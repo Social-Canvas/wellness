@@ -27,7 +27,12 @@ export default async function AdminLayout({
     redirect("/login")
   }
 
-  // TODO: Restrict access to admin and super_admin roles.
+  if (
+    userResult.data.role !== "admin" &&
+    userResult.data.role !== "super_admin"
+  ) {
+    redirect("/dashboard")
+  }
 
   return (
     <AdminShell user={userResult.data} profile={profileResult.data}>
