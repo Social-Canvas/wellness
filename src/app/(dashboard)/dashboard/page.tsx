@@ -50,8 +50,11 @@ export default async function DashboardPage() {
           Membership content and tracking are coming in the next sprints.
         </p>
         <p className="mt-5">
-          <Link href="/programs" className="font-semibold text-blue hover:text-blue-deep">
-            Browse programs
+          <Link
+            href="/dashboard/library"
+            className="font-semibold text-blue hover:text-blue-deep"
+          >
+            Browse your library
           </Link>
         </p>
       </div>
