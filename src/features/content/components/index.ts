@@ -1,3 +1,4 @@
+export { SecureMuxPlayer } from "./SecureMuxPlayer"
 export { LibraryCertificatePlaceholder } from "./LibraryCertificatePlaceholder"
 export { LibraryCourseCard } from "./LibraryCourseCard"
 export { LibraryCourseGrid } from "./LibraryCourseGrid"
