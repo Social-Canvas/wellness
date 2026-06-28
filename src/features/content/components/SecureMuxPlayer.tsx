@@ -17,6 +17,10 @@ interface SecureMuxPlayerProps {
   title: string
   poster?: string | null
   className?: string
+  startTime?: number
+  onTimeUpdate?: (payload: { currentTime: number; duration: number }) => void
+  onPause?: (payload: { currentTime: number; duration: number }) => void
+  onEnded?: (payload: { currentTime: number; duration: number }) => void
 }
 
 type PlaybackTokenResponse = {
@@ -56,6 +60,10 @@ export function SecureMuxPlayer({
   title,
   poster,
   className,
+  startTime,
+  onTimeUpdate,
+  onPause,
+  onEnded,
 }: SecureMuxPlayerProps) {
   const [playback, setPlayback] = useState<PlaybackState>({ status: "loading" })
 
@@ -121,6 +129,15 @@ export function SecureMuxPlayer({
     }
   }, [videoId])
 
+  function readMediaPayload(event: Event): { currentTime: number; duration: number } {
+    const media = event.target as HTMLVideoElement | null
+
+    return {
+      currentTime: media?.currentTime ?? 0,
+      duration: media?.duration ?? 0,
+    }
+  }
+
   if (playback.status === "ready") {
     return (
       <div
@@ -135,7 +152,11 @@ export function SecureMuxPlayer({
           metadata={{ video_title: title }}
           poster={poster ?? undefined}
           streamType="on-demand"
+          startTime={startTime}
           className="aspect-video w-full"
+          onTimeUpdate={(event) => onTimeUpdate?.(readMediaPayload(event))}
+          onPause={(event) => onPause?.(readMediaPayload(event))}
+          onEnded={(event) => onEnded?.(readMediaPayload(event))}
         />
       </div>
     )

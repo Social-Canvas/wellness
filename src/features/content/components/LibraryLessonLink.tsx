@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui"
 import { formatDuration } from "@/features/content/utils/format-duration"
 import type { LibraryLesson } from "@/features/content/types"
+import { LessonCompletionBadge } from "@/features/progress/components"
 
 interface LibraryLessonLinkProps {
   courseId: string
@@ -20,7 +21,7 @@ export function LibraryLessonLink({ courseId, lesson }: LibraryLessonLinkProps) 
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-soft">
           <span>{formatDuration(lesson.durationSeconds)}</span>
           <span aria-hidden="true">·</span>
-          <Badge variant="outline">Not completed</Badge>
+          <LessonCompletionBadge isCompleted={lesson.isCompleted} />
           {lesson.hasVideo ? (
             <Badge variant="secondary">Video attached</Badge>
           ) : (

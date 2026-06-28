@@ -1,3 +1,5 @@
+import type { VideoProgress } from "@/features/progress/types"
+
 export type LibraryVideoSummary = {
   id: string
   title: string
@@ -16,6 +18,7 @@ export type LibraryLesson = {
   videoId: string | null
   hasVideo: boolean
   durationSeconds: number | null
+  isCompleted: boolean
 }
 
 export type LibraryModule = {
@@ -52,6 +55,8 @@ export type LibraryLessonDetail = {
   sortOrder: number
   isRequired: boolean
   video: LibraryVideoSummary | null
+  videoProgress: VideoProgress | null
+  isCompleted: boolean
   course: Pick<LibraryCourse, "id" | "title" | "slug">
   module: Pick<LibraryModule, "id" | "title" | "slug">
 }

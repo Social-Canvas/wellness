@@ -1,7 +1,10 @@
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
-import { SecureMuxPlayer } from "@/features/content/components/SecureMuxPlayer"
 import { formatDuration } from "@/features/content/utils/format-duration"
 import type { LibraryLessonDetail } from "@/features/content/types"
+import {
+  LessonCompletionBadge,
+  ProgressTrackedMuxPlayer,
+} from "@/features/progress/components"
 
 interface LibraryLessonDetailViewProps {
   lesson: LibraryLessonDetail
@@ -24,7 +27,7 @@ export function LibraryLessonDetailView({ lesson }: LibraryLessonDetailViewProps
               ) : (
                 <Badge variant="outline">Optional</Badge>
               )}
-              <Badge variant="outline">Not completed</Badge>
+              <LessonCompletionBadge isCompleted={lesson.isCompleted} />
             </div>
           </div>
           {lesson.description ? (
@@ -40,10 +43,13 @@ export function LibraryLessonDetailView({ lesson }: LibraryLessonDetailViewProps
         <CardContent className="space-y-4">
           {video ? (
             <>
-              <SecureMuxPlayer
+              <ProgressTrackedMuxPlayer
                 videoId={video.id}
+                lessonId={lesson.id}
                 title={video.title}
                 poster={video.thumbnailUrl}
+                startTimeSeconds={lesson.videoProgress?.lastPositionSeconds ?? 0}
+                isCompleted={lesson.isCompleted}
               />
 
               <dl className="grid gap-4 sm:grid-cols-2">

@@ -15,11 +15,15 @@ import type { Course } from "@/features/courses/types"
 import type { Lesson } from "@/features/lessons/types"
 import type { Module } from "@/features/modules/types"
 import type { Video } from "@/features/videos/types"
-import { createClient } from "@/lib/supabase/server"
+import {
+  getVideoProgress,
+  getVideoProgressByVideoIds,
+} from "@/features/progress/services/progress.service"
 import {
   canAccessCourse,
   canAccessLesson,
 } from "@/server/services/entitlement.service"
+import { createClient } from "@/lib/supabase/server"
 
 const userIdSchema = z.uuid("Invalid user id.")
 const courseIdSchema = z.uuid("Invalid course id.")
@@ -97,7 +101,10 @@ function mapLibraryVideo(video: VideoSummaryRow | null): LibraryVideoSummary | n
   }
 }
 
-function mapLibraryLesson(lesson: LessonWithVideo): LibraryLesson {
+function mapLibraryLesson(
+  lesson: LessonWithVideo,
+  isCompleted = false
+): LibraryLesson {
   const video = normalizeVideoRow(lesson.videos)
 
   return {
@@ -110,6 +117,7 @@ function mapLibraryLesson(lesson: LessonWithVideo): LibraryLesson {
     videoId: lesson.video_id,
     hasVideo: Boolean(lesson.video_id && video),
     durationSeconds: video?.duration_seconds ?? null,
+    isCompleted,
   }
 }
 
@@ -130,7 +138,8 @@ function mapLibraryModule(
 
 async function filterEntitledLessons(
   userId: string,
-  lessons: LessonWithVideo[]
+  lessons: LessonWithVideo[],
+  progressByVideoId: Record<string, { completedAt: string | null }>
 ): Promise<ActionResult<LibraryLesson[]>> {
   const entitledLessons: LibraryLesson[] = []
 
@@ -142,7 +151,12 @@ async function filterEntitledLessons(
     }
 
     if (accessResult.data) {
-      entitledLessons.push(mapLibraryLesson(lesson))
+      const video = normalizeVideoRow(lesson.videos)
+      const isCompleted = video?.id
+        ? Boolean(progressByVideoId[video.id]?.completedAt)
+        : true
+
+      entitledLessons.push(mapLibraryLesson(lesson, isCompleted))
     }
   }
 
@@ -268,15 +282,34 @@ export async function getAccessibleCourse(
       return mapDatabaseError(lessonsError)
     }
 
+    const lessonRows = (lessons ?? []) as LessonWithVideo[]
+    const videoIds = lessonRows
+      .map((lesson) => normalizeVideoRow(lesson.videos)?.id)
+      .filter((videoId): videoId is string => Boolean(videoId))
+
+    const progressResult = await getVideoProgressByVideoIds(parsedUserId.data, videoIds)
+
+    if (!progressResult.success) {
+      return progressResult
+    }
+
+    const progressByVideoId = Object.fromEntries(
+      Object.entries(progressResult.data).map(([videoId, progress]) => [
+        videoId,
+        { completedAt: progress.completedAt },
+      ])
+    )
+
     const lessonsByModuleId = new Map<string, LibraryLesson[]>()
 
     for (const moduleRow of moduleRows) {
-      const moduleLessons = ((lessons ?? []) as LessonWithVideo[]).filter(
+      const moduleLessons = lessonRows.filter(
         (lesson) => lesson.module_id === moduleRow.id
       )
       const entitledLessonsResult = await filterEntitledLessons(
         parsedUserId.data,
-        moduleLessons
+        moduleLessons,
+        progressByVideoId
       )
 
       if (!entitledLessonsResult.success) {
@@ -393,6 +426,23 @@ export async function getAccessibleLesson(
       return failure("not_found", "Lesson not found.")
     }
 
+    const video = mapLibraryVideo(normalizeVideoRow(lesson.videos))
+    let videoProgress = null
+    let isCompleted = !video
+
+    if (video) {
+      const progressResult = await getVideoProgress(parsedUserId.data, {
+        videoId: video.id,
+      })
+
+      if (!progressResult.success) {
+        return progressResult
+      }
+
+      videoProgress = progressResult.data
+      isCompleted = Boolean(progressResult.data?.completedAt)
+    }
+
     return success({
       id: lesson.id,
       moduleId: lesson.module_id,
@@ -402,7 +452,9 @@ export async function getAccessibleLesson(
       description: lesson.description,
       sortOrder: lesson.sort_order,
       isRequired: lesson.is_required,
-      video: mapLibraryVideo(normalizeVideoRow(lesson.videos)),
+      video,
+      videoProgress,
+      isCompleted,
       course: {
         id: lessonModule.courses.id,
         title: lessonModule.courses.title,

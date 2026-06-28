@@ -6,9 +6,10 @@ import {
   LibraryCertificatePlaceholder,
   LibraryModuleList,
   LibraryPageHeader,
-  LibraryProgressPlaceholder,
 } from "@/features/content/components"
 import { getAccessibleCourse } from "@/features/content/services/content.service"
+import { CourseProgressSummary } from "@/features/progress/components"
+import { calculateCourseProgress } from "@/features/progress/services/progress.service"
 
 interface CourseLibraryPageProps {
   params: Promise<{ courseId: string }>
@@ -68,6 +69,9 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
   }
 
   const course = result.data
+  const progressResult = await calculateCourseProgress(profileResult.data.id, {
+    courseId: course.id,
+  })
 
   return (
     <div className="mt-9 space-y-6">
@@ -81,7 +85,9 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
         meta={<LibraryCertificatePlaceholder enabled={course.certificateEnabled} />}
       />
 
-      <LibraryProgressPlaceholder />
+      {progressResult.success ? (
+        <CourseProgressSummary progress={progressResult.data} />
+      ) : null}
 
       <LibraryModuleList courseId={course.id} modules={course.modules} />
     </div>
