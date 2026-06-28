@@ -2,8 +2,9 @@ import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import { CourseCertificateCard } from "@/features/certificates/components"
+import { issueCertificate } from "@/features/certificates/services/certificates.service"
 import {
-  LibraryCertificatePlaceholder,
   LibraryModuleList,
   LibraryPageHeader,
 } from "@/features/content/components"
@@ -73,6 +74,22 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
     courseId: course.id,
   })
 
+  let certificate = null
+
+  if (
+    course.certificateEnabled &&
+    progressResult.success &&
+    progressResult.data.completedAt
+  ) {
+    const certificateResult = await issueCertificate(profileResult.data.id, {
+      courseId: course.id,
+    })
+
+    if (certificateResult.success) {
+      certificate = certificateResult.data
+    }
+  }
+
   return (
     <div className="mt-9 space-y-6">
       <LibraryPageHeader
@@ -82,12 +99,13 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
         ]}
         title={course.title}
         description={course.description}
-        meta={<LibraryCertificatePlaceholder enabled={course.certificateEnabled} />}
       />
 
       {progressResult.success ? (
         <CourseProgressSummary progress={progressResult.data} />
       ) : null}
+
+      {certificate ? <CourseCertificateCard certificate={certificate} /> : null}
 
       <LibraryModuleList courseId={course.id} modules={course.modules} />
     </div>
