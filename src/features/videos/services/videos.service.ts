@@ -14,6 +14,16 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/types/database/supabase"
 
 const videoIdSchema = z.uuid("Invalid video id.")
+const muxAssetIdSchema = z.string().trim().min(1, "Mux asset ID is required.")
+
+type ProcessingStatusInput = {
+  status?: Database["public"]["Enums"]["video_status"]
+  migrationStatus?: Database["public"]["Enums"]["migration_status"]
+  durationSeconds?: number | null
+  thumbnailUrl?: string | null
+  muxAssetId?: string | null
+  muxPlaybackId?: string | null
+}
 
 function success<T>(data: T): ActionResult<T> {
   return { success: true, data }
@@ -146,6 +156,136 @@ export async function getVideo(id: string): Promise<ActionResult<Video>> {
 
     if (!data) {
       return failure("not_found", "Video not found.")
+    }
+
+    return success(data)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+export async function getVideoByMuxAssetId(
+  muxAssetId: string
+): Promise<ActionResult<Video>> {
+  const parsedMuxAssetId = muxAssetIdSchema.safeParse(muxAssetId)
+
+  if (!parsedMuxAssetId.success) {
+    return validationFailure(firstValidationMessage(parsedMuxAssetId.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("videos")
+      .select("*")
+      .eq("mux_asset_id", parsedMuxAssetId.data)
+      .maybeSingle()
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    if (!data) {
+      return failure("not_found", "Video not found.")
+    }
+
+    return success(data)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+export async function attachMuxAsset(
+  videoId: string,
+  muxAssetId: string,
+  playbackId: string | null
+): Promise<ActionResult<Video>> {
+  const parsedVideoId = videoIdSchema.safeParse(videoId)
+  const parsedMuxAssetId = muxAssetIdSchema.safeParse(muxAssetId)
+
+  if (!parsedVideoId.success) {
+    return validationFailure(firstValidationMessage(parsedVideoId.error))
+  }
+
+  if (!parsedMuxAssetId.success) {
+    return validationFailure(firstValidationMessage(parsedMuxAssetId.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("videos")
+      .update({
+        mux_asset_id: parsedMuxAssetId.data,
+        mux_playback_id: playbackId,
+        status: "processing",
+        migration_status: "uploaded",
+      })
+      .eq("id", parsedVideoId.data)
+      .select("*")
+      .single()
+
+    if (error || !data) {
+      return error ? mapDatabaseError(error) : failure("not_found", "Video not found.")
+    }
+
+    return success(data)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+export async function updateProcessingStatus(
+  videoId: string,
+  input: ProcessingStatusInput
+): Promise<ActionResult<Video>> {
+  const parsedVideoId = videoIdSchema.safeParse(videoId)
+
+  if (!parsedVideoId.success) {
+    return validationFailure(firstValidationMessage(parsedVideoId.error))
+  }
+
+  const updates: Database["public"]["Tables"]["videos"]["Update"] = {}
+
+  if (input.status !== undefined) {
+    updates.status = input.status
+  }
+
+  if (input.migrationStatus !== undefined) {
+    updates.migration_status = input.migrationStatus
+  }
+
+  if (input.durationSeconds !== undefined) {
+    updates.duration_seconds = input.durationSeconds
+  }
+
+  if (input.thumbnailUrl !== undefined) {
+    updates.thumbnail_url = emptyToNull(input.thumbnailUrl)
+  }
+
+  if (input.muxAssetId !== undefined) {
+    updates.mux_asset_id = emptyToNull(input.muxAssetId)
+  }
+
+  if (input.muxPlaybackId !== undefined) {
+    updates.mux_playback_id = emptyToNull(input.muxPlaybackId)
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return failure("validation_error", "At least one processing field is required.")
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("videos")
+      .update(updates)
+      .eq("id", parsedVideoId.data)
+      .select("*")
+      .single()
+
+    if (error || !data) {
+      return error ? mapDatabaseError(error) : failure("not_found", "Video not found.")
     }
 
     return success(data)
