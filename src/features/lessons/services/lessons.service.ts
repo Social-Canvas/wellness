@@ -76,6 +76,10 @@ function mapUpdateLessonInput(
     updates.status = input.status
   }
 
+  if (input.videoId !== undefined) {
+    updates.video_id = input.videoId === "" ? null : input.videoId
+  }
+
   return updates
 }
 

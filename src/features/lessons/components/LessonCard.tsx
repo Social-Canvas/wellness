@@ -4,13 +4,15 @@ import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui
 import type { Lesson } from "@/features/lessons/types"
 
 import { LessonStatusBadge, LessonVideoLabel } from "./LessonStatusBadge"
+import type { LessonVideoOption } from "./lesson-video-utils"
 
 interface LessonCardProps {
   lesson: Lesson
+  videos: LessonVideoOption[]
   actions?: ReactNode
 }
 
-export function LessonCard({ lesson, actions }: LessonCardProps) {
+export function LessonCard({ lesson, videos, actions }: LessonCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -37,7 +39,7 @@ export function LessonCard({ lesson, actions }: LessonCardProps) {
               Video
             </p>
             <p className="mt-1">
-              <LessonVideoLabel videoId={lesson.video_id} />
+              <LessonVideoLabel videoId={lesson.video_id} videos={videos} />
             </p>
           </div>
         </div>

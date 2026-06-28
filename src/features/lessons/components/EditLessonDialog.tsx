@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 
 import {
   Button,
@@ -25,11 +25,14 @@ import {
   lessonTextareaClassName,
   PUBLISH_STATUS_OPTIONS,
 } from "./lesson-form-styles"
+import type { LessonVideoOption } from "./lesson-video-utils"
+import { LessonVideoSelect } from "./LessonVideoSelect"
 
 interface EditLessonDialogProps {
   courseId: string
   moduleId: string
   lesson: Lesson | null
+  videos: LessonVideoOption[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -38,6 +41,7 @@ export function EditLessonDialog({
   courseId,
   moduleId,
   lesson,
+  videos,
   open,
   onOpenChange,
 }: EditLessonDialogProps) {
@@ -53,6 +57,7 @@ export function EditLessonDialog({
       sortOrder: 0,
       isRequired: true,
       status: "draft",
+      videoId: null,
     },
   })
 
@@ -60,6 +65,7 @@ export function EditLessonDialog({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = form
 
@@ -75,6 +81,7 @@ export function EditLessonDialog({
       sortOrder: lesson.sort_order,
       isRequired: lesson.is_required,
       status: lesson.status,
+      videoId: lesson.video_id,
     })
   }, [lesson, reset])
 
@@ -88,6 +95,7 @@ export function EditLessonDialog({
     const result = await updateLessonAction(courseId, moduleId, lesson.id, {
       ...values,
       description: values.description ?? null,
+      videoId: values.videoId ?? null,
     })
 
     if (!result.success) {
@@ -216,11 +224,22 @@ export function EditLessonDialog({
               Required lesson
             </label>
 
-            {lesson.video_id ? (
-              <p className="text-sm text-ink-soft">
-                <span className="font-semibold text-ink">Video ID:</span>{" "}
-                <span className="font-mono text-xs">{lesson.video_id}</span>
-              </p>
+            <Controller
+              name="videoId"
+              control={control}
+              render={({ field }) => (
+                <LessonVideoSelect
+                  id="edit-lesson-video"
+                  value={field.value ?? null}
+                  onChange={field.onChange}
+                  videos={videos}
+                  disabled={isSubmitting}
+                  invalid={Boolean(errors.videoId)}
+                />
+              )}
+            />
+            {errors.videoId ? (
+              <p className="text-sm text-destructive">{errors.videoId.message}</p>
             ) : null}
 
             <div className="flex justify-end gap-2 pt-2">

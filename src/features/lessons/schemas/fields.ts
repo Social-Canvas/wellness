@@ -24,3 +24,7 @@ export const lessonDescriptionField = z
 export const publishStatusField = z.enum(["draft", "published", "archived"], {
   message: "Select a valid status",
 })
+
+export const lessonVideoIdField = z
+  .union([z.uuid("Select a valid video."), z.literal(""), z.null()])
+  .optional()

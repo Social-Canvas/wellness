@@ -5,6 +5,7 @@ import { getCourse } from "@/features/courses/services/courses.service"
 import { LessonsTable } from "@/features/lessons/components"
 import { listLessons } from "@/features/lessons/services/lessons.service"
 import { getModule } from "@/features/modules/services/modules.service"
+import { listVideos } from "@/features/videos/services/videos.service"
 
 interface AdminModuleLessonsPageProps {
   params: Promise<{ courseId: string; moduleId: string }>
@@ -15,10 +16,11 @@ export default async function AdminModuleLessonsPage({
 }: AdminModuleLessonsPageProps) {
   const { courseId, moduleId } = await params
 
-  const [courseResult, moduleResult, lessonsResult] = await Promise.all([
+  const [courseResult, moduleResult, lessonsResult, videosResult] = await Promise.all([
     getCourse(courseId),
     getModule(moduleId),
     listLessons(moduleId),
+    listVideos(),
   ])
 
   if (!courseResult.success) {
@@ -104,6 +106,41 @@ export default async function AdminModuleLessonsPage({
     )
   }
 
+  if (!videosResult.success) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <p className="text-sm text-ink-soft">
+            <Link href="/admin/courses" className="font-semibold text-blue hover:text-blue-deep">
+              Courses
+            </Link>
+            <span className="mx-1.5">·</span>
+            <Link
+              href={`/admin/courses/${courseId}/modules`}
+              className="font-semibold text-blue hover:text-blue-deep"
+            >
+              Modules
+            </Link>
+          </p>
+          <h2 className="mt-2 font-display text-[28px] font-medium text-ink">
+            {moduleResult.data.title}
+          </h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Lessons in {courseResult.data.title}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-surface px-6 py-6">
+          <p className="text-sm text-destructive">{videosResult.error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const videoOptions = videosResult.data.map((video) => ({
+    id: video.id,
+    title: video.title,
+  }))
+
   return (
     <div className="space-y-6">
       <div>
@@ -131,6 +168,7 @@ export default async function AdminModuleLessonsPage({
         courseId={courseId}
         moduleId={moduleId}
         lessons={lessonsResult.data}
+        videos={videoOptions}
       />
     </div>
   )

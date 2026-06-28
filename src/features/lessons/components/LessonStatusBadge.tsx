@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui"
 import type { Lesson } from "@/features/lessons/types"
 
+import type { LessonVideoOption } from "./lesson-video-utils"
+import { getVideoTitleForLesson } from "./lesson-video-utils"
+
 interface LessonStatusBadgeProps {
   lesson: Pick<Lesson, "status">
 }
@@ -17,24 +20,22 @@ export function LessonStatusBadge({ lesson }: LessonStatusBadgeProps) {
   return <Badge variant="secondary">Draft</Badge>
 }
 
-function formatVideoId(videoId: string | null): string {
+export function LessonVideoLabel({
+  videoId,
+  videos,
+}: {
+  videoId: string | null
+  videos: LessonVideoOption[]
+}) {
   if (!videoId) {
-    return "—"
+    return <span className="text-ink-soft">No video attached</span>
   }
 
-  return videoId
-}
+  const title = getVideoTitleForLesson(videoId, videos)
 
-export function LessonVideoLabel({ videoId }: { videoId: string | null }) {
-  const label = formatVideoId(videoId)
-
-  if (label === "—") {
-    return <span className="text-ink-soft">—</span>
+  if (title) {
+    return <span className="text-ink">{title}</span>
   }
 
-  return (
-    <span className="font-mono text-xs text-ink-soft" title={label}>
-      {label.slice(0, 8)}…
-    </span>
-  )
+  return <span className="text-ink-soft">Unknown video</span>
 }

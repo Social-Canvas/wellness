@@ -21,11 +21,13 @@ import { CreateLessonDialog } from "./CreateLessonDialog"
 import { EditLessonDialog } from "./EditLessonDialog"
 import { LessonCard } from "./LessonCard"
 import { LessonStatusBadge, LessonVideoLabel } from "./LessonStatusBadge"
+import type { LessonVideoOption } from "./lesson-video-utils"
 
 interface LessonsTableProps {
   courseId: string
   moduleId: string
   lessons: Lesson[]
+  videos: LessonVideoOption[]
 }
 
 function LessonRowActions({
@@ -55,7 +57,7 @@ function LessonRowActions({
   )
 }
 
-export function LessonsTable({ courseId, moduleId, lessons }: LessonsTableProps) {
+export function LessonsTable({ courseId, moduleId, lessons, videos }: LessonsTableProps) {
   const [createOpen, setCreateOpen] = useState(false)
   const [editLesson, setEditLesson] = useState<Lesson | null>(null)
   const [archiveLesson, setArchiveLesson] = useState<Lesson | null>(null)
@@ -125,7 +127,7 @@ export function LessonsTable({ courseId, moduleId, lessons }: LessonsTableProps)
                   </TableCell>
                   <TableCell>{lesson.sort_order}</TableCell>
                   <TableCell>
-                    <LessonVideoLabel videoId={lesson.video_id} />
+                    <LessonVideoLabel videoId={lesson.video_id} videos={videos} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -148,6 +150,7 @@ export function LessonsTable({ courseId, moduleId, lessons }: LessonsTableProps)
           <LessonCard
             key={lesson.id}
             lesson={lesson}
+            videos={videos}
             actions={
               <LessonRowActions
                 lesson={lesson}
@@ -169,6 +172,7 @@ export function LessonsTable({ courseId, moduleId, lessons }: LessonsTableProps)
         courseId={courseId}
         moduleId={moduleId}
         lesson={editLesson}
+        videos={videos}
         open={Boolean(editLesson)}
         onOpenChange={(open) => {
           if (!open) {
