@@ -1,0 +1,53 @@
+---
+description: Core architecture rules for the yoga membership platform
+alwaysApply: true
+---
+
+# Architecture
+
+## Stack
+
+Next.js 15 App Router + TypeScript + Tailwind + Shadcn + Supabase + Stripe + Mux + Vercel + Resend.
+
+**No Express.** No Shopify. No separate backend repo.
+
+## Modular Monolith
+
+One repo, feature-based folders:
+
+- `src/app/` — routes and API handlers only
+- `src/features/` — domain modules
+- `src/server/` — services, actions, webhooks, jobs
+- `src/lib/` — provider clients and shared utilities
+- `components/` — reusable presentation
+
+## Source of Truth
+
+| Domain | Owner |
+|--------|-------|
+| Payments | Stripe (webhooks sync local DB) |
+| App data & access | Supabase PostgreSQL |
+| Video streaming | Mux (signed playback) |
+| UX & orchestration | Next.js |
+
+## Key Rules
+
+- Entitlement checks live in `server/services/entitlementService` — never hardcode plan access in UI.
+- Grant subscription/product access **after webhook**, not checkout redirect.
+- Webhooks: verify signature → store event → idempotent process.
+- GHL/email failures: log + retry; never block user flows.
+- Background jobs: `integration_jobs` + Vercel Cron (no queue service in MVP).
+
+## Feature Boundaries
+
+Each feature owns its domain only:
+
+- `auth` — login/signup/session; not entitlements
+- `billing` — Stripe checkout/portal/webhooks; not UI styling
+- `video` — Mux tokens/upload; not progress logic
+- `progress` — watch state; not certificate issuance directly
+- `integrations` — GHL, Resend, Calendly; isolated in `server/integrations/`
+
+## Do Not Build in MVP
+
+Native apps, offline downloads, full DRM, community forum, custom scheduling, affiliate system, microservices.

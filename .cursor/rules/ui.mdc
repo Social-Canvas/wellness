@@ -1,0 +1,81 @@
+---
+description: UI and design system conventions from HTML template
+globs: "{src/components/**,src/features/**/components/**}"
+alwaysApply: false
+---
+
+# UI Rules
+
+## Stack
+
+Tailwind CSS + Shadcn UI. Design extracted from `Sample_Platform_Demo` HTML.
+
+## Color Tokens
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| cream | `#F6FAF9` | Page background |
+| cream2 | `#EDF4EF` | Secondary bg |
+| blue | `#2F7E96` | Primary CTA, links |
+| blue-deep | `#235F73` | Hover states |
+| blue-soft | `#E7F2F2` | Highlights |
+| green | `#5E8E74` | Success, badges |
+| green-deep | `#4A7560` | Ticker, accents |
+| ink | `#1F3A43` | Body text |
+| ink-soft | `#5A7077` | Muted text |
+| line | `#DCE8E6` | Borders |
+
+Define in `tailwind.config` — reference via `bg-cream`, `text-ink`, etc.
+
+## Typography
+
+- **Display:** Poppins (headings) — `font-display`
+- **Body:** Mulish — `font-body`
+- Eyebrow: `text-xs font-bold uppercase tracking-widest text-blue`
+- Section heading: `text-3xl font-medium tracking-tight`
+
+## Spacing & Layout
+
+- Max content width: `max-w-[1120px]` (`.wrap`)
+- Section padding: `py-14` (54px)
+- Card radius: `rounded-2xl` (16–18px)
+- Button radius: `rounded-full`
+
+## Component Inventory
+
+Build these from HTML before pages:
+
+**Primitives:** Button (primary/ghost/block), Input, Label, Card, Badge, Modal, Tabs, Accordion
+
+**Layout:** Navbar (sticky), Footer, Sidebar, PageHeader, Ticker
+
+**Marketing:** Hero, TrustBar, StepsGrid, PricingTiers, TestimonialCard, FAQ, CaptureForm, Band CTA
+
+**Dashboard:** PlanBadge, ProgressBar, CourseCard, VideoCard, LessonList, EmptyState
+
+**Commerce:** ProductCard, EnrollBox, CheckoutSummary, Invoice
+
+**Admin:** DataTable, AdminForm, StatusBadge, UploadZone
+
+## Shadcn Usage
+
+- Use Shadcn for interactive primitives; style with project tokens.
+- Extend via `className` and variants — don't fork component source heavily.
+- `cn()` utility for conditional classes.
+
+## Responsive
+
+- Mobile-first.
+- Grids: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+- Hero: stack on mobile, side-by-side on `lg:`
+
+## States
+
+Every interactive UI needs: default, hover, focus, disabled, loading, error, empty.
+
+## Anti-patterns
+
+- No inline `style={{}}` — use Tailwind.
+- No hardcoded hex in components — use theme tokens.
+- No business logic in UI components.
+- Mock data OK during UI sprint; label clearly as placeholder.

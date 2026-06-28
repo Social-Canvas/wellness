@@ -1,0 +1,73 @@
+---
+description: Supabase database, auth, and RLS conventions
+globs: "{src/lib/supabase/**,supabase/**,src/server/**}"
+alwaysApply: false
+---
+
+# Supabase Rules
+
+## Clients
+
+| Client | Use |
+|--------|-----|
+| Browser (anon key) | Client Components only when unavoidable |
+| Server (cookies) | Server Components, Server Actions, Route Handlers |
+| Service role | Webhooks, cron, admin mutations — **server-only** |
+
+Never import service-role client into Client Components or expose in `NEXT_PUBLIC_*`.
+
+## Auth
+
+- Supabase Auth for email/password + password reset.
+- Read session server-side: `createServerClient` with cookies.
+- Middleware refreshes session.
+- On signup: upsert `profiles` with `role: 'user'`.
+
+## RLS Required On
+
+- `profiles`, `video_progress`, `course_progress`
+- `certificates`, `purchases`
+- Any table users query directly
+
+## RLS Policy Direction
+
+- Users read/update own profile (limited fields).
+- Users read/write own progress (via controlled server paths preferred).
+- Users read own purchases and certificates.
+- Admins: use service role server-side, not broad anon policies.
+
+**RLS is not a substitute for application entitlement logic.**
+
+## Migrations
+
+- All schema changes in `supabase/migrations/`.
+- Include RLS policies in same migration.
+- UUID primary keys for internal records.
+- `created_at`, `updated_at` on business tables.
+- Soft archive (`status: archived`) over hard delete.
+
+## Storage Buckets
+
+| Bucket | Access |
+|--------|--------|
+| `product-files` | Private, signed URLs, purchaser-only |
+| `product-images` | Public OK for covers |
+| `certificate-files` | Private, owner + admin |
+| `admin-uploads` | Private, admin-only |
+
+**Do not store protected member videos in Supabase Storage.**
+
+## Queries
+
+- Use indexes on: `subscriptions.user_id`, `content_plan_access(plan_id, content_type, content_id)`, `video_progress(user_id, video_id)`.
+- Paginate admin lists — never load all members/progress at once.
+- Entitlement checks query local `subscriptions` + `content_plan_access`, not Stripe API.
+
+## Stripe ID Storage
+
+- `profiles.stripe_customer_id`
+- `subscriptions.stripe_subscription_id`
+- `plan_prices.stripe_price_id`
+- `products.stripe_price_id`
+
+Always validate IDs against local DB before creating checkout sessions.

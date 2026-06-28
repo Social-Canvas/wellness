@@ -1,0 +1,78 @@
+---
+description: TypeScript coding standards
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript Rules
+
+## Strict Mode
+
+- `strict: true` always.
+- No `any` — use `unknown` + narrowing, or proper types.
+- No `@ts-ignore` without a comment explaining why.
+
+## Types Organization
+
+```
+src/types/
+  database/   # Supabase generated types
+  domain/     # Plan, Video, Subscription, etc.
+  api/        # Request/response shapes
+```
+
+## Naming
+
+| Kind | Style | Example |
+|------|-------|---------|
+| DB columns | snake_case | `current_period_end` |
+| TS properties | camelCase | `currentPeriodEnd` |
+| Components | PascalCase | `PricingCard` |
+| Constants | SCREAMING_SNAKE | `PLAN_SLUGS` |
+| Enums/unions | PascalCase | `SubscriptionStatus` |
+
+## Service Functions
+
+Always explicit return types:
+
+```typescript
+export async function canAccessVideo(
+  userId: string,
+  videoId: string
+): Promise<boolean> {
+  // ...
+}
+```
+
+## API Result Type
+
+```typescript
+type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: { code: string; message: string } }
+```
+
+## Provider Types
+
+Isolate Stripe/Mux/Supabase-specific types in `lib/` — don't leak into components.
+
+## Database Types
+
+- Regenerate from Supabase after migrations.
+- Map DB rows to domain types in services when shapes differ.
+
+## Validation
+
+- Zod schemas in `features/*/schemas/` or `lib/validation/`.
+- Infer types: `type LoginInput = z.infer<typeof loginSchema>`.
+
+## Avoid
+
+```typescript
+// ❌
+const data: any = await response.json()
+
+// ✅
+const parsed = checkoutSchema.safeParse(body)
+if (!parsed.success) return validationError(parsed.error)
+```

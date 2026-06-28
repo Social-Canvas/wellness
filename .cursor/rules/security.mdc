@@ -1,0 +1,82 @@
+---
+description: Security requirements for auth, payments, video, and admin
+alwaysApply: true
+---
+
+# Security Rules
+
+## Authentication
+
+- Server-side session checks on all protected routes.
+- Never trust client-side auth state for authorization decisions.
+- Password reset via Supabase Auth only.
+- Consider MFA for admin users post-MVP.
+
+## Authorization (Four Layers)
+
+1. Middleware/route layout — session exists
+2. Server action/handler — role check (`admin`, `super_admin`)
+3. Service layer — entitlement check (plan, purchase, content rules)
+4. Supabase RLS — user-owned data isolation
+
+## Payments (Stripe)
+
+- Never store card data.
+- Verify `Stripe-Signature` on all webhooks.
+- Store `provider_event_id` for idempotency.
+- Grant access on webhook only — **not** on success redirect.
+- Never trust client-submitted amounts or price IDs without DB lookup.
+- `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`: server-only.
+
+## Video (Mux)
+
+- Signed playback only for paid content.
+- Generate tokens only after `entitlementService` approves.
+- Short-lived tokens (minutes, not hours).
+- `MUX_SIGNING_PRIVATE_KEY`: server-only.
+- Deny playback for: wrong plan, unpublished, processing, archived.
+
+## File Downloads
+
+- Private Supabase buckets only.
+- Signed URLs after purchase ownership verified.
+- Short expiry; never log signed URLs.
+- Validate file type/size on admin upload.
+
+## Webhooks
+
+- Verify signatures (Stripe, Mux).
+- Cron routes: require `CRON_SECRET` header.
+- Return 200 quickly; enqueue heavy work.
+- Log failures without exposing internals to provider.
+
+## API & Forms
+
+- Zod validate all inputs.
+- Rate-limit public endpoints (`/api/leads/submit`).
+- CSRF-safe mutations (Server Actions or same-origin POST).
+- Generic error messages to users; detailed logs server-side.
+
+## Secrets — Never in Client
+
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `MUX_TOKEN_SECRET`, `MUX_SIGNING_PRIVATE_KEY`
+- `GHL_API_KEY`, `RESEND_API_KEY`
+- `CRON_SECRET`
+
+## Admin
+
+- Role check in admin layout AND sensitive mutations.
+- Log publish/unpublish and access rule changes.
+- No casual `super_admin` grants.
+
+## Logging — Never Log
+
+Passwords, tokens, signing keys, full payment details, signed URLs, sensitive form data.
+
+## OWASP Awareness
+
+- XSS: sanitize rendered user content; React escapes by default.
+- SQL injection: use Supabase parameterized queries only.
+- IDOR: always scope queries to authenticated user ID server-side.

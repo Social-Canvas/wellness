@@ -1,0 +1,63 @@
+---
+description: Next.js 15 App Router conventions
+globs: src/app/**/*
+alwaysApply: false
+---
+
+# Next.js Rules
+
+## App Router
+
+- Use route groups: `(public)`, `(auth)`, `(dashboard)`, `(admin)`.
+- Keep `page.tsx` thin — fetch in page or layout, render components.
+- Use `loading.tsx` and `error.tsx` for route segments.
+- Use `layout.tsx` for shared chrome and auth guards.
+
+## Server vs Client
+
+- **Default: Server Components.** No `"use client"` unless required.
+- Client only for: video player, interactive forms, Shadcn interactive primitives, progress events.
+- Never import `server/services/` or service-role Supabase into Client Components.
+
+## Data Fetching
+
+- Fetch protected data server-side in layouts/pages.
+- Avoid `useEffect` + fetch for data already available on server.
+- Use `revalidatePath` / `revalidateTag` after mutations.
+
+## Server Actions
+
+- Place in `server/actions/` or co-located `actions.ts` in features.
+- Pattern: validate (Zod) → auth → authorize → service → revalidate → return.
+- Return typed results, not thrown errors to UI.
+
+## Route Handlers (`app/api/`)
+
+Use only for:
+
+- `stripe/webhook`, `mux/webhook`
+- `stripe/checkout`, `stripe/portal`
+- `mux/playback-token`
+- `products/download-url`
+- `leads/submit`
+- `cron/process-jobs`
+
+Webhooks need raw body — do not use Server Actions for these.
+
+## Middleware
+
+- Refresh Supabase session.
+- Redirect unauthenticated users from `/dashboard/*` and `/admin/*`.
+- Do not put business logic in middleware — only session + redirects.
+
+## API Responses
+
+```typescript
+// Success
+{ success: true, data: T }
+
+// Error
+{ success: false, error: { code: string, message: string } }
+```
+
+Never leak provider error details to clients.

@@ -1,0 +1,72 @@
+---
+description: React component patterns
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# React Rules
+
+## Server Components First
+
+- Pages and layouts are Server Components unless they need hooks/events.
+- Pass serializable props from server to client children.
+- Fetch data as close to the route as practical.
+
+## Client Components
+
+Add `"use client"` only when using:
+
+- `useState`, `useEffect`, `useRef`
+- Event handlers (onClick, onChange)
+- Browser APIs
+- Mux video player
+- React Hook Form controlled inputs
+
+## Component Structure
+
+```
+components/
+  ui/          # Shadcn primitives (Button, Input, Card)
+  layout/      # Navbar, Sidebar, Footer
+  marketing/   # Hero, PricingTiers, FAQ
+  dashboard/   # CourseCard, ProgressBar
+  admin/       # DataTable, AdminForm
+  video/       # VideoPlayer (client)
+  forms/       # LeadForm, CheckoutForm (client)
+```
+
+## Rules
+
+- Keep components under ~200 lines.
+- No business logic in UI — call Server Actions or receive pre-computed props.
+- No entitlement checks in client-only code.
+- Extract reusable hooks to `features/*/hooks/`.
+- Prefer composition over deep prop drilling.
+
+## Forms
+
+- React Hook Form + Zod resolver.
+- Submit via Server Action or `action` prop.
+- Show field-level and form-level errors.
+- Loading state on submit button.
+
+## Design System (from HTML template)
+
+- Colors: cream `#F6FAF9`, blue `#2F7E96`, green `#5E8E74`, ink `#1F3A43`
+- Fonts: Poppins (display), Mulish (body)
+- Buttons: rounded-full (`border-radius: 40px`), primary blue
+- Cards: white bg, `border-line`, `rounded-2xl`
+
+Map to Tailwind theme tokens — do not use inline styles.
+
+## Anti-patterns
+
+```tsx
+// ❌ Client component fetching protected data
+"use client"
+useEffect(() => fetch("/api/videos"), [])
+
+// ✅ Server page fetches, passes to client player
+const video = await getVideo(id)
+return <VideoPlayer playbackToken={token} />
+```
