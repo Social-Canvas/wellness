@@ -3,6 +3,7 @@ import "server-only"
 import type Stripe from "stripe"
 
 import { syncSubscriptionFromStripe } from "@/features/billing/services/billing.service"
+import { syncOrderFromStripeCheckoutSession } from "@/features/shop/services/shop.service"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getStripeClient } from "@/server/integrations/stripe/client"
@@ -144,15 +145,27 @@ async function resolveSubscriptionIdFromEvent(
 }
 
 async function processStripeEvent(event: Stripe.Event): Promise<void> {
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session
+
+    if (session.mode === "payment") {
+      const syncResult = await syncOrderFromStripeCheckoutSession(session.id)
+
+      if (!syncResult.success) {
+        throw new Error(syncResult.error.message)
+      }
+
+      return
+    }
+  }
+
   if (!SUBSCRIPTION_SYNC_EVENTS.has(event.type)) {
-    await updateWebhookEventStatus(event.id, "ignored")
     return
   }
 
   const subscriptionId = await resolveSubscriptionIdFromEvent(event)
 
   if (!subscriptionId) {
-    await updateWebhookEventStatus(event.id, "ignored")
     return
   }
 
