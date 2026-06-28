@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cream: #f6faf9;
+  --cream2: #edf4ef;
+  --white: #ffffff;
+  --blue: #2f7e96;
+  --blue-deep: #235f73;
+  --blue-soft: #e7f2f2;
+  --green: #5e8e74;
+  --green-deep: #4a7560;
+  --green-soft: #edf4ee;
+  --ink: #1f3a43;
+  --ink-soft: #5a7077;
+  --line: #dce8e6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-cream: var(--cream);
+  --color-cream2: var(--cream2);
+  --color-surface: var(--white);
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-blue-soft: var(--blue-soft);
+  --color-green: var(--green);
+  --color-green-deep: var(--green-deep);
+  --color-green-soft: var(--green-soft);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-poppins), ui-sans-serif, sans-serif;
+  --font-body: var(--font-mulish), ui-sans-serif, sans-serif;
+
+  --radius-input: 0.625rem;
+  --radius-card: 1rem;
+  --radius-card-lg: 1.125rem;
+  --radius-button: 9999px;
+
+  --spacing-section: 3.375rem;
+  --spacing-wrap-x: 1.625rem;
+  --width-wrap: 70rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.18;
 }

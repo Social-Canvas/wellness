@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yoga Membership Platform
+
+Next.js 15+ membership platform for yoga video content — subscriptions, secure streaming, progress tracking, certificates, shop, and admin.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Env validation is skipped in local development by default. Set `SKIP_ENV_VALIDATION=false` and fill in `.env.local` to test validation before production deploy.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Copy `.env.example` to `.env.local` and fill in values. Access validated env via `@/lib/config` — do not read `process.env` directly in application code.
 
-To learn more about Next.js, take a look at the following resources:
+### Public (client-safe)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_APP_URL` | Canonical app URL (e.g. `http://localhost:3000`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Server-only
 
-## Deploy on Vercel
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `MUX_TOKEN_ID` | Mux API token ID |
+| `MUX_TOKEN_SECRET` | Mux API token secret |
+| `MUX_SIGNING_KEY_ID` | Mux signed playback key ID |
+| `MUX_SIGNING_PRIVATE_KEY` | Mux signed playback private key |
+| `RESEND_API_KEY` | Resend email API key |
+| `GHL_API_KEY` | GoHighLevel API key |
+| `CRON_SECRET` | Secret for Vercel Cron job authentication |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Optional
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description |
+|----------|-------------|
+| `SKIP_ENV_VALIDATION` | Set to `true` to bypass validation (local dev only) |
+
+## Project Structure
+
+```
+src/
+  app/           # Routes and API handlers
+  features/      # Domain modules
+  lib/           # Config, provider clients, utilities
+  server/        # Actions, queries, services, jobs, webhooks
+  types/         # Database, domain, and API types
+docs/            # PRD, TDD, reference HTML
+```
+
+## Documentation
+
+- [AI_CONTEXT.md](./AI_CONTEXT.md) — architecture and conventions
+- [PROJECT_RULES.md](./PROJECT_RULES.md) — coding standards
+- [TASKS.md](./TASKS.md) — sprint checklist
+- [docs/PRD.md](./docs/PRD.md) — product requirements
+- [docs/TDD.md](./docs/TDD.md) — technical design
+- [docs/reference/Sample_Platform_Demo.html](./docs/reference/Sample_Platform_Demo.html) — UI reference
+
+## Scripts
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # ESLint
+```
