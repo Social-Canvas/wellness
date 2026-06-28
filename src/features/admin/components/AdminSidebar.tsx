@@ -7,6 +7,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Plans", href: "/admin/plans" },
   { label: "Courses", href: "/admin/courses" },
+  { label: "Videos", href: "/admin/videos" },
   { label: "Products", href: "/admin/products" },
   { label: "Members", href: "/admin/members" },
   { label: "Certificates", href: "/admin/certificates" },

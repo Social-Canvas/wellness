@@ -1,0 +1,56 @@
+"use client"
+
+import { cn } from "@/lib/utils"
+
+export const videoTextareaClassName = cn(
+  "min-h-24 w-full min-w-0 rounded-[var(--radius-input)] border border-line bg-surface px-3.5 py-3 font-body text-[15px] text-ink transition-colors outline-none placeholder:text-ink-soft/70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-cream2 disabled:opacity-60 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+)
+
+export const videoSelectClassName = cn(
+  "h-auto min-h-10 w-full min-w-0 rounded-[var(--radius-input)] border border-line bg-surface px-3.5 py-3 font-body text-[15px] text-ink transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-cream2 disabled:opacity-60 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+)
+
+export const VIDEO_STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "uploading", label: "Uploading" },
+  { value: "processing", label: "Processing" },
+  { value: "ready", label: "Ready" },
+  { value: "published", label: "Published" },
+  { value: "failed", label: "Failed" },
+  { value: "archived", label: "Archived" },
+] as const
+
+export const MIGRATION_STATUS_OPTIONS = [
+  { value: "not_started", label: "Not started" },
+  { value: "uploaded", label: "Uploaded" },
+  { value: "verified", label: "Verified" },
+  { value: "failed", label: "Failed" },
+] as const
+
+export function formatVideoDuration(seconds: number | null): string {
+  if (seconds === null || seconds === undefined) {
+    return "—"
+  }
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+  }
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`
+}
+
+export function truncateId(value: string | null, maxLength = 12): string {
+  if (!value) {
+    return "—"
+  }
+
+  if (value.length <= maxLength) {
+    return value
+  }
+
+  return `${value.slice(0, maxLength)}…`
+}
