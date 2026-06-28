@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import {
   LibraryCertificatePlaceholder,
   LibraryModuleList,
@@ -16,8 +17,14 @@ interface CourseLibraryPageProps {
 export async function generateMetadata({
   params,
 }: CourseLibraryPageProps): Promise<Metadata> {
+  const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    return { title: "Course" }
+  }
+
   const { courseId } = await params
-  const result = await getAccessibleCourse(courseId)
+  const result = await getAccessibleCourse(profileResult.data.id, courseId)
 
   if (!result.success) {
     return { title: "Course" }
@@ -30,8 +37,14 @@ export async function generateMetadata({
 }
 
 export default async function CourseLibraryPage({ params }: CourseLibraryPageProps) {
+  const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    redirect("/login")
+  }
+
   const { courseId } = await params
-  const result = await getAccessibleCourse(courseId)
+  const result = await getAccessibleCourse(profileResult.data.id, courseId)
 
   if (!result.success) {
     if (result.error.code === "not_found") {

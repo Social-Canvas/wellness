@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import {
   LibraryLessonDetailView,
   LibraryPageHeader,
@@ -14,8 +15,14 @@ interface LessonLibraryPageProps {
 export async function generateMetadata({
   params,
 }: LessonLibraryPageProps): Promise<Metadata> {
+  const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    return { title: "Lesson" }
+  }
+
   const { courseId, lessonId } = await params
-  const result = await getAccessibleLesson(courseId, lessonId)
+  const result = await getAccessibleLesson(profileResult.data.id, courseId, lessonId)
 
   if (!result.success) {
     return { title: "Lesson" }
@@ -28,8 +35,14 @@ export async function generateMetadata({
 }
 
 export default async function LessonLibraryPage({ params }: LessonLibraryPageProps) {
+  const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    redirect("/login")
+  }
+
   const { courseId, lessonId } = await params
-  const result = await getAccessibleLesson(courseId, lessonId)
+  const result = await getAccessibleLesson(profileResult.data.id, courseId, lessonId)
 
   if (!result.success) {
     if (result.error.code === "not_found") {

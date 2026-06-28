@@ -16,7 +16,12 @@ import type { Lesson } from "@/features/lessons/types"
 import type { Module } from "@/features/modules/types"
 import type { Video } from "@/features/videos/types"
 import { createClient } from "@/lib/supabase/server"
+import {
+  canAccessCourse,
+  canAccessLesson,
+} from "@/server/services/entitlement.service"
 
+const userIdSchema = z.uuid("Invalid user id.")
 const courseIdSchema = z.uuid("Invalid course id.")
 const lessonIdSchema = z.uuid("Invalid lesson id.")
 
@@ -123,7 +128,36 @@ function mapLibraryModule(
   }
 }
 
-export async function listAccessibleCourses(): Promise<ActionResult<LibraryCourse[]>> {
+async function filterEntitledLessons(
+  userId: string,
+  lessons: LessonWithVideo[]
+): Promise<ActionResult<LibraryLesson[]>> {
+  const entitledLessons: LibraryLesson[] = []
+
+  for (const lesson of lessons) {
+    const accessResult = await canAccessLesson(userId, lesson.id)
+
+    if (!accessResult.success) {
+      return accessResult
+    }
+
+    if (accessResult.data) {
+      entitledLessons.push(mapLibraryLesson(lesson))
+    }
+  }
+
+  return success(entitledLessons)
+}
+
+export async function listAccessibleCourses(
+  userId: string
+): Promise<ActionResult<LibraryCourse[]>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
+
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -136,19 +170,49 @@ export async function listAccessibleCourses(): Promise<ActionResult<LibraryCours
       return mapDatabaseError(error)
     }
 
-    return success((data ?? []).map(mapLibraryCourse))
+    const accessibleCourses: LibraryCourse[] = []
+
+    for (const course of data ?? []) {
+      const accessResult = await canAccessCourse(parsedUserId.data, course.id)
+
+      if (!accessResult.success) {
+        return accessResult
+      }
+
+      if (accessResult.data) {
+        accessibleCourses.push(mapLibraryCourse(course))
+      }
+    }
+
+    return success(accessibleCourses)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
 }
 
 export async function getAccessibleCourse(
+  userId: string,
   courseId: string
 ): Promise<ActionResult<LibraryCourseDetail>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
   const parsedCourseId = courseIdSchema.safeParse(courseId)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
 
   if (!parsedCourseId.success) {
     return validationFailure(firstValidationMessage(parsedCourseId.error))
+  }
+
+  const accessResult = await canAccessCourse(parsedUserId.data, parsedCourseId.data)
+
+  if (!accessResult.success) {
+    return accessResult
+  }
+
+  if (!accessResult.data) {
+    return failure("not_found", "Course not found.")
   }
 
   try {
@@ -206,17 +270,26 @@ export async function getAccessibleCourse(
 
     const lessonsByModuleId = new Map<string, LibraryLesson[]>()
 
-    for (const lesson of (lessons ?? []) as LessonWithVideo[]) {
-      const mappedLesson = mapLibraryLesson(lesson)
-      const existing = lessonsByModuleId.get(lesson.module_id) ?? []
-      existing.push(mappedLesson)
-      lessonsByModuleId.set(lesson.module_id, existing)
+    for (const moduleRow of moduleRows) {
+      const moduleLessons = ((lessons ?? []) as LessonWithVideo[]).filter(
+        (lesson) => lesson.module_id === moduleRow.id
+      )
+      const entitledLessonsResult = await filterEntitledLessons(
+        parsedUserId.data,
+        moduleLessons
+      )
+
+      if (!entitledLessonsResult.success) {
+        return entitledLessonsResult
+      }
+
+      lessonsByModuleId.set(moduleRow.id, entitledLessonsResult.data)
     }
 
     return success({
       ...mapLibraryCourse(course),
-      modules: moduleRows.map((module) =>
-        mapLibraryModule(module, lessonsByModuleId.get(module.id) ?? [])
+      modules: moduleRows.map((moduleRow) =>
+        mapLibraryModule(moduleRow, lessonsByModuleId.get(moduleRow.id) ?? [])
       ),
     })
   } catch {
@@ -241,11 +314,17 @@ type LessonDetailRow = Pick<
 }
 
 export async function getAccessibleLesson(
+  userId: string,
   courseId: string,
   lessonId: string
 ): Promise<ActionResult<LibraryLessonDetail>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
   const parsedCourseId = courseIdSchema.safeParse(courseId)
   const parsedLessonId = lessonIdSchema.safeParse(lessonId)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
 
   if (!parsedCourseId.success) {
     return validationFailure(firstValidationMessage(parsedCourseId.error))
@@ -253,6 +332,16 @@ export async function getAccessibleLesson(
 
   if (!parsedLessonId.success) {
     return validationFailure(firstValidationMessage(parsedLessonId.error))
+  }
+
+  const accessResult = await canAccessLesson(parsedUserId.data, parsedLessonId.data)
+
+  if (!accessResult.success) {
+    return accessResult
+  }
+
+  if (!accessResult.data) {
+    return failure("not_found", "Lesson not found.")
   }
 
   try {

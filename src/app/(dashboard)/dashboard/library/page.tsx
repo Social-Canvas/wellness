@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import {
   LibraryCourseGrid,
   LibraryPageHeader,
@@ -12,7 +14,13 @@ export const metadata: Metadata = {
 }
 
 export default async function LibraryPage() {
-  const result = await listAccessibleCourses()
+  const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    redirect("/login")
+  }
+
+  const result = await listAccessibleCourses(profileResult.data.id)
 
   if (!result.success) {
     return (
