@@ -18,6 +18,7 @@ import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import type { Database } from "@/types/database/supabase"
 
 export type ActionResult<T> =
@@ -128,7 +129,7 @@ function mapAuthError(error: AuthError): ActionResult<never> {
 }
 
 function mapDatabaseError(error: { code?: string; message: string; details?: string; hint?: string }): ActionResult<never> {
-  console.error("[auth] Supabase profile database error", {
+  logger.error("[auth] Supabase profile database error", {
     code: error.code,
     message: error.message,
     details: error.details,
@@ -162,7 +163,7 @@ async function fetchProfileByAuthUserId(
       return { status: "not_found" }
     }
 
-    console.error("[auth] Failed to load profile by auth_user_id", {
+    logger.error("[auth] Failed to load profile by auth_user_id", {
       authUserId,
       code: error.code,
       message: error.message,
@@ -190,7 +191,7 @@ async function applyAuthenticatedSession(
   })
 
   if (error) {
-    console.error("[auth] Failed to apply authenticated session", {
+    logger.error("[auth] Failed to apply authenticated session", {
       code: error.code,
       message: error.message,
     })
@@ -217,7 +218,7 @@ async function loadProfileForAuthUser(
         .single()
 
       if (error) {
-        console.error("[auth] Failed to update profile full_name", {
+        logger.error("[auth] Failed to update profile full_name", {
           authUserId,
           code: error.code,
           message: error.message,
@@ -297,7 +298,9 @@ async function repairMissingProfile(
 
     return success(data)
   } catch (caughtError) {
-    console.error("[auth] Unexpected error while repairing profile", caughtError)
+    logger.error("[auth] Unexpected error while repairing profile", {
+      error: safeErrorMessage(caughtError),
+    })
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
 }
