@@ -11,6 +11,7 @@ import {
 import type { Plan, PlanPrice, PlanWithPrices } from "@/features/plans/types"
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import type { Database } from "@/types/database/supabase"
 
 const planIdSchema = z.uuid("Invalid plan id.")
@@ -86,9 +87,45 @@ function mapUpdatePlanInput(
   return updates
 }
 
-function mapDatabaseError(error: { code?: string; message: string }): ActionResult<never> {
+type PlanDatabaseError = {
+  code?: string
+  message: string
+  details?: string
+  hint?: string
+}
+
+function getAdminSupabase() {
+  return createAdminClient()
+}
+
+function logPlanDatabaseError(
+  operation: string,
+  error: PlanDatabaseError,
+  context?: Record<string, unknown>
+): void {
+  logger.error(`[plans] ${operation} failed`, {
+    operation,
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    ...context,
+  })
+}
+
+function mapDatabaseError(
+  operation: string,
+  error: PlanDatabaseError,
+  context?: Record<string, unknown>
+): ActionResult<never> {
+  logPlanDatabaseError(operation, error, context)
+
   if (error.code === "23505") {
     return failure("validation_error", "A plan with this slug already exists.")
+  }
+
+  if (error.code === "42501") {
+    return failure("provider_error", "Unable to complete the plan request. Please try again.")
   }
 
   if (error.code === "PGRST116") {
@@ -98,21 +135,30 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
   return failure("provider_error", "Unable to complete the plan request. Please try again.")
 }
 
+function mapUnexpectedError(operation: string, caughtError: unknown): ActionResult<never> {
+  logger.error(`[plans] ${operation} unexpected error`, {
+    operation,
+    error: safeErrorMessage(caughtError),
+  })
+
+  return failure("unknown_error", "Something went wrong. Please try again.")
+}
+
 export async function listPlans(): Promise<ActionResult<PlanWithPrices[]>> {
   try {
-    const supabase = createAdminClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("plans")
       .select("*, plan_prices(*)")
       .order("sort_order", { ascending: true })
 
     if (error) {
-      return mapDatabaseError(error)
+      return mapDatabaseError("listPlans", error)
     }
 
     return success((data ?? []).map(mapPlanWithPrices))
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  } catch (caughtError) {
+    return mapUnexpectedError("listPlans", caughtError)
   }
 }
 
@@ -124,7 +170,7 @@ export async function getPlan(id: string): Promise<ActionResult<PlanWithPrices>>
   }
 
   try {
-    const supabase = createAdminClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("plans")
       .select("*, plan_prices(*)")
@@ -132,7 +178,7 @@ export async function getPlan(id: string): Promise<ActionResult<PlanWithPrices>>
       .maybeSingle()
 
     if (error) {
-      return mapDatabaseError(error)
+      return mapDatabaseError("getPlan", error, { planId: parsedId.data })
     }
 
     if (!data) {
@@ -140,8 +186,8 @@ export async function getPlan(id: string): Promise<ActionResult<PlanWithPrices>>
     }
 
     return success(mapPlanWithPrices(data))
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  } catch (caughtError) {
+    return mapUnexpectedError("getPlan", caughtError)
   }
 }
 
@@ -155,20 +201,29 @@ export async function createPlan(
   }
 
   try {
-    const supabase = createAdminClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("plans")
       .insert(mapCreatePlanInput(parsed.data))
       .select("*")
       .single()
 
-    if (error || !data) {
-      return error ? mapDatabaseError(error) : failure("provider_error", "Unable to create plan.")
+    if (error) {
+      return mapDatabaseError("createPlan", error, { slug: parsed.data.slug })
+    }
+
+    if (!data) {
+      logger.error("[plans] createPlan failed", {
+        operation: "createPlan",
+        reason: "insert_returned_no_row",
+        slug: parsed.data.slug,
+      })
+      return failure("provider_error", "Unable to complete the plan request. Please try again.")
     }
 
     return success(data)
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  } catch (caughtError) {
+    return mapUnexpectedError("createPlan", caughtError)
   }
 }
 
@@ -189,7 +244,7 @@ export async function updatePlan(
   }
 
   try {
-    const supabase = createAdminClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("plans")
       .update(mapUpdatePlanInput(parsed.data))
@@ -197,13 +252,22 @@ export async function updatePlan(
       .select("*")
       .single()
 
-    if (error || !data) {
-      return error ? mapDatabaseError(error) : failure("not_found", "Plan not found.")
+    if (error) {
+      return mapDatabaseError("updatePlan", error, { planId: parsedId.data })
+    }
+
+    if (!data) {
+      logger.error("[plans] updatePlan failed", {
+        operation: "updatePlan",
+        reason: "update_returned_no_row",
+        planId: parsedId.data,
+      })
+      return failure("not_found", "Plan not found.")
     }
 
     return success(data)
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  } catch (caughtError) {
+    return mapUnexpectedError("updatePlan", caughtError)
   }
 }
 
@@ -215,7 +279,7 @@ export async function archivePlan(id: string): Promise<ActionResult<Plan>> {
   }
 
   try {
-    const supabase = createAdminClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("plans")
       .update({ is_active: false })
@@ -223,12 +287,21 @@ export async function archivePlan(id: string): Promise<ActionResult<Plan>> {
       .select("*")
       .single()
 
-    if (error || !data) {
-      return error ? mapDatabaseError(error) : failure("not_found", "Plan not found.")
+    if (error) {
+      return mapDatabaseError("archivePlan", error, { planId: parsedId.data })
+    }
+
+    if (!data) {
+      logger.error("[plans] archivePlan failed", {
+        operation: "archivePlan",
+        reason: "update_returned_no_row",
+        planId: parsedId.data,
+      })
+      return failure("not_found", "Plan not found.")
     }
 
     return success(data)
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  } catch (caughtError) {
+    return mapUnexpectedError("archivePlan", caughtError)
   }
 }
