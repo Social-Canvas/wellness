@@ -6,7 +6,7 @@ import { CtaBand } from "@/components/marketing"
 import { buttonVariants } from "@/components/ui/button"
 import { listPlans } from "@/features/plans/services/plans.service"
 import type { PlanWithPrices } from "@/features/plans/types"
-import { listPublishedProducts } from "@/features/shop/services/shop.service"
+import { listProgramCatalogProducts } from "@/features/shop/services/shop.service"
 import { formatProductPrice } from "@/features/shop/utils/format-product"
 import { cn } from "@/lib/utils"
 
@@ -158,11 +158,11 @@ function formatMembershipPrice(plan: PlanWithPrices | undefined): {
   }
 }
 
-function resolveProductHref(
+function resolveProgramOfferHref(
   slug: string,
-  publishedProductSlugs: ReadonlySet<string>
+  publishedProgramSlugs: ReadonlySet<string>
 ): string {
-  return publishedProductSlugs.has(slug) ? `/shop/${slug}` : "/shop"
+  return publishedProgramSlugs.has(slug) ? `#offer-${slug}` : "#programs-offers"
 }
 
 function membershipSignupHref(planSlug: string): string {
@@ -172,7 +172,7 @@ function membershipSignupHref(planSlug: string): string {
 export default async function ProgramsPage() {
   const [plansResult, productsResult] = await Promise.all([
     listPlans(),
-    listPublishedProducts(),
+    listProgramCatalogProducts(),
   ])
 
   const plansBySlug = new Map(
@@ -286,7 +286,7 @@ export default async function ProgramsPage() {
           </Container>
         </Section>
 
-        <Section variant="soft" padding="default">
+        <Section id="programs-offers" variant="soft" padding="default">
           <Container>
             <SectionHeader eyebrow="Programs" title="One-time programs & sessions" />
 
@@ -295,11 +295,12 @@ export default async function ProgramsPage() {
                 const publishedProduct = publishedProductsBySlug.get(offer.slug)
                 const priceCents = publishedProduct?.priceAmount ?? offer.priceCents
                 const currency = publishedProduct?.currency ?? "usd"
-                const href = resolveProductHref(offer.slug, publishedProductSlugs)
+                const href = resolveProgramOfferHref(offer.slug, publishedProductSlugs)
 
                 return (
                   <article
                     key={offer.slug}
+                    id={`offer-${offer.slug}`}
                     className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left"
                   >
                     <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-blue-soft to-green-soft">

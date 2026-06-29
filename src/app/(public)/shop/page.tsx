@@ -1,25 +1,31 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { ShopProductGrid } from "@/features/shop/components"
-import { listPublishedProducts } from "@/features/shop/services/shop.service"
+import { listShopCatalogProducts } from "@/features/shop/services/shop.service"
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Books and digital resources you can buy and download instantly.",
+  description: "Ebooks and digital downloads you can buy and access instantly.",
 }
 
 export default async function ShopPage() {
-  const result = await listPublishedProducts()
+  const result = await listShopCatalogProducts()
 
   return (
     <div className="space-y-8">
       <div className="max-w-2xl">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue">Shop</p>
         <h1 className="mt-3 font-display text-4xl font-medium tracking-tight text-ink">
-          Books &amp; resources
+          Ebooks &amp; digital downloads
         </h1>
         <p className="mt-3 text-base leading-relaxed text-ink-soft">
-          Digital products you can buy and download instantly.
+          Books and digital resources you can buy and download instantly. For memberships,
+          programs, and live sessions, visit{" "}
+          <Link href="/programs" className="font-semibold text-blue hover:text-blue-deep">
+            Programs
+          </Link>
+          .
         </p>
       </div>
 

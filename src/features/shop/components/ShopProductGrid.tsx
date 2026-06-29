@@ -12,7 +12,7 @@ export function ShopProductGrid({ products }: ShopProductGridProps) {
       <div className="rounded-2xl border border-dashed border-line bg-cream2/50 px-6 py-10 text-center">
         <p className="font-display text-lg font-medium text-ink">No products available</p>
         <p className="mt-2 text-sm text-ink-soft">
-          Published digital products will appear here.
+          Published ebooks and digital downloads will appear here.
         </p>
       </div>
     )

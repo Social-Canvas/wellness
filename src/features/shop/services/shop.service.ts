@@ -11,6 +11,10 @@ import {
   type CreateProductCheckoutInput,
   type GenerateProductDownloadUrlInput,
 } from "@/features/shop/schemas"
+import {
+  isProgramCatalogProductType,
+  isShopCatalogProductType,
+} from "@/features/shop/constants/catalog"
 import type {
   ProductCheckoutResult,
   ProductDownloadUrlResult,
@@ -237,6 +241,30 @@ export async function listPublishedProducts(): Promise<ActionResult<ShopProduct[
   }
 }
 
+export async function listShopCatalogProducts(): Promise<ActionResult<ShopProduct[]>> {
+  const result = await listPublishedProducts()
+
+  if (!result.success) {
+    return result
+  }
+
+  return success(
+    result.data.filter((product) => isShopCatalogProductType(product.productType))
+  )
+}
+
+export async function listProgramCatalogProducts(): Promise<ActionResult<ShopProduct[]>> {
+  const result = await listPublishedProducts()
+
+  if (!result.success) {
+    return result
+  }
+
+  return success(
+    result.data.filter((product) => isProgramCatalogProductType(product.productType))
+  )
+}
+
 export async function getPublishedProductDetail(
   slug: string,
   userId?: string | null
@@ -253,13 +281,44 @@ export async function getPublishedProductDetail(
     return productResult
   }
 
+  return getPublishedProductDetailFromRow(productResult.data, userId)
+}
+
+export async function getShopCatalogProductDetail(
+  slug: string,
+  userId?: string | null
+): Promise<ActionResult<ShopProductDetail>> {
+  const parsedSlug = slugSchema.safeParse(slug)
+
+  if (!parsedSlug.success) {
+    return validationFailure(firstValidationMessage(parsedSlug.error))
+  }
+
+  const productResult = await getPublishedProductBySlugInternal(parsedSlug.data)
+
+  if (!productResult.success) {
+    return productResult
+  }
+
+  if (!isShopCatalogProductType(productResult.data.product_type)) {
+    return failure("not_found", "Product not found.")
+  }
+
+  return getPublishedProductDetailFromRow(productResult.data, userId)
+}
+
+async function getPublishedProductDetailFromRow(
+  product: ProductRow,
+  userId?: string | null
+): Promise<ActionResult<ShopProductDetail>> {
+
   let isPurchased = false
 
   if (userId) {
     const parsedUserId = userIdSchema.safeParse(userId)
 
     if (parsedUserId.success) {
-      const purchaseResult = await canDownloadProduct(parsedUserId.data, productResult.data.id)
+      const purchaseResult = await canDownloadProduct(parsedUserId.data, product.id)
       if (purchaseResult.success) {
         isPurchased = purchaseResult.data
       }
@@ -271,7 +330,7 @@ export async function getPublishedProductDetail(
     const { data: files, error } = await supabase
       .from("product_files")
       .select("id, file_name, mime_type, size_bytes")
-      .eq("product_id", productResult.data.id)
+      .eq("product_id", product.id)
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -279,7 +338,7 @@ export async function getPublishedProductDetail(
     }
 
     return success({
-      ...mapShopProduct(productResult.data),
+      ...mapShopProduct(product),
       isPurchased,
       files: (files ?? []).map((file) => ({
         id: file.id,
@@ -335,6 +394,10 @@ export async function createProductCheckoutSession(
     }
 
     if (!product) {
+      return failure("not_found", "Product not found.")
+    }
+
+    if (!isShopCatalogProductType(product.product_type)) {
       return failure("not_found", "Product not found.")
     }
 
@@ -621,6 +684,16 @@ export async function generateProductDownloadUrl(
 
   if (!accessResult.data) {
     return failure("entitlement_required", "Purchase this product to download files.")
+  }
+
+  const productResult = await getProduct(parsedInput.data.productId)
+
+  if (!productResult.success) {
+    return productResult
+  }
+
+  if (!isShopCatalogProductType(productResult.data.product_type)) {
+    return failure("not_found", "Product not found.")
   }
 
   try {

@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout"
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Digital products and resources.",
+  description: "Ebooks and digital downloads.",
 }
 
 const NAV_LINKS = [

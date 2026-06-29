@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ProductDetailView } from "@/features/shop/components"
-import { getPublishedProductDetail } from "@/features/shop/services/shop.service"
+import { getShopCatalogProductDetail } from "@/features/shop/services/shop.service"
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>
@@ -14,7 +14,7 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params
-  const result = await getPublishedProductDetail(slug)
+  const result = await getShopCatalogProductDetail(slug)
 
   if (!result.success) {
     return { title: "Product" }
@@ -31,7 +31,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const { slug } = await params
   const { checkout } = await searchParams
 
-  const result = await getPublishedProductDetail(
+  const result = await getShopCatalogProductDetail(
     slug,
     profileResult.success ? profileResult.data.id : null
   )
