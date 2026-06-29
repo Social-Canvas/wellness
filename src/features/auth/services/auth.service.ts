@@ -16,6 +16,7 @@ import {
 } from "@/features/auth/schemas"
 import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
 import { env } from "@/lib/config"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/types/database/supabase"
 
@@ -126,39 +127,212 @@ function mapAuthError(error: AuthError): ActionResult<never> {
   return failure("provider_error", "Something went wrong. Please try again.")
 }
 
+function mapDatabaseError(error: { code?: string; message: string; details?: string; hint?: string }): ActionResult<never> {
+  console.error("[auth] Supabase profile database error", {
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+  })
+
+  if (error.code === "23505") {
+    return failure("provider_error", "Profile record conflict. Please try again.")
+  }
+
+  return failure("provider_error", "Unable to load your profile. Please try again.")
+}
+
+type FetchProfileResult =
+  | { status: "found"; profile: Profile }
+  | { status: "not_found" }
+  | { status: "error"; error: { code?: string; message: string; details?: string; hint?: string } }
+
 async function fetchProfileByAuthUserId(
   supabase: ServerSupabaseClient,
   authUserId: string
-): Promise<Profile | null> {
+): Promise<FetchProfileResult> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("auth_user_id", authUserId)
     .maybeSingle()
 
-  if (error || !data) {
-    return null
+  if (error) {
+    if (error.code === "PGRST116") {
+      return { status: "not_found" }
+    }
+
+    console.error("[auth] Failed to load profile by auth_user_id", {
+      authUserId,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    })
+
+    return { status: "error", error }
   }
 
-  return data
+  if (!data) {
+    return { status: "not_found" }
+  }
+
+  return { status: "found", profile: data }
 }
 
-async function buildAuthSessionUser(
+async function applyAuthenticatedSession(
+  supabase: ServerSupabaseClient,
+  session: { access_token: string; refresh_token: string }
+): Promise<void> {
+  const { error } = await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  })
+
+  if (error) {
+    console.error("[auth] Failed to apply authenticated session", {
+      code: error.code,
+      message: error.message,
+    })
+  }
+}
+
+async function loadProfileForAuthUser(
   supabase: ServerSupabaseClient,
   authUserId: string,
-  email: string
-): Promise<AuthSessionUser | null> {
-  const profile = await fetchProfileByAuthUserId(supabase, authUserId)
+  email: string,
+  options?: { fullName?: string | null; allowRepair?: boolean }
+): Promise<ActionResult<Profile>> {
+  const fetchResult = await fetchProfileByAuthUserId(supabase, authUserId)
 
-  if (!profile) {
-    return null
+  if (fetchResult.status === "found") {
+    const existingProfile = fetchResult.profile
+
+    if (options?.fullName && !existingProfile.full_name) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ full_name: options.fullName })
+        .eq("auth_user_id", authUserId)
+        .select("*")
+        .single()
+
+      if (error) {
+        console.error("[auth] Failed to update profile full_name", {
+          authUserId,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        return success(existingProfile)
+      }
+
+      if (data) {
+        return success(data)
+      }
+    }
+
+    return success(existingProfile)
   }
 
+  if (fetchResult.status === "error") {
+    return mapDatabaseError(fetchResult.error)
+  }
+
+  if (!options?.allowRepair) {
+    return failure("not_found", "Profile not found.")
+  }
+
+  return repairMissingProfile(supabase, authUserId, email, options?.fullName)
+}
+
+async function repairMissingProfile(
+  supabase: ServerSupabaseClient,
+  authUserId: string,
+  email: string,
+  fullName?: string | null
+): Promise<ActionResult<Profile>> {
+  const refetchedProfile = await fetchProfileByAuthUserId(supabase, authUserId)
+
+  if (refetchedProfile.status === "found") {
+    return success(refetchedProfile.profile)
+  }
+
+  if (refetchedProfile.status === "error") {
+    return mapDatabaseError(refetchedProfile.error)
+  }
+
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from("profiles")
+      .insert({
+        auth_user_id: authUserId,
+        email,
+        full_name: fullName ?? null,
+        role: "user",
+      })
+      .select("*")
+      .single()
+
+    if (error?.code === "23505") {
+      const existingAfterConflict = await fetchProfileByAuthUserId(supabase, authUserId)
+
+      if (existingAfterConflict.status === "found") {
+        return success(existingAfterConflict.profile)
+      }
+
+      if (existingAfterConflict.status === "error") {
+        return mapDatabaseError(existingAfterConflict.error)
+      }
+
+      return mapDatabaseError(error)
+    }
+
+    if (error || !data) {
+      return error
+        ? mapDatabaseError(error)
+        : failure("provider_error", "Unable to create your profile.")
+    }
+
+    return success(data)
+  } catch (caughtError) {
+    console.error("[auth] Unexpected error while repairing profile", caughtError)
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+function buildAuthSessionUser(
+  profile: Profile,
+  authUserId: string,
+  email: string
+): AuthSessionUser {
   return {
     id: authUserId,
     email,
     role: profile.role,
   }
+}
+
+async function getAuthenticatedAuthUser(
+  supabase: ServerSupabaseClient
+): Promise<ActionResult<{ id: string; email: string; fullName: string | null }>> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user?.email) {
+    return failure("authentication_required", "You must be signed in.")
+  }
+
+  const metadata = user.user_metadata as { full_name?: string | null } | undefined
+
+  return success({
+    id: user.id,
+    email: user.email,
+    fullName: metadata?.full_name ?? null,
+  })
 }
 
 export async function signUp(
@@ -192,28 +366,23 @@ export async function signUp(
       })
     }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ full_name: parsed.data.fullName })
-      .eq("auth_user_id", data.user.id)
+    await applyAuthenticatedSession(supabase, data.session)
 
-    if (profileError) {
-      return failure(
-        "provider_error",
-        "Your account was created, but we could not save your profile. Please try again."
-      )
-    }
+    const profileResult = await loadProfileForAuthUser(
+      supabase,
+      data.user.id,
+      parsed.data.email,
+      { fullName: parsed.data.fullName, allowRepair: true }
+    )
 
-    const profile = await fetchProfileByAuthUserId(supabase, data.user.id)
-
-    if (!profile) {
-      return failure("not_found", "Profile not found.")
+    if (!profileResult.success) {
+      return profileResult
     }
 
     return success({
       requiresEmailConfirmation: false,
       email: parsed.data.email,
-      profile: mapProfile(profile),
+      profile: mapProfile(profileResult.data),
     })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
@@ -244,25 +413,24 @@ export async function signIn(
       return failure("authentication_required", "Invalid email or password.")
     }
 
-    const user = await buildAuthSessionUser(
-      supabase,
-      data.user.id,
-      data.user.email
-    )
-
-    if (!user) {
-      return failure("not_found", "Profile not found.")
+    if (data.session) {
+      await applyAuthenticatedSession(supabase, data.session)
     }
 
-    const profile = await fetchProfileByAuthUserId(supabase, data.user.id)
+    const profileResult = await loadProfileForAuthUser(
+      supabase,
+      data.user.id,
+      data.user.email,
+      { allowRepair: true }
+    )
 
-    if (!profile) {
-      return failure("not_found", "Profile not found.")
+    if (!profileResult.success) {
+      return profileResult
     }
 
     return success({
-      user,
-      profile: mapProfile(profile),
+      user: buildAuthSessionUser(profileResult.data, data.user.id, data.user.email),
+      profile: mapProfile(profileResult.data),
     })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
@@ -349,22 +517,30 @@ export async function resetPassword(
 export async function getCurrentUser(): Promise<ActionResult<AuthSessionUser>> {
   try {
     const supabase = await createClient()
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+    const authUserResult = await getAuthenticatedAuthUser(supabase)
 
-    if (error || !user?.email) {
-      return failure("authentication_required", "You must be signed in.")
+    if (!authUserResult.success) {
+      return authUserResult
     }
 
-    const sessionUser = await buildAuthSessionUser(supabase, user.id, user.email)
+    const profileResult = await loadProfileForAuthUser(
+      supabase,
+      authUserResult.data.id,
+      authUserResult.data.email,
+      { fullName: authUserResult.data.fullName, allowRepair: true }
+    )
 
-    if (!sessionUser) {
-      return failure("not_found", "Profile not found.")
+    if (!profileResult.success) {
+      return profileResult
     }
 
-    return success(sessionUser)
+    return success(
+      buildAuthSessionUser(
+        profileResult.data,
+        authUserResult.data.id,
+        authUserResult.data.email
+      )
+    )
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
@@ -373,22 +549,24 @@ export async function getCurrentUser(): Promise<ActionResult<AuthSessionUser>> {
 export async function getCurrentProfile(): Promise<ActionResult<ProfileView>> {
   try {
     const supabase = await createClient()
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+    const authUserResult = await getAuthenticatedAuthUser(supabase)
 
-    if (error || !user) {
-      return failure("authentication_required", "You must be signed in.")
+    if (!authUserResult.success) {
+      return authUserResult
     }
 
-    const profile = await fetchProfileByAuthUserId(supabase, user.id)
+    const profileResult = await loadProfileForAuthUser(
+      supabase,
+      authUserResult.data.id,
+      authUserResult.data.email,
+      { fullName: authUserResult.data.fullName, allowRepair: true }
+    )
 
-    if (!profile) {
-      return failure("not_found", "Profile not found.")
+    if (!profileResult.success) {
+      return profileResult
     }
 
-    return success(mapProfile(profile))
+    return success(mapProfile(profileResult.data))
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }

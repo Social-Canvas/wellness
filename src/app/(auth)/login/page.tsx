@@ -3,7 +3,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { LoginForm } from "@/features/auth/components/LoginForm"
-import { createClient } from "@/lib/supabase/server"
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -11,12 +11,9 @@ export const metadata: Metadata = {
 }
 
 export default async function LoginPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const profileResult = await getCurrentProfile()
 
-  if (user) {
+  if (profileResult.success) {
     redirect("/dashboard")
   }
 

@@ -1,10 +1,6 @@
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
-import {
-  getCurrentProfile,
-  getCurrentUser,
-} from "@/features/auth/services/auth.service"
+import { getCurrentProfile, getCurrentUser } from "@/features/auth/services/auth.service"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 
 export default async function DashboardPage() {
@@ -14,7 +10,7 @@ export default async function DashboardPage() {
   ])
 
   if (!userResult.success || !profileResult.success) {
-    redirect("/login")
+    return null
   }
 
   const { data: user } = userResult
