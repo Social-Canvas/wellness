@@ -1,10 +1,13 @@
 import Link from "next/link"
 import * as React from "react"
 
+import { BrandImage } from "@/components/media"
 import { Container } from "@/components/layout/container"
 import { Section } from "@/components/layout/section"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
+import type { BrandImageAsset } from "@/lib/brand/images"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 type RetreatBlockProps = React.ComponentProps<"section"> & {
@@ -12,7 +15,7 @@ type RetreatBlockProps = React.ComponentProps<"section"> & {
   title: string
   description: string
   cta: { label: string; href: string }
-  imageLabel?: string
+  image?: BrandImageAsset
 }
 
 function RetreatBlock({
@@ -21,19 +24,18 @@ function RetreatBlock({
   title,
   description,
   cta,
-  imageLabel = "Retreat image placeholder",
+  image = BRAND_IMAGES.retreatRiver,
   ...props
 }: RetreatBlockProps) {
   return (
     <Section className={className} {...props}>
       <Container>
         <div className="grid items-center gap-[42px] min-[861px]:grid-cols-2">
-          <div
-            aria-hidden
-            className="flex aspect-[5/4] min-h-[300px] items-center justify-center rounded-2xl border border-line bg-gradient-to-br from-blue-soft to-green-soft p-3.5 text-center text-[13px] italic text-ink-soft"
-          >
-            {imageLabel}
-          </div>
+          <BrandImage
+            image={image}
+            containerClassName="aspect-[5/4] min-h-[300px] w-full rounded-2xl border border-line shadow-sm"
+            sizes="(max-width: 860px) 100vw, 50vw"
+          />
 
           <div>
             <Badge variant="eyebrow">{eyebrow}</Badge>

@@ -1,10 +1,12 @@
 import * as React from "react"
 
+import { BrandImage } from "@/components/media"
 import { Container } from "@/components/layout/container"
 import { Section } from "@/components/layout/section"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { TrustBar } from "@/components/marketing/trust-bar"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 type HeroAction = {
@@ -21,25 +23,7 @@ type HeroSectionProps = React.ComponentProps<"section"> & {
   actions: HeroAction[]
   trustItems?: string[]
   media?: React.ReactNode
-  mediaLabel?: string
-}
-
-function HeroMedia({
-  media,
-  mediaLabel = "Hero image placeholder",
-}: Pick<HeroSectionProps, "media" | "mediaLabel">) {
-  if (media) {
-    return <div className="min-h-[330px] w-full">{media}</div>
-  }
-
-  return (
-    <div
-      aria-hidden
-      className="flex aspect-[4/5] min-h-[330px] items-center justify-center rounded-2xl border border-line bg-linear-to-br from-blue-soft to-green-soft p-3.5 text-center font-body text-[13px] italic text-ink-soft"
-    >
-      {mediaLabel}
-    </div>
-  )
+  image?: (typeof BRAND_IMAGES)[keyof typeof BRAND_IMAGES]
 }
 
 function HeroSection({
@@ -51,7 +35,7 @@ function HeroSection({
   actions,
   trustItems,
   media,
-  mediaLabel,
+  image = BRAND_IMAGES.heroBreathwork,
   ...props
 }: HeroSectionProps) {
   return (
@@ -102,7 +86,14 @@ function HeroSection({
             ) : null}
           </div>
 
-          <HeroMedia media={media} mediaLabel={mediaLabel} />
+          {media ?? (
+            <BrandImage
+              image={image}
+              priority
+              containerClassName="aspect-[4/5] min-h-[330px] w-full rounded-2xl border border-line shadow-sm"
+              sizes="(max-width: 860px) 100vw, 45vw"
+            />
+          )}
         </div>
       </Container>
     </Section>

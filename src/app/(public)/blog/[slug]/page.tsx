@@ -4,11 +4,13 @@ import { notFound } from "next/navigation"
 
 import { BackButton } from "@/components/layout"
 import { Container, Section } from "@/components/layout"
+import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
 import {
   getSampleBlogArticle,
   SAMPLE_BLOG_ARTICLES,
 } from "@/content/blog/sample-articles"
+import { getBlogArticleBrandImage } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 interface BlogArticlePageProps {
@@ -62,12 +64,11 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
               By {article.author} · {article.readTime}
             </p>
 
-            <div
-              aria-hidden
-              className="mb-6 flex aspect-[16/8] min-h-[220px] items-center justify-center rounded-[14px] border border-line bg-gradient-to-br from-blue-soft to-green-soft text-sm italic text-ink-soft"
-            >
-              Article image
-            </div>
+            <BrandImage
+              image={getBlogArticleBrandImage(article.slug)}
+              containerClassName="mb-6 aspect-[16/8] min-h-[220px] w-full overflow-hidden rounded-[14px] border border-line"
+              sizes="(max-width: 860px) 100vw, 740px"
+            />
 
             {article.content.map((block, index) => {
               if (block.type === "heading") {

@@ -1,8 +1,9 @@
 import { Badge, Card, CardContent } from "@/components/ui"
+import { BrandImage } from "@/components/media"
 import { ProductPreviewActions } from "@/features/shop/components/ProductPreviewActions"
 import type { ShopProductDetail } from "@/features/shop/types"
 import { formatProductPrice, formatProductType } from "@/features/shop/utils/format-product"
-import { cn } from "@/lib/utils"
+import { getProgramOfferBrandImage, resolveProductCoverImage } from "@/lib/brand/images"
 
 import { BuyProductButton } from "./BuyProductButton"
 import { DownloadProductButton } from "./DownloadProductButton"
@@ -12,21 +13,21 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ product }: ProductDetailViewProps) {
+  const coverImage = resolveProductCoverImage(product.slug, product.coverImageUrl)
+  const previewImage = getProgramOfferBrandImage(product.slug)
+
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-6">
-        <div
-          className={cn(
-            "relative aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line bg-gradient-to-br from-blue-soft to-green-soft",
-            product.coverImageUrl && "bg-cover bg-center"
-          )}
-          style={
-            product.coverImageUrl
-              ? { backgroundImage: `url(${product.coverImageUrl})` }
-              : undefined
-          }
-        >
-          <ProductPreviewActions title={product.title} />
+        <div className="relative aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line shadow-sm">
+          {coverImage ? (
+            <BrandImage
+              image={{ ...coverImage, alt: coverImage.alt || product.title }}
+              containerClassName="absolute inset-0"
+              sizes="(max-width: 1024px) 100vw, 65vw"
+            />
+          ) : null}
+          <ProductPreviewActions title={product.title} image={previewImage} />
         </div>
 
         <div className="space-y-3">
@@ -45,7 +46,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         </div>
       </div>
 
-      <Card className="h-fit">
+      <Card className="h-fit shadow-sm">
         <CardContent className="space-y-5 p-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Price</p>

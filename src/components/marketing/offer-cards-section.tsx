@@ -1,10 +1,12 @@
 import Link from "next/link"
 import * as React from "react"
 
+import { BrandImage } from "@/components/media"
 import { Container } from "@/components/layout/container"
 import { Section } from "@/components/layout/section"
 import { SectionHeader } from "@/components/layout/section-header"
 import { buttonVariants } from "@/components/ui/button"
+import type { BrandImageAsset } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 type OfferCard = {
@@ -14,6 +16,7 @@ type OfferCard = {
   price: React.ReactNode
   href: string
   ctaLabel?: string
+  image: BrandImageAsset
 }
 
 type OfferCardsSectionProps = React.ComponentProps<"section"> & {
@@ -40,17 +43,16 @@ function OfferCardsSection({
           {cards.map((card) => (
             <article
               key={card.title}
-              className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left"
+              className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-sm"
             >
-              <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-blue-soft to-green-soft">
-                <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.85)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase">
+              <div className="relative aspect-video overflow-hidden">
+                <BrandImage
+                  image={card.image}
+                  containerClassName="absolute inset-0"
+                  sizes="(max-width: 860px) 100vw, 33vw"
+                />
+                <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase backdrop-blur-sm">
                   {card.category}
-                </span>
-                <span
-                  aria-hidden
-                  className="flex size-[42px] items-center justify-center rounded-full bg-blue"
-                >
-                  <span className="ml-0.5 border-y-8 border-l-[13px] border-y-transparent border-l-white" />
                 </span>
               </div>
 

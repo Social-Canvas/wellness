@@ -1,7 +1,9 @@
 import { Award } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui"
+import { BrandImage } from "@/components/media"
 import type { VerifiedCertificate } from "@/features/certificates/types"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 
 interface CertificateVerifyViewProps {
   certificate: VerifiedCertificate
@@ -13,15 +15,16 @@ function formatIssuedDate(value: string): string {
   }).format(new Date(value))
 }
 
-function getInitial(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "W"
-}
-
 export function CertificateVerifyView({ certificate }: CertificateVerifyViewProps) {
   return (
     <div className="mx-auto w-full max-w-[720px]">
-      <Card className="overflow-hidden border-2 border-blue">
-        <CardContent className="space-y-8 px-6 py-10 sm:px-10 sm:py-12">
+      <Card className="overflow-hidden border-2 border-blue shadow-sm">
+        <BrandImage
+          image={BRAND_IMAGES.certificate}
+          containerClassName="aspect-[4/3] w-full border-b border-line bg-white"
+          sizes="(max-width: 768px) 100vw, 720px"
+        />
+        <CardContent className="space-y-6 px-6 py-8 sm:px-10 sm:py-10">
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue">
               Certificate of completion
@@ -31,19 +34,11 @@ export function CertificateVerifyView({ certificate }: CertificateVerifyViewProp
             </h1>
           </div>
 
-          <div className="flex flex-col items-center gap-5 text-center">
-            <div
-              className="flex size-[60px] items-center justify-center rounded-full bg-blue font-display text-2xl font-medium text-white"
-              aria-hidden="true"
-            >
-              {getInitial(certificate.recipientName)}
-            </div>
-            <div>
-              <p className="text-sm text-ink-soft">Awarded to</p>
-              <p className="mt-1 font-display text-[26px] font-medium text-blue">
-                {certificate.recipientName}
-              </p>
-            </div>
+          <div className="text-center">
+            <p className="text-sm text-ink-soft">Awarded to</p>
+            <p className="mt-1 font-display text-[26px] font-medium text-blue">
+              {certificate.recipientName}
+            </p>
           </div>
 
           <div className="grid gap-4 border-t border-line pt-6 sm:grid-cols-2">

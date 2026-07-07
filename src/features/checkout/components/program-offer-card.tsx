@@ -4,7 +4,9 @@ import Link from "next/link"
 import { useState } from "react"
 
 import { VideoPreviewModal } from "@/components/marketing/modals"
+import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
+import type { BrandImageAsset } from "@/lib/brand/images"
 import { formatProductPrice } from "@/features/shop/utils/format-product"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +21,7 @@ type ProgramOfferCardProps = {
   ctaVariant: "default" | "outline"
   checkoutHref: string | null
   fallbackHref: string
+  image: BrandImageAsset
 }
 
 export function ProgramOfferCard({
@@ -32,21 +35,27 @@ export function ProgramOfferCard({
   ctaVariant,
   checkoutHref,
   fallbackHref,
+  image,
 }: ProgramOfferCardProps) {
   const [previewOpen, setPreviewOpen] = useState(false)
   const actionHref = checkoutHref ?? fallbackHref
 
   return (
     <>
-      <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left">
-        <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-blue-soft to-green-soft">
-          <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.85)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase">
+      <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-sm">
+        <div className="relative aspect-video overflow-hidden">
+          <BrandImage
+            image={image}
+            containerClassName="absolute inset-0"
+            sizes="(max-width: 860px) 100vw, 50vw"
+          />
+          <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase backdrop-blur-sm">
             {category}
           </span>
           <button
             type="button"
             onClick={() => setPreviewOpen(true)}
-            className="flex size-[42px] items-center justify-center rounded-full bg-blue transition-colors hover:bg-blue-deep"
+            className="absolute top-1/2 left-1/2 flex size-[42px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue transition-colors hover:bg-blue-deep"
             aria-label={`Watch intro for ${title}`}
           >
             <span className="ml-0.5 border-y-8 border-l-[13px] border-y-transparent border-l-white" />
@@ -54,7 +63,7 @@ export function ProgramOfferCard({
           <button
             type="button"
             onClick={() => setPreviewOpen(true)}
-            className="absolute bottom-3 right-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-3 py-1.5 text-xs font-bold text-ink-soft"
+            className="absolute right-3 bottom-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-3 py-1.5 text-xs font-bold text-ink-soft backdrop-blur-sm"
           >
             Watch intro
           </button>
@@ -96,7 +105,12 @@ export function ProgramOfferCard({
         </div>
       </article>
 
-      <VideoPreviewModal open={previewOpen} onOpenChange={setPreviewOpen} title={title} />
+      <VideoPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={title}
+        image={image}
+      />
     </>
   )
 }

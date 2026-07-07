@@ -11,6 +11,7 @@ import {
   TestimonialGrid,
   type HeroAction,
 } from "@/components/marketing"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
   title: "Wellness Studio — Membership Platform",
@@ -83,6 +84,7 @@ const OFFER_CARDS = [
       </>
     ),
     href: "/programs#offer-7-day-reset",
+    image: BRAND_IMAGES.productJournalReset,
   },
   {
     category: "Membership",
@@ -96,6 +98,7 @@ const OFFER_CARDS = [
       </>
     ),
     href: "/programs",
+    image: BRAND_IMAGES.meditationSession,
   },
   {
     category: "Premium 1:1",
@@ -104,6 +107,7 @@ const OFFER_CARDS = [
       "Custom high-touch transformation with enquiry-based pricing and dedicated support.",
     price: "By enquiry",
     href: "/vip",
+    image: BRAND_IMAGES.wellnessSpa,
   },
 ]
 

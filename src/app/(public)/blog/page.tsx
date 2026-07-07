@@ -2,7 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
+import { BrandImage } from "@/components/media"
 import { SAMPLE_BLOG_ARTICLES } from "@/content/blog/sample-articles"
+import { getBlogArticleBrandImage } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -25,10 +27,14 @@ export default function BlogPage() {
             {SAMPLE_BLOG_ARTICLES.map((article) => (
               <article
                 key={article.slug}
-                className="overflow-hidden rounded-2xl border border-line bg-surface text-left"
+                className="overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-sm"
               >
                 <Link href={`/blog/${article.slug}`} className="block">
-                  <div className="aspect-video bg-gradient-to-br from-blue-soft to-green-soft" />
+                  <BrandImage
+                    image={getBlogArticleBrandImage(article.slug)}
+                    containerClassName="aspect-video w-full"
+                    sizes="(max-width: 860px) 100vw, 33vw"
+                  />
                   <div className="p-5">
                     <p className="text-[11px] font-bold tracking-[0.07em] text-blue uppercase">
                       {article.category}

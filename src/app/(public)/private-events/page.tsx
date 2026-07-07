@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { LeadCaptureForm } from "@/features/leads/components/LeadCaptureForm"
 import { LeadPageShell } from "@/features/leads/components/LeadPageShell"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
   title: "Private Events",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivateEventsLeadPage() {
   return (
-    <LeadPageShell>
+    <LeadPageShell image={BRAND_IMAGES.retreatSpiritual}>
       <LeadCaptureForm
         leadType="private_event"
         source="private_events_page"

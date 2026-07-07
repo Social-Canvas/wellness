@@ -2,10 +2,12 @@
 
 import * as React from "react"
 
+import { BrandImage } from "@/components/media"
 import { Container } from "@/components/layout/container"
 import { Section } from "@/components/layout/section"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 type EmailCaptureSectionProps = React.ComponentProps<"section"> & {
@@ -36,8 +38,18 @@ function EmailCaptureSection({
   }
 
   return (
-    <Section variant="primary" className={cn("text-center", className)} {...props}>
-      <Container>
+    <Section variant="primary" className={cn("relative overflow-hidden text-center", className)} {...props}>
+      <div className="absolute inset-0">
+        <BrandImage
+          image={BRAND_IMAGES.meditationHands}
+          containerClassName="h-full w-full"
+          sizes="100vw"
+          className="opacity-25"
+        />
+        <div className="absolute inset-0 bg-ink/80" aria-hidden />
+      </div>
+
+      <Container className="relative z-10">
         <h2 className="font-display text-[clamp(1.5rem,3.2vw,2.125rem)] font-medium text-white">
           {title}
         </h2>

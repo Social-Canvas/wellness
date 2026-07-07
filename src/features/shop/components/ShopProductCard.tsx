@@ -1,8 +1,10 @@
 import Link from "next/link"
 
 import { Badge, Card, CardContent } from "@/components/ui"
+import { BrandImage } from "@/components/media"
 import type { ShopProduct } from "@/features/shop/types"
 import { formatProductPrice, formatProductType } from "@/features/shop/utils/format-product"
+import { resolveProductCoverImage } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 interface ShopProductCardProps {
@@ -11,19 +13,15 @@ interface ShopProductCardProps {
 }
 
 export function ShopProductCard({ product, className }: ShopProductCardProps) {
+  const coverImage = resolveProductCoverImage(product.slug, product.coverImageUrl)
+
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden shadow-sm", className)}>
       <Link href={`/shop/${product.slug}`} className="block">
-        <div
-          className={cn(
-            "aspect-[4/3] bg-gradient-to-br from-blue-soft to-green-soft",
-            product.coverImageUrl && "bg-cover bg-center"
-          )}
-          style={
-            product.coverImageUrl
-              ? { backgroundImage: `url(${product.coverImageUrl})` }
-              : undefined
-          }
+        <BrandImage
+          image={{ ...coverImage, alt: coverImage.alt || product.title }}
+          containerClassName="aspect-[4/3] w-full"
+          sizes="(max-width: 860px) 100vw, 33vw"
         />
         <CardContent className="space-y-3 p-5">
           <div className="flex items-start justify-between gap-3">

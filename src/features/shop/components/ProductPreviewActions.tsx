@@ -3,14 +3,20 @@
 import { useState } from "react"
 
 import { VideoPreviewModal } from "@/components/marketing/modals"
+import type { BrandImageAsset } from "@/lib/brand/images"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 type ProductPreviewActionsProps = {
   title: string
+  image?: BrandImageAsset
 }
 
-export function ProductPreviewActions({ title }: ProductPreviewActionsProps) {
+export function ProductPreviewActions({
+  title,
+  image = BRAND_IMAGES.meditationSession,
+}: ProductPreviewActionsProps) {
   const [previewOpen, setPreviewOpen] = useState(false)
 
   return (
@@ -28,16 +34,25 @@ export function ProductPreviewActions({ title }: ProductPreviewActionsProps) {
       <button
         type="button"
         onClick={() => setPreviewOpen(true)}
-        className="absolute right-3 bottom-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-3 py-1.5 text-xs font-bold text-ink-soft"
+        className="absolute right-3 bottom-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-3 py-1.5 text-xs font-bold text-ink-soft backdrop-blur-sm"
       >
         Watch intro
       </button>
-      <VideoPreviewModal open={previewOpen} onOpenChange={setPreviewOpen} title={title} />
+      <VideoPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={title}
+        image={image}
+      />
     </>
   )
 }
 
-export function ProductPreviewLink({ title, className }: ProductPreviewActionsProps & { className?: string }) {
+export function ProductPreviewLink({
+  title,
+  className,
+  image = BRAND_IMAGES.meditationSession,
+}: ProductPreviewActionsProps & { className?: string }) {
   const [previewOpen, setPreviewOpen] = useState(false)
 
   return (
@@ -49,7 +64,12 @@ export function ProductPreviewLink({ title, className }: ProductPreviewActionsPr
       >
         Preview
       </button>
-      <VideoPreviewModal open={previewOpen} onOpenChange={setPreviewOpen} title={title} />
+      <VideoPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={title}
+        image={image}
+      />
     </>
   )
 }

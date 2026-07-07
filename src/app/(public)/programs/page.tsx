@@ -5,6 +5,7 @@ import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
 import { ProgramOfferCard } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import { getProgramOfferBrandImage, BRAND_IMAGES } from "@/lib/brand/images"
 import { buttonVariants } from "@/components/ui/button"
 import { listPlans } from "@/features/plans/services/plans.service"
 import type { PlanWithPrices } from "@/features/plans/types"
@@ -288,6 +289,7 @@ export default async function ProgramsPage() {
                       ctaVariant={offer.ctaVariant}
                       checkoutHref={checkoutHref}
                       fallbackHref="#programs-offers"
+                      image={getProgramOfferBrandImage(offer.slug)}
                     />
                   </div>
                 )
@@ -315,6 +317,7 @@ export default async function ProgramsPage() {
                 price="By enquiry"
                 priceNote="not a self-serve checkout"
                 action={{ label: "Apply for VIP", href: "/vip" }}
+                image={BRAND_IMAGES.wellnessSpa}
               />
             </div>
 
@@ -328,6 +331,7 @@ export default async function ProgramsPage() {
                 price="Enquire"
                 priceNote="lead capture only at launch"
                 action={{ label: "Enquire", href: "/retreats" }}
+                image={BRAND_IMAGES.retreatSpiritual}
               />
             </div>
           </Container>

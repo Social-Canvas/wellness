@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
+import { BrandImage } from "@/components/media"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import {
   LibraryCourseGrid,
   LibraryPageHeader,
 } from "@/features/content/components"
 import { listAccessibleCourses } from "@/features/content/services/content.service"
+import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
   title: "Library",
@@ -45,11 +47,21 @@ export default async function LibraryPage() {
           title="Course library"
           description="Browse published courses and continue your practice."
         />
-        <div className="rounded-2xl border border-dashed border-line bg-cream2/50 px-6 py-10 text-center">
-          <p className="font-display text-lg font-medium text-ink">No courses yet</p>
-          <p className="mt-2 text-sm text-ink-soft">
-            Published courses will appear here when they are ready.
-          </p>
+        <div className="overflow-hidden rounded-2xl border border-dashed border-line bg-cream2/50">
+          <div className="grid items-center gap-6 min-[861px]:grid-cols-[1.1fr_0.9fr]">
+            <div className="px-6 py-10 text-center min-[861px]:text-left">
+              <p className="font-display text-lg font-medium text-ink">No courses yet</p>
+              <p className="mt-2 text-sm text-ink-soft">
+                Published courses will appear here when they are ready. Explore programs to see
+                what is available.
+              </p>
+            </div>
+            <BrandImage
+              image={BRAND_IMAGES.meditationSession}
+              containerClassName="aspect-[16/10] w-full min-h-[220px]"
+              sizes="(max-width: 860px) 100vw, 40vw"
+            />
+          </div>
         </div>
       </div>
     )
