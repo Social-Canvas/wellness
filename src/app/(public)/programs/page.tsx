@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
-import { Container, Navbar, Section, SectionHeader, Ticker } from "@/components/layout"
+import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
 import { buttonVariants } from "@/components/ui/button"
 import { listPlans } from "@/features/plans/services/plans.service"
@@ -15,28 +15,6 @@ export const metadata: Metadata = {
   description:
     "Choose a membership plan or explore one-time wellness programs, masterclasses, and live sessions.",
 }
-
-const TICKER_MESSAGE =
-  "Educational content only · not medical advice · Get 10% off your first program with code WELCOME10"
-
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "Programs", href: "/programs", active: true },
-  { label: "Shop", href: "/shop" },
-  { label: "Blog", href: "/blog" },
-  { label: "About", href: "/about" },
-] as const
-
-const NAV_SOCIAL_LINKS = [
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "LinkedIn", href: "https://linkedin.com" },
-  { label: "Podcast", href: "/podcast" },
-] as const
-
-const NAV_ACTIONS = [
-  { label: "Log in", href: "/login", variant: "ghost" as const },
-  { label: "Get started", href: "/signup", variant: "primary" as const },
-]
 
 type MembershipTier = {
   slug: string
@@ -193,18 +171,8 @@ export default async function ProgramsPage() {
   )
 
   return (
-    <>
-      <Ticker>{TICKER_MESSAGE}</Ticker>
-
-      <Navbar
-        logo={{ accent: "Wellness", suffix: "Studio", href: "/" }}
-        links={[...NAV_LINKS]}
-        socialLinks={[...NAV_SOCIAL_LINKS]}
-        actions={NAV_ACTIONS}
-      />
-
-      <main>
-        <Section padding="default">
+    <main>
+      <Section padding="default">
           <Container>
             <SectionHeader
               eyebrow="Membership"
@@ -389,7 +357,6 @@ export default async function ProgramsPage() {
             </div>
           </Container>
         </Section>
-      </main>
-    </>
+    </main>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
+import { BackButton } from "@/components/layout"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ProductDetailView } from "@/features/shop/components"
 import { getShopCatalogProductDetail } from "@/features/shop/services/shop.service"
@@ -47,5 +48,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         ? "Checkout canceled. You can try again whenever you are ready."
         : null
 
-  return <ProductDetailView product={result.data} checkoutMessage={checkoutMessage} />
+  return (
+    <>
+      <div className="mb-4">
+        <BackButton fallbackHref="/shop" label="← Back to shop" />
+      </div>
+      <ProductDetailView product={result.data} checkoutMessage={checkoutMessage} />
+    </>
+  )
 }

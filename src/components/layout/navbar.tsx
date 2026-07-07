@@ -39,6 +39,8 @@ type NavbarProps = React.ComponentProps<"header"> & {
   socialLinks?: NavbarSocialLink[]
   actions?: NavbarAction[]
   back?: NavbarBackLink
+  navMiddle?: React.ReactNode
+  navActions?: React.ReactNode
 }
 
 function NavbarBackLink({ label, href }: NavbarBackLink) {
@@ -109,6 +111,8 @@ function Navbar({
   socialLinks = [],
   actions = [],
   back,
+  navMiddle,
+  navActions,
   ...props
 }: NavbarProps) {
   return (
@@ -130,13 +134,14 @@ function Navbar({
             <NavbarLogoLink {...logo} />
           </div>
 
-          {links.length > 0 ? (
-            <div className="hidden min-[861px]:flex items-center gap-[22px]">
-              {links.map((link) => (
-                <NavbarLinkItem key={`${link.href}-${link.label}`} {...link} />
-              ))}
-            </div>
-          ) : null}
+          {navMiddle ??
+            (links.length > 0 ? (
+              <div className="hidden min-w-0 items-center gap-[22px] min-[861px]:flex">
+                {links.map((link) => (
+                  <NavbarLinkItem key={`${link.href}-${link.label}`} {...link} />
+                ))}
+              </div>
+            ) : null)}
 
           <div className="flex shrink-0 items-center gap-2.5">
             {socialLinks.length > 0 ? (
@@ -150,12 +155,13 @@ function Navbar({
               </div>
             ) : null}
 
-            {actions.map((action) => (
-              <NavbarActionLink
-                key={`${action.href}-${action.label}`}
-                {...action}
-              />
-            ))}
+            {navActions ??
+              actions.map((action) => (
+                <NavbarActionLink
+                  key={`${action.href}-${action.label}`}
+                  {...action}
+                />
+              ))}
           </div>
         </nav>
       </Container>
