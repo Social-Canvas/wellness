@@ -3,6 +3,8 @@ import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
+import { ProgramOfferCard } from "@/features/checkout/components"
+import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
 import { buttonVariants } from "@/components/ui/button"
 import { listPlans } from "@/features/plans/services/plans.service"
 import type { PlanWithPrices } from "@/features/plans/types"
@@ -136,15 +138,23 @@ function formatMembershipPrice(plan: PlanWithPrices | undefined): {
   }
 }
 
-function resolveProgramOfferHref(
-  slug: string,
-  publishedProgramSlugs: ReadonlySet<string>
-): string {
-  return publishedProgramSlugs.has(slug) ? `#offer-${slug}` : "#programs-offers"
+function membershipCheckoutHref(planSlug: string): string {
+  return buildCheckoutConsentUrl({
+    type: "membership",
+    planSlug,
+    interval: "monthly",
+  })
 }
 
-function membershipSignupHref(planSlug: string): string {
-  return `/signup?plan=${encodeURIComponent(planSlug)}`
+function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<string>): string | null {
+  if (!publishedProgramSlugs.has(slug)) {
+    return null
+  }
+
+  return buildCheckoutConsentUrl({
+    type: "product",
+    productSlug: slug,
+  })
 }
 
 export default async function ProgramsPage() {
@@ -236,7 +246,7 @@ export default async function ProgramsPage() {
                     </ul>
 
                     <Link
-                      href={membershipSignupHref(tier.slug)}
+                      href={membershipCheckoutHref(tier.slug)}
                       className={cn(
                         buttonVariants({
                           variant: tier.ctaVariant,
@@ -263,58 +273,23 @@ export default async function ProgramsPage() {
                 const publishedProduct = publishedProductsBySlug.get(offer.slug)
                 const priceCents = publishedProduct?.priceAmount ?? offer.priceCents
                 const currency = publishedProduct?.currency ?? "usd"
-                const href = resolveProgramOfferHref(offer.slug, publishedProductSlugs)
+                const checkoutHref = programCheckoutHref(offer.slug, publishedProductSlugs)
 
                 return (
-                  <article
-                    key={offer.slug}
-                    id={`offer-${offer.slug}`}
-                    className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left"
-                  >
-                    <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-blue-soft to-green-soft">
-                      <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.85)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase">
-                        {offer.category}
-                      </span>
-                      <span
-                        aria-hidden
-                        className="flex size-[42px] items-center justify-center rounded-full bg-blue"
-                      >
-                        <span className="ml-0.5 border-y-8 border-l-[13px] border-y-transparent border-l-white" />
-                      </span>
-                    </div>
-
-                    <div className="flex flex-1 flex-col p-5">
-                      <h4 className="font-display text-lg font-medium text-ink">
-                        {offer.title}
-                      </h4>
-                      <p className="mt-1.5 mb-3.5 text-sm text-ink-soft">
-                        {publishedProduct?.description ?? offer.description}
-                      </p>
-
-                      <div className="mt-auto flex items-center justify-between gap-3">
-                        <span className="font-display text-lg font-semibold text-ink">
-                          {formatProductPrice(priceCents, currency)}
-                          {offer.priceNote ? (
-                            <small className="ml-1 font-body text-xs font-normal text-ink-soft">
-                              {offer.priceNote}
-                            </small>
-                          ) : null}
-                        </span>
-
-                        <Link
-                          href={href}
-                          className={cn(
-                            buttonVariants({
-                              variant: offer.ctaVariant,
-                              size: "sm",
-                            })
-                          )}
-                        >
-                          {offer.ctaLabel}
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
+                  <div key={offer.slug} id={`offer-${offer.slug}`}>
+                    <ProgramOfferCard
+                      category={offer.category}
+                      title={offer.title}
+                      description={publishedProduct?.description ?? offer.description}
+                      priceCents={priceCents}
+                      currency={currency}
+                      priceNote={offer.priceNote}
+                      ctaLabel={offer.ctaLabel}
+                      ctaVariant={offer.ctaVariant}
+                      checkoutHref={checkoutHref}
+                      fallbackHref="#programs-offers"
+                    />
+                  </div>
                 )
               })}
             </div>

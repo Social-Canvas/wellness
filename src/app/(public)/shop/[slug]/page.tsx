@@ -8,7 +8,6 @@ import { getShopCatalogProductDetail } from "@/features/shop/services/shop.servi
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkout?: string }>
 }
 
 export async function generateMetadata({
@@ -27,10 +26,9 @@ export async function generateMetadata({
   }
 }
 
-export default async function ProductPage({ params, searchParams }: ProductPageProps) {
+export default async function ProductPage({ params }: ProductPageProps) {
   const profileResult = await getCurrentProfile()
   const { slug } = await params
-  const { checkout } = await searchParams
 
   const result = await getShopCatalogProductDetail(
     slug,
@@ -41,19 +39,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     notFound()
   }
 
-  const checkoutMessage =
-    checkout === "success"
-      ? "Payment received. Your download will be ready once Stripe confirms the order."
-      : checkout === "canceled"
-        ? "Checkout canceled. You can try again whenever you are ready."
-        : null
-
   return (
     <>
       <div className="mb-4">
         <BackButton fallbackHref="/shop" label="← Back to shop" />
       </div>
-      <ProductDetailView product={result.data} checkoutMessage={checkoutMessage} />
+      <ProductDetailView product={result.data} />
     </>
   )
 }

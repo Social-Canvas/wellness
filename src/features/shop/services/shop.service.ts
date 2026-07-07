@@ -4,7 +4,10 @@ import type Stripe from "stripe"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
-import { env } from "@/lib/config"
+import {
+  buildCheckoutCancelUrl,
+  buildCheckoutSuccessUrl,
+} from "@/features/checkout/utils/stripe-return-urls"
 import {
   createProductCheckoutSchema,
   generateProductDownloadUrlSchema,
@@ -13,6 +16,7 @@ import {
 } from "@/features/shop/schemas"
 import {
   isProgramCatalogProductType,
+  isPurchasableCatalogProductType,
   isShopCatalogProductType,
 } from "@/features/shop/constants/catalog"
 import type {
@@ -397,7 +401,7 @@ export async function createProductCheckoutSession(
       return failure("not_found", "Product not found.")
     }
 
-    if (!isShopCatalogProductType(product.product_type)) {
+    if (!isPurchasableCatalogProductType(product.product_type)) {
       return failure("not_found", "Product not found.")
     }
 
@@ -420,6 +424,10 @@ export async function createProductCheckoutSession(
       return customerResult
     }
 
+    const returnTo = isShopCatalogProductType(product.product_type)
+      ? `/shop/${product.slug}`
+      : "/programs"
+
     const stripe = getStripeClient()
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -431,8 +439,15 @@ export async function createProductCheckoutSession(
           quantity: 1,
         },
       ],
-      success_url: `${env.NEXT_PUBLIC_APP_URL}/shop/${product.slug}?checkout=success`,
-      cancel_url: `${env.NEXT_PUBLIC_APP_URL}/shop/${product.slug}?checkout=canceled`,
+      success_url: buildCheckoutSuccessUrl({
+        type: "product",
+        item: product.title,
+        returnTo,
+      }),
+      cancel_url: buildCheckoutCancelUrl({
+        type: "product",
+        returnTo,
+      }),
       metadata: {
         profile_id: parsedUserId.data,
         product_id: product.id,

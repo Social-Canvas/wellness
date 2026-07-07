@@ -1,4 +1,5 @@
 import { Badge, Card, CardContent } from "@/components/ui"
+import { ProductPreviewActions } from "@/features/shop/components/ProductPreviewActions"
 import type { ShopProductDetail } from "@/features/shop/types"
 import { formatProductPrice, formatProductType } from "@/features/shop/utils/format-product"
 import { cn } from "@/lib/utils"
@@ -8,16 +9,15 @@ import { DownloadProductButton } from "./DownloadProductButton"
 
 interface ProductDetailViewProps {
   product: ShopProductDetail
-  checkoutMessage?: string | null
 }
 
-export function ProductDetailView({ product, checkoutMessage }: ProductDetailViewProps) {
+export function ProductDetailView({ product }: ProductDetailViewProps) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-6">
         <div
           className={cn(
-            "aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line bg-gradient-to-br from-blue-soft to-green-soft",
+            "relative aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line bg-gradient-to-br from-blue-soft to-green-soft",
             product.coverImageUrl && "bg-cover bg-center"
           )}
           style={
@@ -25,7 +25,9 @@ export function ProductDetailView({ product, checkoutMessage }: ProductDetailVie
               ? { backgroundImage: `url(${product.coverImageUrl})` }
               : undefined
           }
-        />
+        >
+          <ProductPreviewActions title={product.title} />
+        </div>
 
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -52,12 +54,6 @@ export function ProductDetailView({ product, checkoutMessage }: ProductDetailVie
             </p>
           </div>
 
-          {checkoutMessage ? (
-            <p className="rounded-[var(--radius-input)] bg-green-soft px-4 py-3 text-sm text-green-deep">
-              {checkoutMessage}
-            </p>
-          ) : null}
-
           {product.isPurchased ? (
             <div className="space-y-3">
               <p className="text-sm text-ink-soft">
@@ -79,7 +75,7 @@ export function ProductDetailView({ product, checkoutMessage }: ProductDetailVie
               )}
             </div>
           ) : (
-            <BuyProductButton productId={product.id} />
+            <BuyProductButton productSlug={product.slug} />
           )}
         </CardContent>
       </Card>

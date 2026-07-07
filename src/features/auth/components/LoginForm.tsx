@@ -8,7 +8,11 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 import { signInAction } from "@/features/auth/actions/auth.actions"
 import { loginSchema, type LoginInput } from "@/features/auth/schemas"
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo?: string
+}
+
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
 
   const form = useForm<LoginInput>({
@@ -28,7 +32,7 @@ export function LoginForm() {
   async function onSubmit(values: LoginInput) {
     setFormError(null)
 
-    const result = await signInAction(values)
+    const result = await signInAction(values, redirectTo)
 
     if (!result.success) {
       setFormError(result.error.message)

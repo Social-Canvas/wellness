@@ -36,7 +36,8 @@ export async function signUpAction(
 }
 
 export async function signInAction(
-  input: LoginInput
+  input: LoginInput,
+  redirectTo?: string
 ): Promise<ActionResult<SignInResult>> {
   const result = await signIn(input)
 
@@ -45,7 +46,13 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout")
-  redirect("/dashboard")
+
+  const safeRedirect =
+    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+      ? redirectTo
+      : "/dashboard"
+
+  redirect(safeRedirect)
 }
 
 export async function signOutAction(): Promise<ActionResult<null>> {

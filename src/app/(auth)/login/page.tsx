@@ -10,16 +10,23 @@ export const metadata: Metadata = {
   description: "Sign in to your member account.",
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
   const profileResult = await getCurrentProfile()
+  const { next } = await searchParams
+  const redirectTo =
+    next && next.startsWith("/") && !next.startsWith("//") ? next : undefined
 
   if (profileResult.success) {
-    redirect("/dashboard")
+    redirect(redirectTo ?? "/dashboard")
   }
 
   return (
     <>
-      <LoginForm />
+      <LoginForm redirectTo={redirectTo} />
       <p className="mt-[18px] text-center text-[13.5px] text-ink-soft">
         <Link href="/signup" className="font-semibold text-blue hover:text-blue-deep">
           Create an account

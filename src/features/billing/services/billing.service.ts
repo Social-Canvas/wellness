@@ -10,6 +10,10 @@ import type {
   CurrentSubscription,
   Subscription,
 } from "@/features/billing/types"
+import {
+  buildCheckoutCancelUrl,
+  buildCheckoutSuccessUrl,
+} from "@/features/checkout/utils/stripe-return-urls"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getStripeClient } from "@/server/integrations/stripe/client"
@@ -267,6 +271,23 @@ export async function createCheckoutSession(
     return planPriceResult
   }
 
+  let planName = "Membership"
+
+  try {
+    const supabase = createAdminClient()
+    const { data: plan } = await supabase
+      .from("plans")
+      .select("name")
+      .eq("id", planPriceResult.data.plan_id)
+      .maybeSingle()
+
+    if (plan?.name) {
+      planName = plan.name
+    }
+  } catch {
+    // Keep default plan label when plan lookup fails.
+  }
+
   const customerResult = await ensureStripeCustomer(profileResult.data)
 
   if (!customerResult.success) {
@@ -285,8 +306,15 @@ export async function createCheckoutSession(
           quantity: 1,
         },
       ],
-      success_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
-      cancel_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=canceled`,
+      success_url: buildCheckoutSuccessUrl({
+        type: "membership",
+        item: planName,
+        returnTo: "/programs",
+      }),
+      cancel_url: buildCheckoutCancelUrl({
+        type: "membership",
+        returnTo: "/programs",
+      }),
       metadata: {
         profile_id: parsedUserId.data,
         plan_price_id: parsedPlanPriceId.data,
