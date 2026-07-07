@@ -3,12 +3,14 @@ import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { BrandImage } from "@/components/media"
-import { SAMPLE_BLOG_ARTICLES } from "@/content/blog/sample-articles"
 import { getBlogArticleBrandImage } from "@/lib/brand/images"
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import { SAMPLE_BLOG_ARTICLES } from "@/content/blog/sample-articles"
 
 export const metadata: Metadata = {
-  title: "Blog",
-  description: "Wellness, explained — practical articles on energy, hormones, gut health, and stress.",
+  title: `Insights — ${ELEVATE_BRAND.name}`,
+  description:
+    "Evidence-informed articles on nervous system regulation, functional medicine, hormones, and root-cause healing.",
 }
 
 export default function BlogPage() {
@@ -18,9 +20,9 @@ export default function BlogPage() {
         <Container>
           <SectionHeader
             align="center"
-            eyebrow="The blog"
-            title="Wellness, explained"
-            subtitle="Deep, practical articles on energy, hormones, gut health, stress, and healing at the root."
+            eyebrow="Elevate insights"
+            title="Science + soul, explained"
+            subtitle="Practical writing on energy, hormones, gut health, stress, and nervous system regulation — from the Elevate team."
           />
 
           <div className="mt-10 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">

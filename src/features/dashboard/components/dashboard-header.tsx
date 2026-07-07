@@ -14,6 +14,7 @@ import {
   type DashboardNavItem,
 } from "@/features/dashboard/constants/navigation"
 import type { UserRole } from "@/features/auth/types"
+import { PUBLIC_LOGO } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 type DashboardHeaderProps = {
@@ -101,7 +102,7 @@ export function DashboardHeader({
             </Button>
 
             <Link href="/" className="inline-flex shrink-0 transition-opacity hover:opacity-90">
-              <Logo accent="Wellness" suffix="Studio" />
+              <Logo accent={PUBLIC_LOGO.accent} suffix={PUBLIC_LOGO.suffix} />
             </Link>
           </div>
 

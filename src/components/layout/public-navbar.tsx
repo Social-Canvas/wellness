@@ -5,10 +5,7 @@ import { NavbarLinks } from "@/components/layout/navbar-links"
 import { NavbarSignOutButton } from "@/components/layout/navbar-sign-out-button"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
-import {
-  PUBLIC_NAV_LINKS,
-  PUBLIC_SOCIAL_LINKS,
-} from "@/lib/constants/public-site"
+import { PUBLIC_LOGO, PUBLIC_NAV_LINKS } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 async function PublicNavbar() {
@@ -17,9 +14,8 @@ async function PublicNavbar() {
 
   return (
     <Navbar
-      logo={{ accent: "Wellness", suffix: "Studio", href: "/" }}
+      logo={{ accent: PUBLIC_LOGO.accent, suffix: PUBLIC_LOGO.suffix, href: "/" }}
       links={[]}
-      socialLinks={[...PUBLIC_SOCIAL_LINKS]}
       actions={[]}
       navMiddle={<NavbarLinks links={PUBLIC_NAV_LINKS} />}
       navActions={
@@ -42,10 +38,10 @@ async function PublicNavbar() {
               Log in
             </Link>
             <Link
-              href="/programs"
+              href="/programs#reset-plan"
               className={cn(buttonVariants({ variant: "default", size: "sm" }))}
             >
-              Get started
+              Start Reset Plan
             </Link>
           </>
         )

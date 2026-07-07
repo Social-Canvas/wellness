@@ -6,8 +6,9 @@ import { PublicNavbar } from "@/components/layout/public-navbar"
 import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
-import { PUBLIC_LEGAL_DISCLAIMER } from "@/lib/constants/public-site"
+import { PUBLIC_LEGAL_DISCLAIMER, PUBLIC_LOGO } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -26,7 +27,11 @@ export default async function NotFoundPage() {
         <Container className="max-w-5xl">
           <div className="grid items-center gap-10 min-[861px]:grid-cols-[1fr_0.85fr]">
             <div className="text-center min-[861px]:text-left">
-              <Logo accent="Wellness" suffix="Studio" className="justify-center text-3xl min-[861px]:justify-start" />
+              <Logo
+                accent={PUBLIC_LOGO.accent}
+                suffix={PUBLIC_LOGO.suffix}
+                className="justify-center text-3xl min-[861px]:justify-start"
+              />
               <p className="mt-8 text-xs font-bold tracking-[0.18em] text-blue uppercase">
                 404
               </p>
@@ -34,8 +39,8 @@ export default async function NotFoundPage() {
                 Page not found
               </h1>
               <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-ink-soft min-[861px]:mx-0">
-                The page you are looking for may have moved, been removed, or never existed.
-                Take a breath — then use the links below to find your way back.
+                This page may have moved or no longer exists. Return to {ELEVATE_BRAND.name}{" "}
+                to continue your journey.
               </p>
 
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row min-[861px]:justify-start">

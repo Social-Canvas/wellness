@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Mulish, Poppins } from "next/font/google";
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -15,8 +16,8 @@ const mulish = Mulish({
 });
 
 export const metadata: Metadata = {
-  title: "Yoga Membership Platform",
-  description: "Online yoga membership platform",
+  title: ELEVATE_BRAND.name,
+  description: ELEVATE_BRAND.tagline,
 };
 
 export default function RootLayout({

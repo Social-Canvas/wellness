@@ -20,11 +20,11 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
     excerpt:
       'If you are tired no matter how much you sleep, the answer is rarely "rest more." Here is what to look at instead.',
     readTime: "7 min read",
-    author: "Wellness Studio team",
+    author: "Elevate Health Solutions",
     content: [
       {
         type: "paragraph",
-        text: "If you are tired no matter how much you sleep, the answer is rarely rest more. Here is what to look at instead. In holistic wellness, we do not start with the symptom — we start with the question: why is this happening at all? That single shift changes everything about how you heal.",
+        text: "If you are tired no matter how much you sleep, the answer is rarely rest more. Here is what to look at instead. In functional medicine, we do not start with the symptom — we start with the question: why is this happening at all? That single shift changes everything about how you heal.",
       },
       { type: "heading", text: "It starts deeper than you think" },
       {
@@ -61,7 +61,7 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
     excerpt:
       "The gut and your hormones are in constant conversation. When it breaks down, everything feels off.",
     readTime: "6 min read",
-    author: "Wellness Studio team",
+    author: "Elevate Health Solutions",
     content: [
       {
         type: "paragraph",
@@ -93,7 +93,7 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
     excerpt:
       "Chronic stress reshapes your whole day. Learn to read the signs and reset your stress response.",
     readTime: "8 min read",
-    author: "Wellness Studio team",
+    author: "Elevate Health Solutions",
     content: [
       {
         type: "paragraph",

@@ -41,7 +41,7 @@ export function AdminSidebar({ mobileOpen, onNavigate }: AdminSidebarProps) {
         aria-label="Admin navigation"
       >
         <div className="mb-6 px-2">
-          <Logo accent="Admin" suffix="Studio" />
+          <Logo accent="Elevate" suffix="Admin" />
           <p className="mt-1 text-xs text-ink-soft">Platform management</p>
         </div>
 

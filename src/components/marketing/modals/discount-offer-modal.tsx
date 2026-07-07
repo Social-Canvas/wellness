@@ -38,7 +38,7 @@ export function DiscountOfferModal({
   couponCode = "LEVEL2-10",
   couponLabel = "10% off",
   upgradeHref = buildCheckoutConsentUrl({ type: "membership", planSlug: "plan-2" }),
-  upgradeLabel = "Enroll in the next level",
+  upgradeLabel = "Join Elevate Gold",
 }: DiscountOfferModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

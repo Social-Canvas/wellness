@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Container } from "@/components/layout/container"
 import { Logo } from "@/components/layout/logo"
 import { DASHBOARD_FOOTER_LINKS } from "@/features/dashboard/constants/navigation"
-import { PUBLIC_LEGAL_DISCLAIMER } from "@/lib/constants/public-site"
+import { PUBLIC_LEGAL_DISCLAIMER, PUBLIC_LOGO } from "@/lib/constants/public-site"
 
 function DashboardFooter() {
   return (
@@ -11,9 +11,9 @@ function DashboardFooter() {
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
           <div>
-            <Logo accent="Wellness" suffix="Studio" variant="footer" />
+            <Logo accent={PUBLIC_LOGO.accent} suffix={PUBLIC_LOGO.suffix} variant="footer" />
             <p className="mt-2.5 max-w-[320px] text-sm">
-              Educational wellness content for members. This is not medical advice.
+              Evidence-informed functional medicine and breathwork for members. This is not medical advice.
             </p>
           </div>
 
