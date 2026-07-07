@@ -1,40 +1,53 @@
 import type { ReactNode } from "react"
 
-import { Badge } from "@/components/ui"
 import { Container, Section } from "@/components/layout"
-import type { AuthSessionUser } from "@/features/auth/types"
 import type { ProfileView } from "@/features/auth/services/auth.service"
+import type { AuthSessionUser } from "@/features/auth/types"
+import type { CurrentSubscription } from "@/features/billing/types"
 
-import { SignOutButton } from "./sign-out-button"
+import { DashboardFooter } from "./dashboard-footer"
+import { DashboardHeader } from "./dashboard-header"
 
 interface DashboardShellProps {
   user: AuthSessionUser
   profile: ProfileView
+  subscription: CurrentSubscription | null
   children: ReactNode
 }
 
-export function DashboardShell({ user, profile, children }: DashboardShellProps) {
+export function DashboardShell({
+  user,
+  profile,
+  subscription,
+  children,
+}: DashboardShellProps) {
   const displayName = profile.fullName?.trim() || user.email
+  const isAdmin = user.role === "admin" || user.role === "super_admin"
+  const activeSubscription =
+    subscription &&
+    (subscription.status === "active" ||
+      subscription.status === "trialing" ||
+      subscription.status === "past_due")
+      ? subscription
+      : null
 
   return (
-    <Section padding="dashboard">
-      <Container>
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="font-display text-[28px] font-medium text-ink">
-              My dashboard
-            </h1>
-            <p className="mt-1 text-sm text-ink-soft">
-              Welcome back, {displayName}. Keep your momentum going.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="plan">Member</Badge>
-            <SignOutButton />
-          </div>
-        </header>
-        {children}
-      </Container>
-    </Section>
+    <div className="flex min-h-screen flex-col bg-cream">
+      <DashboardHeader
+        displayName={displayName}
+        email={user.email}
+        role={user.role}
+        planBadge={activeSubscription?.planName ?? null}
+        isAdmin={isAdmin}
+      />
+
+      <main className="flex-1">
+        <Section padding="dashboard">
+          <Container>{children}</Container>
+        </Section>
+      </main>
+
+      <DashboardFooter />
+    </div>
   )
 }

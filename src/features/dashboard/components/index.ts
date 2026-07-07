@@ -1,2 +1,5 @@
+export { DashboardFooter } from "./dashboard-footer"
+export { DashboardHeader } from "./dashboard-header"
+export { DashboardHomeActions } from "./dashboard-home-actions"
 export { DashboardShell } from "./dashboard-shell"
 export { SignOutButton } from "./sign-out-button"

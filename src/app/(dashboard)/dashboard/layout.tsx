@@ -6,6 +6,7 @@ import {
   getCurrentProfile,
   getCurrentUser,
 } from "@/features/auth/services/auth.service"
+import { getCurrentSubscription } from "@/features/billing/services/billing.service"
 import { DashboardShell } from "@/features/dashboard/components"
 import { createClient } from "@/lib/supabase/server"
 
@@ -48,8 +49,15 @@ export default async function DashboardLayout({
     )
   }
 
+  const subscriptionResult = await getCurrentSubscription(profileResult.data.id)
+  const subscription = subscriptionResult.success ? subscriptionResult.data : null
+
   return (
-    <DashboardShell user={userResult.data} profile={profileResult.data}>
+    <DashboardShell
+      user={userResult.data}
+      profile={profileResult.data}
+      subscription={subscription}
+    >
       {children}
     </DashboardShell>
   )
