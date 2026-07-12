@@ -2,11 +2,13 @@ import type { Metadata } from "next"
 
 import { LeadCaptureForm } from "@/features/leads/components/LeadCaptureForm"
 import { LeadPageShell } from "@/features/leads/components/LeadPageShell"
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
-  title: "Private Events",
-  description: "Enquire about private wellness events and bespoke sessions.",
+  title: `Private Events — ${ELEVATE_BRAND.name}`,
+  description:
+    "Enquire about private breathwork, sound healing, and bespoke Elevate events.",
 }
 
 export default function PrivateEventsLeadPage() {
@@ -16,7 +18,7 @@ export default function PrivateEventsLeadPage() {
         leadType="private_event"
         source="private_events_page"
         title="Private Events"
-        description="Planning a private breathwork, sound bath, or wellness event? Send an enquiry and we will follow up with availability."
+        description="Planning a private breathwork, sound bath, or Elevate experience for your group? Send an enquiry and we will follow up with availability."
         submitLabel="Enquire about private events"
       />
     </LeadPageShell>

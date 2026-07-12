@@ -6,6 +6,8 @@ import { syncSubscriptionFromStripe } from "@/features/billing/services/billing.
 import { syncOrderFromStripeCheckoutSession } from "@/features/shop/services/shop.service"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sendPaymentFailedEmail } from "@/server/integrations/resend/transactional-email.service"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import type { Database } from "@/types/database/supabase"
 
@@ -144,6 +146,46 @@ async function resolveSubscriptionIdFromEvent(
   }
 }
 
+type PaymentFailedEmailContext = {
+  email: string
+  fullName: string | null
+  planName: string
+}
+
+async function getPaymentFailedEmailContext(
+  stripeSubscriptionId: string
+): Promise<PaymentFailedEmailContext | null> {
+  const supabase = createAdminClient()
+  const { data: subscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .select("user_id, plan_id")
+    .eq("stripe_subscription_id", stripeSubscriptionId)
+    .maybeSingle()
+
+  if (subscriptionError || !subscription) {
+    return null
+  }
+
+  const [{ data: profile }, { data: plan }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", subscription.user_id)
+      .maybeSingle(),
+    supabase.from("plans").select("name").eq("id", subscription.plan_id).maybeSingle(),
+  ])
+
+  if (!profile?.email) {
+    return null
+  }
+
+  return {
+    email: profile.email,
+    fullName: profile.full_name,
+    planName: plan?.name ?? "Membership",
+  }
+}
+
 async function processStripeEvent(event: Stripe.Event): Promise<void> {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session
@@ -173,6 +215,35 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
 
   if (!syncResult.success) {
     throw new Error(syncResult.error.message)
+  }
+
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice
+
+    try {
+      const paymentContext = await getPaymentFailedEmailContext(subscriptionId)
+
+      if (!paymentContext || !invoice.id) {
+        logger.warn("Skipping payment failed email due to missing context.", {
+          stripeSubscriptionId: subscriptionId,
+          stripeInvoiceId: invoice.id ?? null,
+        })
+        return
+      }
+
+      await sendPaymentFailedEmail({
+        to: paymentContext.email,
+        fullName: paymentContext.fullName,
+        planName: paymentContext.planName,
+        stripeInvoiceId: invoice.id,
+      })
+    } catch (emailError) {
+      logger.error("Payment failed email failed without blocking webhook.", {
+        stripeSubscriptionId: subscriptionId,
+        stripeInvoiceId: invoice.id ?? null,
+        error: safeErrorMessage(emailError),
+      })
+    }
   }
 }
 

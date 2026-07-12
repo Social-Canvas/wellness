@@ -1,4 +1,5 @@
 import * as React from "react"
+import Image from "next/image"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
@@ -20,6 +21,8 @@ type LogoProps = React.ComponentProps<"div"> &
   VariantProps<typeof logoVariants> & {
     accent: string
     suffix?: string
+    src?: string
+    alt?: string
   }
 
 function Logo({
@@ -27,8 +30,29 @@ function Logo({
   variant,
   accent,
   suffix,
+  src,
+  alt,
   ...props
 }: LogoProps) {
+  if (src) {
+    return (
+      <div
+        data-slot="logo"
+        className={cn("relative inline-flex shrink-0", className)}
+        {...props}
+      >
+        <Image
+          src={src}
+          alt={alt ?? `${accent}${suffix ? ` ${suffix}` : ""}`}
+          width={620}
+          height={264}
+          className="h-9 w-auto"
+          priority
+        />
+      </div>
+    )
+  }
+
   return (
     <div
       data-slot="logo"

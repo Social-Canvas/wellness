@@ -5,147 +5,38 @@ import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
 import { ProgramOfferCard } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import {
+  BREATHWORK_ROADMAP,
+  ELEVATE_BRAND,
+  ELEVATE_MEMBERSHIPS,
+  ELEVATE_PROGRAM_OFFERS,
+  RESET_PLAN,
+  RESET_PLAN_CTA_FEATURES,
+  VIP_COACHING_CTA_FEATURES,
+  RETREATS_CTA_FEATURES,
+} from "@/lib/constants/elevate-brand"
 import { getProgramOfferBrandImage, BRAND_IMAGES } from "@/lib/brand/images"
 import { buttonVariants } from "@/components/ui/button"
-import { listPlans } from "@/features/plans/services/plans.service"
-import type { PlanWithPrices } from "@/features/plans/types"
 import { listProgramCatalogProducts } from "@/features/shop/services/shop.service"
-import { formatProductPrice } from "@/features/shop/utils/format-product"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: "Programs & Membership",
+  title: `Programs & Memberships — ${ELEVATE_BRAND.name}`,
   description:
-    "Choose a membership plan or explore one-time wellness programs, masterclasses, and live sessions.",
+    "Reset Plan entry offer, Elevate Core, Gold, and Platinum memberships — a progressive breathwork and nervous system healing journey.",
 }
 
-type MembershipTier = {
-  slug: string
-  levelLabel: string
-  featured: boolean
-  features: string[]
-  ctaVariant: "default" | "outline"
-}
+const PROGRAMS_NAV = [
+  { label: "Start here", href: "#reset-plan" },
+  { label: "Memberships", href: "#memberships" },
+  { label: "Programs", href: "#programs-offers" },
+  { label: "VIP coaching", href: "#vip-package" },
+  { label: "Retreats", href: "#retreats-private-events" },
+] as const
 
-type ProgramOffer = {
-  slug: string
-  category: string
-  title: string
-  description: string
-  priceCents: number
-  priceNote?: string
-  ctaLabel: string
-  ctaVariant: "default" | "outline"
-}
-
-const MEMBERSHIP_TIERS: MembershipTier[] = [
-  {
-    slug: "plan-1",
-    levelLabel: "Plan 1",
-    featured: false,
-    features: [
-      "21 meditation classes (5 min each)",
-      "Core course library (~30 videos, 20–40 min)",
-      "New content added every week",
-    ],
-    ctaVariant: "outline",
-  },
-  {
-    slug: "plan-2",
-    levelLabel: "Plan 2",
-    featured: true,
-    features: [
-      "Everything in Plan 1",
-      "2 virtual live sessions per month (1 hour each)",
-      "Recorded sessions added to your library",
-    ],
-    ctaVariant: "default",
-  },
-  {
-    slug: "plan-3",
-    levelLabel: "Plan 3",
-    featured: false,
-    features: [
-      "Everything in Plan 2",
-      "1 in-person live session per month (1 hour)",
-      "Monthly member extras",
-    ],
-    ctaVariant: "outline",
-  },
-]
-
-const PROGRAM_OFFERS: ProgramOffer[] = [
-  {
-    slug: "7-day-reset",
-    category: "Program",
-    title: "7-Day Reset",
-    description:
-      "Holistic wellness grocery list, manifestation breathwork, a stress and inflammation quiz, and community access.",
-    priceCents: 4700,
-    priceNote: "one time",
-    ctaLabel: "Start",
-    ctaVariant: "default",
-  },
-  {
-    slug: "autoimmune-masterclass",
-    category: "Masterclass",
-    title: "Autoimmune Masterclass",
-    description:
-      "Five recorded sessions with workbook support and a completion certificate.",
-    priceCents: 4700,
-    priceNote: "one time",
-    ctaLabel: "Learn more",
-    ctaVariant: "outline",
-  },
-  {
-    slug: "health-professional-session",
-    category: "Session",
-    title: "Health Professional Session",
-    description: "A two-hour recorded session designed for health professionals.",
-    priceCents: 6500,
-    ctaLabel: "Book",
-    ctaVariant: "outline",
-  },
-  {
-    slug: "standalone-live-session",
-    category: "Live session",
-    title: "Standalone Live Session",
-    description:
-      "A one-off virtual live session with limited group size (25–30 participants).",
-    priceCents: 5500,
-    ctaLabel: "Book",
-    ctaVariant: "outline",
-  },
-]
-
-function formatMembershipPrice(plan: PlanWithPrices | undefined): {
-  amount: string
-  interval: string
-} {
-  const monthlyPrice = plan?.prices.find(
-    (price) => price.billing_interval === "monthly" && price.is_active
-  )
-
-  if (monthlyPrice && monthlyPrice.amount > 0) {
-    return {
-      amount: formatProductPrice(monthlyPrice.amount, monthlyPrice.currency),
-      interval: "/ mo",
-    }
-  }
-
-  return {
-    amount: "Monthly + annual",
-    interval: "",
-  }
-}
-
-function membershipCheckoutHref(planSlug: string): string {
-  return buildCheckoutConsentUrl({
-    type: "membership",
-    planSlug,
-    interval: "monthly",
-  })
-}
+const PROGRAM_OFFERS_WITHOUT_RESET = ELEVATE_PROGRAM_OFFERS.filter(
+  (offer) => offer.slug !== RESET_PLAN.slug
+)
 
 function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<string>): string | null {
   if (!publishedProgramSlugs.has(slug)) {
@@ -158,17 +49,16 @@ function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<st
   })
 }
 
-export default async function ProgramsPage() {
-  const [plansResult, productsResult] = await Promise.all([
-    listPlans(),
-    listProgramCatalogProducts(),
-  ])
+function membershipCheckoutHref(planSlug: string): string {
+  return buildCheckoutConsentUrl({
+    type: "membership",
+    planSlug,
+    interval: "monthly",
+  })
+}
 
-  const plansBySlug = new Map(
-    (plansResult.success ? plansResult.data : [])
-      .filter((plan) => plan.is_active)
-      .map((plan) => [plan.slug, plan])
-  )
+export default async function ProgramsPage() {
+  const productsResult = await listProgramCatalogProducts()
 
   const publishedProductSlugs = new Set(
     (productsResult.success ? productsResult.data : []).map((product) => product.slug)
@@ -184,158 +74,208 @@ export default async function ProgramsPage() {
   return (
     <main>
       <Section padding="default">
-          <Container>
-            <SectionHeader
-              eyebrow="Membership"
-              title="Choose your plan"
-              subtitle="Your ongoing support system for guided wellness content. Move up a plan anytime and cancel whenever you like."
-            />
+        <Container>
+          <SectionHeader
+            align="center"
+            eyebrow="The Elevate journey"
+            title="Progressive nervous system transformation"
+            subtitle={`A structured path — ${BREATHWORK_ROADMAP.framework} — designed for long-term regulation, not isolated courses.`}
+          />
 
-            <div className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
-              {MEMBERSHIP_TIERS.map((tier) => {
-                const plan = plansBySlug.get(tier.slug)
-                const price = formatMembershipPrice(plan)
+          <nav
+            aria-label="Programs page sections"
+            className="mt-8 flex flex-wrap justify-center gap-2"
+          >
+            {PROGRAMS_NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "rounded-full"
+                )}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
 
-                return (
-                  <article
-                    key={tier.slug}
-                    className={cn(
-                      "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left",
-                      tier.featured ? "border-2 border-blue" : "border-line"
-                    )}
-                  >
-                    {tier.featured ? (
-                      <span className="absolute top-[-13px] left-1/2 -translate-x-1/2 rounded-[20px] bg-blue px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-white uppercase">
-                        Most popular
-                      </span>
-                    ) : null}
+          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-line bg-surface px-6 py-6 text-center shadow-sm">
+            <p className="font-display text-lg font-medium text-ink">
+              {BREATHWORK_ROADMAP.framework}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              Year 1: {BREATHWORK_ROADMAP.yearOneFocus}. Year 2:{" "}
+              {BREATHWORK_ROADMAP.yearTwoFocus}. Year 3:{" "}
+              {BREATHWORK_ROADMAP.yearThreeFocus}.
+            </p>
+          </div>
+        </Container>
+      </Section>
 
-                    <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
-                      {tier.levelLabel}
-                    </span>
-                    <h3 className="mt-1.5 font-display text-2xl font-medium text-ink">
-                      Membership
-                    </h3>
-                    <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
-                      {price.amount}
-                      {price.interval ? (
-                        <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-                          {price.interval}
-                        </small>
-                      ) : null}
-                    </div>
+      <Section id="reset-plan" variant="soft" padding="default">
+        <Container>
+          <CtaBand
+            contained={false}
+            eyebrow="Start here"
+            title={RESET_PLAN.name}
+            description={RESET_PLAN.description}
+            features={[...RESET_PLAN_CTA_FEATURES]}
+            price={RESET_PLAN.priceLabel}
+            priceNote="one-time entry offer"
+            action={{
+              label: "Start Reset Plan",
+              href: buildCheckoutConsentUrl({
+                type: "product",
+                productSlug: RESET_PLAN.slug,
+              }),
+            }}
+            image={BRAND_IMAGES.productJournalReset}
+          />
+        </Container>
+      </Section>
 
-                    {plan?.description ? (
-                      <p className="mb-3 text-sm text-ink-soft">{plan.description}</p>
-                    ) : null}
+      <Section id="memberships" padding="default">
+        <Container>
+          <SectionHeader
+            eyebrow="Memberships"
+            title="Elevate Core, Gold & Platinum"
+            subtitle="Choose the level of support, live access, and implementation guidance that fits your season. Elevate Platinum is the only tier that includes the full live Elevate experience."
+          />
 
-                    <ul className="mb-5 list-none">
-                      {tier.features.map((feature) => (
-                        <li
-                          key={feature}
-                          className="relative py-1.5 pl-[22px] text-sm text-ink-soft"
-                        >
-                          <span
-                            aria-hidden
-                            className="absolute left-0 font-bold text-blue"
-                          >
-                            ✓
-                          </span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
+          <div className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
+            {ELEVATE_MEMBERSHIPS.map((tier) => (
+              <article
+                key={tier.slug}
+                className={cn(
+                  "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm",
+                  tier.featured ? "border-2 border-blue" : "border-line"
+                )}
+              >
+                {tier.featured ? (
+                  <span className="absolute top-[-13px] left-1/2 -translate-x-1/2 rounded-[20px] bg-blue px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-white uppercase">
+                    Most popular
+                  </span>
+                ) : null}
 
-                    <Link
-                      href={membershipCheckoutHref(tier.slug)}
-                      className={cn(
-                        buttonVariants({
-                          variant: tier.ctaVariant,
-                          size: "block",
-                        }),
-                        "mt-auto"
-                      )}
+                <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
+                  Membership
+                </span>
+                <h3 className="mt-1.5 font-display text-2xl font-medium text-ink">
+                  {tier.name}
+                </h3>
+                <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
+                  {tier.priceLabel}
+                  <small className="ml-1 font-body text-sm font-normal text-ink-soft">
+                    / mo
+                  </small>
+                </div>
+
+                <p className="mb-3 text-sm text-ink-soft">{tier.whoItIsFor}</p>
+
+                <ul className="mb-5 list-none">
+                  {tier.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className="relative py-1.5 pl-[22px] text-sm text-ink-soft"
                     >
-                      Join {tier.levelLabel}
-                    </Link>
-                  </article>
-                )
-              })}
-            </div>
-          </Container>
-        </Section>
+                      <span
+                        aria-hidden
+                        className="absolute left-0 font-bold text-blue"
+                      >
+                        ✓
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
 
-        <Section id="programs-offers" variant="soft" padding="default">
-          <Container>
-            <SectionHeader eyebrow="Programs" title="One-time programs & sessions" />
+                <Link
+                  href={membershipCheckoutHref(tier.slug)}
+                  className={cn(
+                    buttonVariants({
+                      variant: tier.ctaVariant,
+                      size: "block",
+                    }),
+                    "mt-auto"
+                  )}
+                >
+                  Join {tier.name}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </Section>
 
-            <div className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-2">
-              {PROGRAM_OFFERS.map((offer) => {
-                const publishedProduct = publishedProductsBySlug.get(offer.slug)
-                const priceCents = publishedProduct?.priceAmount ?? offer.priceCents
-                const currency = publishedProduct?.currency ?? "usd"
-                const checkoutHref = programCheckoutHref(offer.slug, publishedProductSlugs)
+      <Section id="programs-offers" variant="soft" padding="default">
+        <Container>
+          <SectionHeader
+            eyebrow="Programs & sessions"
+            title="Build on your membership"
+            subtitle="Focused programs and live sessions that deepen specific phases of your healing journey."
+          />
 
-                return (
-                  <div key={offer.slug} id={`offer-${offer.slug}`}>
-                    <ProgramOfferCard
-                      category={offer.category}
-                      title={offer.title}
-                      description={publishedProduct?.description ?? offer.description}
-                      priceCents={priceCents}
-                      currency={currency}
-                      priceNote={offer.priceNote}
-                      ctaLabel={offer.ctaLabel}
-                      ctaVariant={offer.ctaVariant}
-                      checkoutHref={checkoutHref}
-                      fallbackHref="#programs-offers"
-                      image={getProgramOfferBrandImage(offer.slug)}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          </Container>
-        </Section>
+          <div className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-2">
+            {PROGRAM_OFFERS_WITHOUT_RESET.map((offer) => {
+              const publishedProduct = publishedProductsBySlug.get(offer.slug)
+              const priceCents = publishedProduct?.priceAmount ?? 4700
+              const currency = publishedProduct?.currency ?? "usd"
+              const checkoutHref = programCheckoutHref(offer.slug, publishedProductSlugs)
 
-        <Section padding="default">
-          <Container className="space-y-[18px]">
-            <div id="vip-package">
-              <CtaBand
-                contained={false}
-                eyebrow="Premium 1:1"
-                title="VIP Package"
-                description="Custom high-touch transformation program. Apply to enquire — pricing is customized."
-                features={[
-                  "Comprehensive holistic wellness testing",
-                  "1:1 bi-weekly coaching calls",
-                  "Supplements and personalized support",
-                  "Extended membership access",
-                  "Exclusive VIP retreat access",
-                  "Private VIP support community",
-                ]}
-                price="By enquiry"
-                priceNote="not a self-serve checkout"
-                action={{ label: "Apply for VIP", href: "/vip" }}
-                image={BRAND_IMAGES.wellnessSpa}
-              />
-            </div>
+              return (
+                <div key={offer.slug} id={`offer-${offer.slug}`}>
+                  <ProgramOfferCard
+                    category={offer.category}
+                    title={offer.title}
+                    description={offer.description}
+                    priceCents={priceCents}
+                    currency={currency}
+                    ctaLabel={offer.ctaLabel}
+                    ctaVariant={offer.ctaVariant}
+                    checkoutHref={checkoutHref}
+                    fallbackHref="#programs-offers"
+                    image={getProgramOfferBrandImage(offer.slug)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </Container>
+      </Section>
 
-            <div id="retreats-private-events">
-              <CtaBand
-                contained={false}
-                variant="green"
-                eyebrow="Live & in person"
-                title="Retreats & Private Events"
-                description="Weekend retreats and private events. Enquire for upcoming dates, formats, and pricing."
-                price="Enquire"
-                priceNote="lead capture only at launch"
-                action={{ label: "Enquire", href: "/retreats" }}
-                image={BRAND_IMAGES.retreatSpiritual}
-              />
-            </div>
-          </Container>
-        </Section>
+      <Section padding="default">
+        <Container className="space-y-[18px]">
+          <div id="vip-package">
+            <CtaBand
+              contained={false}
+              eyebrow="Premium 1:1"
+              title="VIP Coaching with Dr. Pattani"
+              description="The 7-Step PATTANI Protocol — advanced diagnostics, one-on-one coaching, and personalized healing strategies for high-touch transformation."
+              features={[...VIP_COACHING_CTA_FEATURES]}
+              price="By enquiry"
+              priceNote="customized high-touch program"
+              action={{ label: "Apply for VIP", href: "/vip" }}
+              image={BRAND_IMAGES.founderCoachingTreePose}
+            />
+          </div>
+
+          <div id="retreats-private-events">
+            <CtaBand
+              contained={false}
+              variant="green"
+              eyebrow="Live & in person"
+              title="Retreats & Private Events"
+              description="Immersive breathwork, sound healing, and functional medicine retreats — enquire for upcoming dates and private event formats."
+              features={[...RETREATS_CTA_FEATURES]}
+              price="Enquire"
+              priceNote="upcoming dates shared on enquiry"
+              action={{ label: "Enquire", href: "/retreats" }}
+              image={BRAND_IMAGES.retreatSpiritual}
+            />
+          </div>
+        </Container>
+      </Section>
     </main>
   )
 }

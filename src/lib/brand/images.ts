@@ -6,9 +6,19 @@ export type BrandImageAsset = {
 
 export const BRAND_IMAGES = {
   founderPortrait: {
-    src: "/brand/founder-portrait.png",
-    alt: "Dr. Deepa Pattani, founder of Elevate Health Solutions, in a serene outdoor setting",
-    objectPosition: "center 20%",
+    src: "/brand/dr-deepa-pattani-founder.jpg",
+    alt: "Dr. Deepa Pattani, Doctor of Pharmacy and founder of Elevate Health Solutions",
+    objectPosition: "center 15%",
+  },
+  founderTempleMeditation: {
+    src: "/brand/founder-temple-meditation.jpg",
+    alt: "Dr. Deepa Pattani seated in meditation at a Balinese temple",
+    objectPosition: "center 38%",
+  },
+  founderCoachingTreePose: {
+    src: "/brand/founder-coaching-tree-pose.jpg",
+    alt: "Dr. Deepa Pattani practicing tree pose by the ocean",
+    objectPosition: "center 30%",
   },
   heroBreathwork: {
     src: "/brand/hero-breathwork.png",

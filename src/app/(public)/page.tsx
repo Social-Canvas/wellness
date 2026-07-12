@@ -1,159 +1,133 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import {
-  EmailCaptureSection,
+  CtaBand,
   FaqAccordion,
-  FeatureGrid,
   HeroSection,
   OfferCardsSection,
-  RetreatBlock,
   StepsGrid,
   TestimonialGrid,
   type HeroAction,
 } from "@/components/marketing"
+import { Container, Section } from "@/components/layout"
+import { buttonVariants } from "@/components/ui/button"
+import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS, RESET_PLAN, RESET_PLAN_CTA_FEATURES } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: "Wellness Studio — Membership Platform",
+  title: `${ELEVATE_BRAND.name} — Functional Medicine & Breathwork`,
   description:
-    "Transform your health with guided wellness programs, memberships, and retreats.",
+    "Science + soul for nervous system regulation, functional medicine, and root-cause healing with Dr. Deepa Pattani.",
 }
 
-const HERO_EYEBROW = "Wellness · Mindfulness · Retreats"
+const HERO_EYEBROW = ELEVATE_BRAND.philosophy
 
-const HERO_TITLE = "Transform your health,"
+const HERO_TITLE = "Regulate your nervous system."
 
-const HERO_HIGHLIGHTED_TITLE = "transform your life."
+const HERO_HIGHLIGHTED_TITLE = "Heal at the root."
 
 const HERO_DESCRIPTION =
-  "Discover the root causes of your health concerns and transform your well-being with a personalized, holistic approach. For over 20 years, our founder has helped people move from stress and fatigue back to energy, calm, and control."
+  "Elevate Health Solutions blends functional medicine, breathwork, and evidence-informed healing to help high-performing professionals move beyond burnout, anxiety, and depletion — into clarity, resilience, and vibrant health."
 
 const HERO_ACTIONS: HeroAction[] = [
-  { label: "Browse programs", href: "/programs", variant: "primary" },
-  { label: "Try a free taster", href: "/free-taster", variant: "ghost" },
+  { label: "Start Reset Plan", href: "/programs#reset-plan", variant: "primary" },
+  { label: "Explore memberships", href: "#memberships", variant: "ghost" },
 ]
 
 const HERO_TRUST_ITEMS = [
-  "Featured in the press",
+  "Featured in Forbes",
+  "Authority Magazine",
   "Best-selling author",
-  "Trusted by thousands",
+  "Functional medicine & breathwork",
 ]
 
-const FEATURE_EYEBROW = "Transformations you can expect"
-
-const FEATURE_TITLE = "What healing at the root feels like"
-
-const FEATURE_ITEMS = [
-  { title: "Improved quality of life and energy" },
-  { title: "Less pain, inflammation, and brain fog" },
-  { title: "Better sleep and hormonal health" },
-  { title: "Better gut health, less bloating" },
-  { title: "Less stress, better mental health" },
-]
-
-const STEPS = [
+const JOURNEY_STEPS = [
   {
     number: "1",
-    title: "Root cause assessment",
+    title: "Ground",
     description:
-      "Comprehensive testing and history to uncover the underlying issues behind how you feel.",
+      "Nervous system safety first — release survival mode, reduce burnout, and teach the body it is safe to rest.",
   },
   {
     number: "2",
-    title: "Custom solutions",
+    title: "Release",
     description:
-      "Tailored guidance, programs, and coaching built around your needs and membership plan.",
+      "Move stored stress and emotional patterns through guided breathwork, gut support, and hormonal balance.",
   },
   {
     number: "3",
-    title: "Lasting results",
+    title: "Align & expand",
     description:
-      "Sustainable practices and ongoing content to maintain optimal health for the long term.",
+      "Embody sustainable transformation — clarity, resilience, purpose, and leadership from a regulated nervous system.",
   },
 ]
 
-const OFFER_CARDS = [
-  {
-    category: "Program",
-    title: "7-Day Reset",
-    description:
-      "Jumpstart your healing in a week with guided meditations, practical resources, and a clear path forward.",
-    price: (
-      <>
-        $47 <small className="font-body text-xs font-normal text-ink-soft">one time</small>
-      </>
-    ),
-    href: "/programs#offer-7-day-reset",
-    image: BRAND_IMAGES.productJournalReset,
-  },
-  {
-    category: "Membership",
-    title: "Membership",
-    description:
-      "Ongoing meditation, core course library, and live session recordings across three plans.",
-    price: (
-      <>
-        Monthly + annual{" "}
-        <small className="font-body text-xs font-normal text-ink-soft">pricing TBC</small>
-      </>
-    ),
-    href: "/programs",
-    image: BRAND_IMAGES.meditationSession,
-  },
-  {
-    category: "Premium 1:1",
-    title: "VIP Package",
-    description:
-      "Custom high-touch transformation with enquiry-based pricing and dedicated support.",
-    price: "By enquiry",
-    href: "/vip",
-    image: BRAND_IMAGES.wellnessSpa,
-  },
-]
+const MEMBERSHIP_IMAGES = [
+  BRAND_IMAGES.meditationSession,
+  BRAND_IMAGES.heroBreathwork,
+  BRAND_IMAGES.coachingVirtual,
+] as const
+
+const MEMBERSHIP_CARDS = ELEVATE_MEMBERSHIPS.map((tier, index) => ({
+  category: "Membership",
+  title: tier.name,
+  description: tier.whoItIsFor,
+  price: (
+    <>
+      {tier.priceLabel}{" "}
+      <small className="font-body text-xs font-normal text-ink-soft">/ month</small>
+    </>
+  ),
+  href: buildCheckoutConsentUrl({
+    type: "membership",
+    planSlug: tier.slug,
+    interval: "monthly",
+  }),
+  ctaLabel: `Join ${tier.name}`,
+  image: MEMBERSHIP_IMAGES[index] ?? BRAND_IMAGES.meditationSession,
+}))
 
 const TESTIMONIALS = [
   {
     quote:
-      "What a difference. My family member went from barely functioning to living independently. Forever grateful to the team.",
-    cite: "Member A.",
+      "I went from exhausted and overwhelmed to having energy and emotional stability I had not felt in years. The nervous system work changed everything.",
+    cite: "Elevate Gold member · burnout recovery",
   },
   {
     quote:
-      "I changed my diet with their guidance and it changed my life. I always knew something was off but had never been tested.",
-    cite: "Member B.",
-  },
-  {
-    quote:
-      "My nutritionist said fix the gut and things fall into place. This program finally showed me how to actually do it.",
-    cite: "Member C.",
+      "The Reset Plan was the doorway. The membership gave me the structure to keep healing instead of starting over every few months.",
+    cite: "Reset Plan graduate · ongoing membership",
   },
 ]
 
 const FAQ_ITEMS = [
   {
-    question: "Do you take insurance?",
+    question: "Is this medical care?",
     answer:
-      "Memberships and programs are self-pay, and costs are always shared up front.",
+      "Elevate provides educational functional medicine and breathwork content. It is not a substitute for medical diagnosis or treatment. Always consult your physician.",
   },
   {
     question: "How is this different from conventional medicine?",
     answer:
-      "Conventional care manages symptoms. Our approach looks for the root cause using history, testing, and lifestyle as the levers for lasting change.",
+      "Conventional care often manages symptoms. Dr. Pattani's approach identifies root causes — nervous system dysregulation, inflammation, hormones, and lifestyle — using science + soul.",
   },
   {
-    question: "How long until I feel a difference?",
+    question: "Where do I start?",
     answer:
-      "Many clients notice shifts in energy and sleep within the first few weeks. Deeper change builds over the course of your protocol.",
+      "Most people begin with the Reset Plan, then choose Elevate Core, Gold, or Platinum depending on the level of support and live access they want.",
   },
   {
-    question: "Are consultations virtual?",
+    question: "Are sessions virtual?",
     answer:
-      "Yes, sessions are delivered virtually so you can take part wherever you are. In-person retreats are also available.",
+      "Yes. Core content and many sessions are delivered virtually. Elevate Platinum includes the full live Elevate experience; retreats are offered separately.",
   },
   {
-    question: "Is this safe with my medications?",
+    question: "Is this safe alongside my medications?",
     answer:
-      "Our team takes safety seriously and works alongside your existing care. Always keep your physician informed.",
+      "Dr. Pattani is a Doctor of Pharmacy with deep pharmacology expertise. Always keep your prescribing physician informed about any program you join.",
   },
 ]
 
@@ -167,42 +141,64 @@ export default function HomePage() {
         description={HERO_DESCRIPTION}
         actions={HERO_ACTIONS}
         trustItems={HERO_TRUST_ITEMS}
+        image={BRAND_IMAGES.founderTempleMeditation}
       />
 
-      <FeatureGrid
-        eyebrow={FEATURE_EYEBROW}
-        title={FEATURE_TITLE}
-        items={FEATURE_ITEMS}
+      <StepsGrid
+        eyebrow="The Elevate journey"
+        title="A structured path to nervous system transformation"
+        steps={JOURNEY_STEPS}
       />
 
-      <StepsGrid eyebrow="Our approach" title="How we get you back to yourself" steps={STEPS} />
+      <Section padding="default">
+        <Container>
+          <CtaBand
+            contained={false}
+            eyebrow="Start here"
+            title={RESET_PLAN.name}
+            description={RESET_PLAN.description}
+            features={[...RESET_PLAN_CTA_FEATURES]}
+            price={RESET_PLAN.priceLabel}
+            priceNote="one-time entry offer"
+            action={{ label: "Start Reset Plan", href: "/programs#reset-plan" }}
+            image={BRAND_IMAGES.productJournalReset}
+          />
+        </Container>
+      </Section>
 
       <OfferCardsSection
-        eyebrow="Ways to work together"
-        title="From a quick reset to the full experience"
-        cards={OFFER_CARDS}
-        footerCta={{ label: "See all programs & plans", href: "/programs" }}
+        id="memberships"
+        eyebrow="Memberships"
+        title="Elevate Core, Gold & Platinum"
+        cards={MEMBERSHIP_CARDS}
+        footerCta={{ label: "View all programs & sessions", href: "/programs" }}
       />
 
       <TestimonialGrid
-        eyebrow="What clients say"
-        title="Real people, real shifts"
+        eyebrow="Client experience"
+        title="Calm, clarity, and lasting change"
         testimonials={TESTIMONIALS}
-      />
-
-      <RetreatBlock
-        eyebrow="Live events & retreats"
-        title="Retreats and private events around the world"
-        description="Step away from the noise and reconnect — breathwork, sound baths, and deep rest in beautiful destinations. Enquire for upcoming dates and formats."
-        cta={{ label: "Explore retreats", href: "/retreats" }}
       />
 
       <FaqAccordion eyebrow="Questions, answered" title="Before you begin" items={FAQ_ITEMS} />
 
-      <EmailCaptureSection
-        title="Get 10% off your first program"
-        description="Drop your email and we'll send your code plus a free guided session to begin."
-      />
+      <Section variant="soft" padding="default">
+        <Container className="text-center">
+          <h2 className="font-display text-[clamp(1.5rem,3.2vw,2.125rem)] font-medium text-ink">
+            Begin with a free guided session
+          </h2>
+          <p className="mx-auto mt-3 max-w-[480px] text-base text-ink-soft">
+            Sample Elevate breathwork before you choose a membership or program. No
+            commitment required.
+          </p>
+          <Link
+            href="/free-taster"
+            className={cn(buttonVariants({ variant: "default", size: "default" }), "mt-6")}
+          >
+            Request free taster
+          </Link>
+        </Container>
+      </Section>
     </main>
   )
 }

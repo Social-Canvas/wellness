@@ -16,12 +16,14 @@ import {
 } from "@/features/checkout/utils/stripe-return-urls"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sendMembershipActivatedEmail } from "@/server/integrations/resend/transactional-email.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import {
   getStripeCustomerId,
   mapStripeSubscriptionToUpdate,
   mapStripeSubscriptionToUpsert,
 } from "@/server/integrations/stripe/mapper"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import type { Database } from "@/types/database/supabase"
 
 const userIdSchema = z.uuid("Invalid user id.")
@@ -30,10 +32,11 @@ const stripeSubscriptionIdSchema = z.string().min(1, "Invalid Stripe subscriptio
 
 type ProfileRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "id" | "email" | "stripe_customer_id"
+  "id" | "email" | "full_name" | "stripe_customer_id"
 >
 
 type PlanPriceRow = Database["public"]["Tables"]["plan_prices"]["Row"]
+const ACTIVE_STATUSES = new Set<Subscription["status"]>(["active", "trialing"])
 
 type SubscriptionWithPlan = Subscription & {
   plans: Pick<
@@ -98,7 +101,7 @@ async function getProfileByUserId(userId: string): Promise<ActionResult<ProfileR
     const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, email, stripe_customer_id")
+      .select("id, email, full_name, stripe_customer_id")
       .eq("id", userId)
       .maybeSingle()
 
@@ -241,6 +244,16 @@ async function resolveUserIdForSubscription(
     return success(data.id)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+async function getPlanNameById(planId: string): Promise<string> {
+  try {
+    const supabase = createAdminClient()
+    const { data } = await supabase.from("plans").select("name").eq("id", planId).maybeSingle()
+    return data?.name ?? "Membership"
+  } catch {
+    return "Membership"
   }
 }
 
@@ -420,13 +433,17 @@ export async function syncSubscriptionFromStripe(
 
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select("id, status")
       .eq("stripe_subscription_id", subscription.id)
       .maybeSingle()
 
     if (existingError) {
       return mapDatabaseError(existingError)
     }
+
+    const shouldSendMembershipActivatedEmail =
+      ACTIVE_STATUSES.has(subscription.status) &&
+      (!existing || !ACTIVE_STATUSES.has(existing.status))
 
     if (existing) {
       const { data, error } = await supabase
@@ -444,6 +461,33 @@ export async function syncSubscriptionFromStripe(
           : failure("provider_error", "Unable to update subscription.")
       }
 
+      if (shouldSendMembershipActivatedEmail) {
+        try {
+          const profileResult = await getProfileByUserId(userIdResult.data)
+          const planName = await getPlanNameById(planPriceResult.data.plan_id)
+
+          if (profileResult.success) {
+            await sendMembershipActivatedEmail({
+              to: profileResult.data.email,
+              fullName: profileResult.data.full_name,
+              planName,
+              stripeSubscriptionId: data.stripe_subscription_id,
+            })
+          } else {
+            logger.warn("Could not load profile for membership activation email.", {
+              userId: userIdResult.data,
+              stripeSubscriptionId: subscription.id,
+            })
+          }
+        } catch (emailError) {
+          logger.error("Membership activation email failed without blocking sync.", {
+            stripeSubscriptionId: subscription.id,
+            userId: userIdResult.data,
+            error: safeErrorMessage(emailError),
+          })
+        }
+      }
+
       return success(data)
     }
 
@@ -457,6 +501,33 @@ export async function syncSubscriptionFromStripe(
       return error
         ? mapDatabaseError(error)
         : failure("provider_error", "Unable to create subscription.")
+    }
+
+    if (shouldSendMembershipActivatedEmail) {
+      try {
+        const profileResult = await getProfileByUserId(userIdResult.data)
+        const planName = await getPlanNameById(planPriceResult.data.plan_id)
+
+        if (profileResult.success) {
+          await sendMembershipActivatedEmail({
+            to: profileResult.data.email,
+            fullName: profileResult.data.full_name,
+            planName,
+            stripeSubscriptionId: data.stripe_subscription_id,
+          })
+        } else {
+          logger.warn("Could not load profile for membership activation email.", {
+            userId: userIdResult.data,
+            stripeSubscriptionId: subscription.id,
+          })
+        }
+      } catch (emailError) {
+        logger.error("Membership activation email failed without blocking sync.", {
+          stripeSubscriptionId: subscription.id,
+          userId: userIdResult.data,
+          error: safeErrorMessage(emailError),
+        })
+      }
     }
 
     return success(data)

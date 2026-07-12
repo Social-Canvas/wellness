@@ -29,7 +29,7 @@ function TestimonialGrid({
       <Container>
         <div className="grid items-center gap-10 min-[861px]:grid-cols-[0.9fr_1.1fr]">
           <BrandImage
-            image={BRAND_IMAGES.coachingConsultation}
+            image={BRAND_IMAGES.heroBreathwork}
             containerClassName="aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line shadow-sm"
             sizes="(max-width: 860px) 100vw, 40vw"
           />

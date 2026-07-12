@@ -20,6 +20,8 @@ import type {
 } from "@/features/certificates/types"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { sendCertificateEarnedEmail } from "@/server/integrations/resend/transactional-email.service"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import { canAccessCourse } from "@/server/services/entitlement.service"
 import type { Database } from "@/types/database/supabase"
 
@@ -90,6 +92,31 @@ function generateCertificateNumber(): string {
 
 function generateVerificationToken(): string {
   return randomBytes(32).toString("hex")
+}
+
+async function getProfileForEmail(
+  userId: string
+): Promise<ActionResult<{ email: string; fullName: string | null }>> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    if (!data) {
+      return failure("not_found", "Profile not found.")
+    }
+
+    return success({ email: data.email, fullName: data.full_name })
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
 }
 
 async function getExistingCertificate(
@@ -303,7 +330,33 @@ export async function issueCertificate(
       return mapDatabaseError(error)
     }
 
-    return success(mapCertificateWithCourse(data as CertificateWithCourseRow))
+    const issuedCertificate = mapCertificateWithCourse(data as CertificateWithCourseRow)
+
+    try {
+      const profileResult = await getProfileForEmail(parsedUserId.data)
+
+      if (profileResult.success) {
+        await sendCertificateEarnedEmail({
+          to: profileResult.data.email,
+          fullName: profileResult.data.fullName,
+          courseTitle: issuedCertificate.course.title,
+          certificateToken: issuedCertificate.verificationToken,
+        })
+      } else {
+        logger.warn("Could not load profile for certificate earned email.", {
+          userId: parsedUserId.data,
+          certificateId: issuedCertificate.id,
+        })
+      }
+    } catch (emailError) {
+      logger.error("Certificate earned email failed without blocking issuance.", {
+        userId: parsedUserId.data,
+        certificateId: issuedCertificate.id,
+        error: safeErrorMessage(emailError),
+      })
+    }
+
+    return success(issuedCertificate)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }

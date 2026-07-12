@@ -25,9 +25,15 @@ import type {
   ShopProduct,
   ShopProductDetail,
 } from "@/features/shop/types"
+import { RESET_PLAN } from "@/lib/constants/elevate-brand"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import {
+  sendPurchaseConfirmationEmail,
+  sendResetCourseAccessGrantedEmail,
+} from "@/server/integrations/resend/transactional-email.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
+import { logger, safeErrorMessage } from "@/server/utils/logger"
 import { canDownloadProduct } from "@/server/services/entitlement.service"
 import type { Database } from "@/types/database/supabase"
 
@@ -47,7 +53,7 @@ type ProductFileRow = Database["public"]["Tables"]["product_files"]["Row"]
 
 type ProfileRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "id" | "email" | "stripe_customer_id"
+  "id" | "email" | "full_name" | "stripe_customer_id"
 >
 
 function success<T>(data: T): ActionResult<T> {
@@ -96,7 +102,7 @@ async function getProfileByUserId(userId: string): Promise<ActionResult<ProfileR
     const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, email, stripe_customer_id")
+      .select("id, email, full_name, stripe_customer_id")
       .eq("id", userId)
       .maybeSingle()
 
@@ -598,6 +604,8 @@ export async function syncOrderFromStripeCheckoutSession(
       return success({ orderId: existingOrder.id })
     }
 
+    const shouldSendPurchaseEmails = status === "paid"
+
     const orderPayload = {
       user_id: parsedUserId.data,
       stripe_checkout_session_id: session.id,
@@ -665,6 +673,41 @@ export async function syncOrderFromStripeCheckoutSession(
 
     if (!itemsResult.success) {
       return itemsResult
+    }
+
+    if (shouldSendPurchaseEmails) {
+      const profileResult = await getProfileByUserId(parsedUserId.data)
+
+      if (!profileResult.success) {
+        logger.warn("Unable to load profile for purchase emails.", {
+          orderId,
+          userId: parsedUserId.data,
+          checkoutSessionId: session.id,
+        })
+      } else {
+        try {
+          await sendPurchaseConfirmationEmail({
+            to: profileResult.data.email,
+            fullName: profileResult.data.full_name,
+            productTitle: product.title,
+            orderId,
+          })
+
+          if (product.slug === RESET_PLAN.slug) {
+            await sendResetCourseAccessGrantedEmail({
+              to: profileResult.data.email,
+              fullName: profileResult.data.full_name,
+              orderId,
+            })
+          }
+        } catch (error) {
+          logger.error("Purchase email dispatch failed without blocking order sync.", {
+            orderId,
+            checkoutSessionId: session.id,
+            error: safeErrorMessage(error),
+          })
+        }
+      }
     }
 
     return success({ orderId })
