@@ -1,0 +1,182 @@
+{
+  "courseSlug": "7-day-reset-meditation-series",
+  "notes": "Provide exactly one source per lesson: localPath or driveUrl.",
+  "lessons": {
+    "welcome": {
+      "moduleSlug": "welcome",
+      "lessonSlug": "welcome",
+      "videoTitle": "7-Day Elevated Reset — Welcome",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day1_morning": {
+      "moduleSlug": "day-1",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 1 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day1_afternoon": {
+      "moduleSlug": "day-1",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 1 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day1_evening": {
+      "moduleSlug": "day-1",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 1 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day2_morning": {
+      "moduleSlug": "day-2",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 2 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day2_afternoon": {
+      "moduleSlug": "day-2",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 2 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day2_evening": {
+      "moduleSlug": "day-2",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 2 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day3_morning": {
+      "moduleSlug": "day-3",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 3 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day3_afternoon": {
+      "moduleSlug": "day-3",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 3 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day3_evening": {
+      "moduleSlug": "day-3",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 3 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day4_morning": {
+      "moduleSlug": "day-4",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 4 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day4_afternoon": {
+      "moduleSlug": "day-4",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 4 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day4_evening": {
+      "moduleSlug": "day-4",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 4 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day5_morning": {
+      "moduleSlug": "day-5",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 5 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day5_afternoon": {
+      "moduleSlug": "day-5",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 5 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day5_evening": {
+      "moduleSlug": "day-5",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 5 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day6_morning": {
+      "moduleSlug": "day-6",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 6 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day6_afternoon": {
+      "moduleSlug": "day-6",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 6 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day6_evening": {
+      "moduleSlug": "day-6",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 6 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day7_morning": {
+      "moduleSlug": "day-7",
+      "lessonSlug": "morning",
+      "videoTitle": "7-Day Elevated Reset — Day 7 Morning Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day7_afternoon": {
+      "moduleSlug": "day-7",
+      "lessonSlug": "afternoon",
+      "videoTitle": "7-Day Elevated Reset — Day 7 Afternoon Regroup / Refocus",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    },
+    "day7_evening": {
+      "moduleSlug": "day-7",
+      "lessonSlug": "evening",
+      "videoTitle": "7-Day Elevated Reset — Day 7 Evening Meditation",
+      "localPath": "TBD",
+      "driveUrl": "",
+      "sourceFilename": "TBD"
+    }
+  }
+}

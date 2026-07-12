@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# reset media migration operator files
+scripts/reset-media-manifest.json
+docs/7-day-elevated-reset-media-migration-status.json

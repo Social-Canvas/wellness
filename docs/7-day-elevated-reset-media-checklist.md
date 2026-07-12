@@ -3,6 +3,7 @@
 **Course slug (DB):** `7-day-reset-meditation-series`  
 **Display title:** The 7-Day Elevated Reset  
 **Launch state:** Course temporarily **`published`** for Welcome E2E testing; revert to `draft` after manual verification (see below). Remaining 21 lessons stay `draft`.
+**Stand-in guard:** Launch readiness is blocked while Welcome playback ID is `cevtQPbDchk4Foe666xyBV2KUyp7xbQSPhtFCMc7Kv4`.
 
 ## Publish rules
 
@@ -10,6 +11,16 @@
 2. Keep the **course** in `draft` until you are ready to expose the full series (or a defined partial launch).
 3. Keep **modules** in `draft` until at least one lesson in that module is published (or publish all module lessons together).
 4. Membership `content_access` for plans 1–3 is unchanged; draft course status hides the course from the member library until launch.
+5. Do **not** treat launch as ready while Welcome still points to the stand-in playback ID.
+
+## New migration scripts
+
+- Validate inventory: `node scripts/reset-media-ops.mjs validate-inventory`
+- Validate manifest + local files: `node scripts/reset-media-ops.mjs missing-files --manifest scripts/reset-media-manifest.json`
+- DB + stand-in status: `node scripts/reset-media-ops.mjs status --env-file .env.local`
+- Ready-to-publish report: `node scripts/reset-media-ops.mjs safe-to-publish --env-file .env.local`
+- Launch blockers report: `node scripts/reset-media-ops.mjs blockers --env-file .env.local --manifest scripts/reset-media-manifest.json`
+- Run migration uploads/sync: `node scripts/reset-media-migrate.mjs --manifest scripts/reset-media-manifest.json --env-file .env.local`
 
 ## E2E test (Welcome lesson first)
 

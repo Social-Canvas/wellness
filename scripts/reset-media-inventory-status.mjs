@@ -4,12 +4,13 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 const WELCOME_ASSET_ID = "cevtQPbDchk4Foe666xyBV2KUyp7xbQSPhtFCMc7Kv4"
-const DEFAULT_SOURCE_URL = "TBD - export from GHL"
+const DEFAULT_SOURCE_URL = "TBD - user supplies explicit source"
 const DEFAULT_SOURCE_FILENAME = "TBD"
 
 const HEADER = [
   "module",
   "lesson",
+  "manifest key",
   "source type",
   "GHL/Drive source URL",
   "source filename",
@@ -29,6 +30,7 @@ function buildLessonRows() {
     {
       module: "welcome",
       lesson: "welcome",
+      manifestKey: "welcome",
       videoTitle: "7-Day Elevated Reset — Welcome",
       defaults: {
         downloadStatus: "pending_real_export",
@@ -37,7 +39,7 @@ function buildLessonRows() {
         attachmentStatus: "linked_to_stand_in",
         publishStatus: "published_e2e_only",
         notes:
-          "Stand-in clip on Mux. REPLACE BEFORE LAUNCH with real GHL Welcome export; then re-verify playback.",
+          "Stand-in clip on Mux. REPLACE BEFORE LAUNCH with explicit real Welcome file/URL in manifest; re-verify playback before deleting stand-in.",
       },
     },
   ]
@@ -47,16 +49,19 @@ function buildLessonRows() {
       {
         module: `day-${day}`,
         lesson: "morning",
+        manifestKey: `day${day}_morning`,
         videoTitle: `7-Day Elevated Reset — Day ${day} Morning Meditation`,
       },
       {
         module: `day-${day}`,
         lesson: "afternoon",
+        manifestKey: `day${day}_afternoon`,
         videoTitle: `7-Day Elevated Reset — Day ${day} Afternoon Regroup / Refocus`,
       },
       {
         module: `day-${day}`,
         lesson: "evening",
+        manifestKey: `day${day}_evening`,
         videoTitle: `7-Day Elevated Reset — Day ${day} Evening Meditation`,
       },
     )
@@ -150,13 +155,14 @@ function renderRows(videoMap) {
     const playbackId = db?.mux_playback_id ?? ""
     const attachmentStatus = defaults.attachmentStatus ?? "not_attached"
     const publishStatus = defaults.publishStatus ?? (db?.status ?? "draft")
-    const notes = defaults.notes ?? "Awaiting source export and first Mux upload."
+    const notes = defaults.notes ?? "Awaiting explicit source and first Mux upload."
     const videoId = db?.id ?? ""
 
     return [
       entry.module,
       entry.lesson,
-      "GHL export",
+      entry.manifestKey,
+      "local_or_drive_explicit",
       DEFAULT_SOURCE_URL,
       DEFAULT_SOURCE_FILENAME,
       entry.videoTitle,
