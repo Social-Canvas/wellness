@@ -11,7 +11,13 @@ function DashboardFooter() {
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
           <div>
-            <Logo accent={PUBLIC_LOGO.accent} suffix={PUBLIC_LOGO.suffix} variant="footer" />
+            <Logo
+              accent={PUBLIC_LOGO.accent}
+              suffix={PUBLIC_LOGO.suffix}
+              src={PUBLIC_LOGO.src}
+              alt={PUBLIC_LOGO.alt}
+              variant="footer"
+            />
             <p className="mt-2.5 max-w-[320px] text-sm">
               Evidence-informed functional medicine and breathwork for members. This is not medical advice.
             </p>

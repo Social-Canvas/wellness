@@ -30,6 +30,8 @@ type NavbarBackLink = {
 type NavbarLogo = {
   accent: string
   suffix?: string
+  src?: string
+  alt?: string
   href?: string
 }
 
@@ -90,8 +92,8 @@ function NavbarActionLink({ label, href, variant = "ghost" }: NavbarAction) {
   )
 }
 
-function NavbarLogoLink({ accent, suffix, href }: NavbarLogo) {
-  const logo = <Logo accent={accent} suffix={suffix} />
+function NavbarLogoLink({ accent, suffix, src, alt, href }: NavbarLogo) {
+  const logo = <Logo accent={accent} suffix={suffix} src={src} alt={alt} />
 
   if (!href) {
     return logo

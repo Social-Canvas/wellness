@@ -30,7 +30,9 @@ export default async function NotFoundPage() {
               <Logo
                 accent={PUBLIC_LOGO.accent}
                 suffix={PUBLIC_LOGO.suffix}
-                className="justify-center text-3xl min-[861px]:justify-start"
+                src={PUBLIC_LOGO.src}
+                alt={PUBLIC_LOGO.alt}
+                className="[&_img]:h-12"
               />
               <p className="mt-8 text-xs font-bold tracking-[0.18em] text-blue uppercase">
                 404

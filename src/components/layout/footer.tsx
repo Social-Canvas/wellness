@@ -20,7 +20,13 @@ function Footer({ isAuthenticated }: FooterProps) {
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
           <div>
-            <Logo accent={PUBLIC_LOGO.accent} suffix={PUBLIC_LOGO.suffix} variant="footer" />
+            <Logo
+              accent={PUBLIC_LOGO.accent}
+              suffix={PUBLIC_LOGO.suffix}
+              src={PUBLIC_LOGO.src}
+              alt={PUBLIC_LOGO.alt}
+              variant="footer"
+            />
             <p className="mt-2.5 max-w-[280px] text-sm">{PUBLIC_FOOTER_DESCRIPTION}</p>
             <div className="mt-3.5 flex flex-wrap gap-3">
               {PUBLIC_SOCIAL_LINKS.map((link) => (

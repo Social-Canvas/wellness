@@ -650,6 +650,7 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          granted_course_id: string | null
           id: string
           price_amount: number
           product_type: Database["public"]["Enums"]["product_type"]
@@ -664,6 +665,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          granted_course_id?: string | null
           id?: string
           price_amount: number
           product_type: Database["public"]["Enums"]["product_type"]
@@ -678,6 +680,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          granted_course_id?: string | null
           id?: string
           price_amount?: number
           product_type?: Database["public"]["Enums"]["product_type"]
@@ -687,7 +690,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_granted_course_id_fkey"
+            columns: ["granted_course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

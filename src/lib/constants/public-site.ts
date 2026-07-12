@@ -24,6 +24,9 @@ export const PUBLIC_FOOTER_DESCRIPTION =
 export const PUBLIC_LEGAL_DISCLAIMER = `© 2026 ${ELEVATE_BRAND.name}. Educational content only — not medical advice.`
 
 export const PUBLIC_LOGO = {
+  markSrc: "/brand/elevate-logo-mark.png",
+  src: "/brand/elevate-logo-horizontal.png",
+  alt: "Elevate Health Solutions",
   accent: "Elevate",
   suffix: "Health Solutions",
 } as const

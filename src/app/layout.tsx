@@ -18,6 +18,10 @@ const mulish = Mulish({
 export const metadata: Metadata = {
   title: ELEVATE_BRAND.name,
   description: ELEVATE_BRAND.tagline,
+  icons: {
+    icon: "/brand/elevate-logo-mark.png",
+    apple: "/brand/elevate-logo-mark.png",
+  },
 };
 
 export default function RootLayout({

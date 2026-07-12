@@ -102,7 +102,12 @@ export function DashboardHeader({
             </Button>
 
             <Link href="/" className="inline-flex shrink-0 transition-opacity hover:opacity-90">
-              <Logo accent={PUBLIC_LOGO.accent} suffix={PUBLIC_LOGO.suffix} />
+              <Logo
+                accent={PUBLIC_LOGO.accent}
+                suffix={PUBLIC_LOGO.suffix}
+                src={PUBLIC_LOGO.src}
+                alt={PUBLIC_LOGO.alt}
+              />
             </Link>
           </div>
 

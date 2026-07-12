@@ -86,9 +86,9 @@ insert into public.courses (
 values
   (
     '7-day-reset-meditation-series',
-    '7-Day Reset / Meditation Series',
-    'Twenty-one guided meditation sessions, five minutes each, to reset mind and body.',
-    'published',
+    'The 7-Day Elevated Reset',
+    'A guided seven-day nervous system reset — welcome orientation plus daily morning meditations, afternoon regroup sessions, and evening meditations.',
+    'draft',
     1,
     false,
     90
@@ -149,12 +149,11 @@ values
   )
 on conflict (slug) do nothing;
 
--- One main module per course
+-- One main module per course (except 7-Day Elevated Reset — structured separately below)
 insert into public.modules (course_id, slug, title, description, status, sort_order)
 select c.id, 'main', c.title, c.description, c.status, 0
 from public.courses c
 where c.slug in (
-  '7-day-reset-meditation-series',
   'core-course-library',
   'autoimmune-masterclass',
   'health-professional-session',
@@ -165,47 +164,99 @@ where c.slug in (
 on conflict (course_id, slug) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Placeholder videos & lessons: 7-Day Reset (21 × 5 min)
+-- The 7-Day Elevated Reset: Welcome + 7 days × (Morning / Afternoon / Evening)
+-- Videos are draft until Mux assets are uploaded via Admin → Videos.
+-- Course, modules, and lessons remain draft until media is ready for launch.
 -- ---------------------------------------------------------------------------
 
-insert into public.videos (title, duration_seconds, status)
+insert into public.modules (course_id, slug, title, description, status, sort_order)
 select
-  format('7-Day Reset — Lesson %s (placeholder)', lpad(gs::text, 2, '0')),
-  300,
-  'draft'
-from generate_series(1, 21) as gs
-where not exists (
-  select 1
-  from public.lessons l
-  join public.modules m on m.id = l.module_id
-  join public.courses c on c.id = m.course_id
-  where c.slug = '7-day-reset-meditation-series'
-    and l.slug = 'lesson-' || lpad(gs::text, 2, '0')
-);
+  c.id,
+  m.slug,
+  m.title,
+  m.description,
+  'draft',
+  m.sort_order
+from public.courses c
+cross join (
+  values
+    ('welcome', 'Welcome', 'Start here before Day 1.', 0),
+    ('day-1', 'Day 1', 'Morning, afternoon, and evening sessions for Day 1.', 1),
+    ('day-2', 'Day 2', 'Morning, afternoon, and evening sessions for Day 2.', 2),
+    ('day-3', 'Day 3', 'Morning, afternoon, and evening sessions for Day 3.', 3),
+    ('day-4', 'Day 4', 'Morning, afternoon, and evening sessions for Day 4.', 4),
+    ('day-5', 'Day 5', 'Morning, afternoon, and evening sessions for Day 5.', 5),
+    ('day-6', 'Day 6', 'Morning, afternoon, and evening sessions for Day 6.', 6),
+    ('day-7', 'Day 7', 'Morning, afternoon, and evening sessions for Day 7.', 7)
+) as m(slug, title, description, sort_order)
+where c.slug = '7-day-reset-meditation-series'
+on conflict (course_id, slug) do nothing;
+
+insert into public.videos (title, status, migration_status)
+select v.title, 'draft', 'not_started'
+from (
+  values
+    ('7-Day Elevated Reset — Welcome'),
+    ('7-Day Elevated Reset — Day 1 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 1 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 1 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 2 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 2 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 2 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 3 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 3 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 3 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 4 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 4 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 4 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 5 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 5 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 5 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 6 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 6 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 6 Evening Meditation'),
+    ('7-Day Elevated Reset — Day 7 Morning Meditation'),
+    ('7-Day Elevated Reset — Day 7 Afternoon Regroup / Refocus'),
+    ('7-Day Elevated Reset — Day 7 Evening Meditation')
+) as v(title)
+where not exists (select 1 from public.videos existing where existing.title = v.title);
 
 insert into public.lessons (module_id, video_id, slug, title, sort_order, status)
 select
-  m.id,
-  v.id,
-  'lesson-' || lpad(gs::text, 2, '0'),
-  format('Day %s Meditation', gs),
-  gs,
-  'published'
-from generate_series(1, 21) as gs
-cross join lateral (
-  select mod.id
-  from public.modules mod
-  join public.courses c on c.id = mod.course_id
-  where c.slug = '7-day-reset-meditation-series'
-    and mod.slug = 'main'
-  limit 1
-) m
-join lateral (
-  select vid.id
-  from public.videos vid
-  where vid.title = format('7-Day Reset — Lesson %s (placeholder)', lpad(gs::text, 2, '0'))
-  limit 1
-) v on true
+  mod.id,
+  vid.id,
+  l.lesson_slug,
+  l.lesson_title,
+  l.sort_order,
+  'draft'
+from (
+  values
+    ('welcome', 'welcome', 'Welcome', '7-Day Elevated Reset — Welcome', 1),
+    ('day-1', 'morning', 'Day 1: Morning Meditation', '7-Day Elevated Reset — Day 1 Morning Meditation', 1),
+    ('day-1', 'afternoon', 'Day 1: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 1 Afternoon Regroup / Refocus', 2),
+    ('day-1', 'evening', 'Day 1: Evening Meditation', '7-Day Elevated Reset — Day 1 Evening Meditation', 3),
+    ('day-2', 'morning', 'Day 2: Morning Meditation', '7-Day Elevated Reset — Day 2 Morning Meditation', 1),
+    ('day-2', 'afternoon', 'Day 2: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 2 Afternoon Regroup / Refocus', 2),
+    ('day-2', 'evening', 'Day 2: Evening Meditation', '7-Day Elevated Reset — Day 2 Evening Meditation', 3),
+    ('day-3', 'morning', 'Day 3: Morning Meditation', '7-Day Elevated Reset — Day 3 Morning Meditation', 1),
+    ('day-3', 'afternoon', 'Day 3: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 3 Afternoon Regroup / Refocus', 2),
+    ('day-3', 'evening', 'Day 3: Evening Meditation', '7-Day Elevated Reset — Day 3 Evening Meditation', 3),
+    ('day-4', 'morning', 'Day 4: Morning Meditation', '7-Day Elevated Reset — Day 4 Morning Meditation', 1),
+    ('day-4', 'afternoon', 'Day 4: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 4 Afternoon Regroup / Refocus', 2),
+    ('day-4', 'evening', 'Day 4: Evening Meditation', '7-Day Elevated Reset — Day 4 Evening Meditation', 3),
+    ('day-5', 'morning', 'Day 5: Morning Meditation', '7-Day Elevated Reset — Day 5 Morning Meditation', 1),
+    ('day-5', 'afternoon', 'Day 5: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 5 Afternoon Regroup / Refocus', 2),
+    ('day-5', 'evening', 'Day 5: Evening Meditation', '7-Day Elevated Reset — Day 5 Evening Meditation', 3),
+    ('day-6', 'morning', 'Day 6: Morning Meditation', '7-Day Elevated Reset — Day 6 Morning Meditation', 1),
+    ('day-6', 'afternoon', 'Day 6: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 6 Afternoon Regroup / Refocus', 2),
+    ('day-6', 'evening', 'Day 6: Evening Meditation', '7-Day Elevated Reset — Day 6 Evening Meditation', 3),
+    ('day-7', 'morning', 'Day 7: Morning Meditation', '7-Day Elevated Reset — Day 7 Morning Meditation', 1),
+    ('day-7', 'afternoon', 'Day 7: Afternoon Regroup / Refocus', '7-Day Elevated Reset — Day 7 Afternoon Regroup / Refocus', 2),
+    ('day-7', 'evening', 'Day 7: Evening Meditation', '7-Day Elevated Reset — Day 7 Evening Meditation', 3)
+) as l(module_slug, lesson_slug, lesson_title, video_title, sort_order)
+join public.courses c on c.slug = '7-day-reset-meditation-series'
+join public.modules mod on mod.course_id = c.id and mod.slug = l.module_slug
+join public.videos vid on vid.title = l.video_title
 on conflict (module_id, slug) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -560,6 +611,12 @@ values
     'published'
   )
 on conflict (slug) do nothing;
+
+update public.products as p
+set granted_course_id = c.id
+from public.courses as c
+where p.slug = '7-day-reset'
+  and c.slug = '7-day-reset-meditation-series';
 
 -- ---------------------------------------------------------------------------
 -- Content access (plan → course)

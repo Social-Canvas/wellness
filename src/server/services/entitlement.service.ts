@@ -241,6 +241,43 @@ async function hasPurchasedProduct(
   }
 }
 
+async function hasProductGrantedCourseAccess(
+  userId: string,
+  courseId: string
+): Promise<ActionResult<boolean>> {
+  try {
+    const supabase = createAdminClient()
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("id")
+      .eq("granted_course_id", courseId)
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    if (!products?.length) {
+      return success(false)
+    }
+
+    for (const product of products) {
+      const purchasedResult = await hasPurchasedProduct(userId, product.id)
+
+      if (!purchasedResult.success) {
+        return purchasedResult
+      }
+
+      if (purchasedResult.data) {
+        return success(true)
+      }
+    }
+
+    return success(false)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
 export async function canAccessCourse(
   userId: string,
   courseId: string
@@ -256,9 +293,19 @@ export async function canAccessCourse(
     return validationFailure(firstValidationMessage(parsedCourseId.error))
   }
 
-  return hasSubscriptionContentAccess(parsedUserId.data, [
+  const subscriptionAccessResult = await hasSubscriptionContentAccess(parsedUserId.data, [
     { contentType: "course", contentId: parsedCourseId.data },
   ])
+
+  if (!subscriptionAccessResult.success) {
+    return subscriptionAccessResult
+  }
+
+  if (subscriptionAccessResult.data) {
+    return success(true)
+  }
+
+  return hasProductGrantedCourseAccess(parsedUserId.data, parsedCourseId.data)
 }
 
 export async function canAccessLesson(
@@ -284,11 +331,21 @@ export async function canAccessLesson(
 
   const { lessonId: resolvedLessonId, moduleId, courseId } = chainResult.data
 
-  return hasSubscriptionContentAccess(parsedUserId.data, [
+  const subscriptionAccessResult = await hasSubscriptionContentAccess(parsedUserId.data, [
     { contentType: "lesson", contentId: resolvedLessonId },
     { contentType: "module", contentId: moduleId },
     { contentType: "course", contentId: courseId },
   ])
+
+  if (!subscriptionAccessResult.success) {
+    return subscriptionAccessResult
+  }
+
+  if (subscriptionAccessResult.data) {
+    return success(true)
+  }
+
+  return hasProductGrantedCourseAccess(parsedUserId.data, courseId)
 }
 
 export async function canAccessVideo(

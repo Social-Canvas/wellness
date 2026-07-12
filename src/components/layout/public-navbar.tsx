@@ -14,7 +14,13 @@ async function PublicNavbar() {
 
   return (
     <Navbar
-      logo={{ accent: PUBLIC_LOGO.accent, suffix: PUBLIC_LOGO.suffix, href: "/" }}
+      logo={{
+        accent: PUBLIC_LOGO.accent,
+        suffix: PUBLIC_LOGO.suffix,
+        src: PUBLIC_LOGO.src,
+        alt: PUBLIC_LOGO.alt,
+        href: "/",
+      }}
       links={[]}
       actions={[]}
       navMiddle={<NavbarLinks links={PUBLIC_NAV_LINKS} />}
