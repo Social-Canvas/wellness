@@ -6,6 +6,8 @@ import { resolve } from "node:path"
 import Mux from "@mux/mux-node"
 import { createClient } from "@supabase/supabase-js"
 
+import { selectLessons } from "./reset-media-selection.mjs"
+
 const COURSE_SLUG = "7-day-reset-meditation-series"
 const STAND_IN_WELCOME_PLAYBACK_ID = "cevtQPbDchk4Foe666xyBV2KUyp7xbQSPhtFCMc7Kv4"
 
@@ -235,6 +237,7 @@ async function main() {
     parseArgValue("--state-out", "docs/7-day-elevated-reset-media-migration-status.json"),
   )
   const lessonKeyFilter = parseArgValue("--lesson-key", "")
+  const onlyFilter = parseArgValue("--only", "")
   const dryRun = hasArg("--dry-run")
   const pollIntervalMs = Number.parseInt(parseArgValue("--poll-interval-ms", "5000"), 10)
   const maxPolls = Number.parseInt(parseArgValue("--max-polls", "120"), 10)
@@ -279,12 +282,29 @@ async function main() {
     throw new Error(`Manifest includes unknown lesson keys: ${unknownKeys.join(", ")}`)
   }
 
-  const lessonsToProcess = lessonKeyFilter
-    ? canonicalLessons.filter((lesson) => lesson.key === lessonKeyFilter)
-    : canonicalLessons
-  if (lessonKeyFilter && lessonsToProcess.length === 0) {
-    throw new Error(`Unknown --lesson-key "${lessonKeyFilter}"`)
-  }
+  const lessonsToProcess = selectLessons(canonicalLessons, {
+    only: onlyFilter,
+    lessonKey: lessonKeyFilter,
+  })
+
+  // Print the exact selection before any Mux/Supabase mutation. Every Mux
+  // upload and Supabase write happens inside the per-lesson loop below, so
+  // lessons absent from this list receive zero provider calls.
+  const selectionMode = onlyFilter ? "only" : lessonKeyFilter ? "lesson-key" : "all"
+  console.log(
+    JSON.stringify(
+      {
+        selection: {
+          mode: selectionMode,
+          dryRun,
+          selectedCount: lessonsToProcess.length,
+          selectedKeys: lessonsToProcess.map((lesson) => lesson.key),
+        },
+      },
+      null,
+      2,
+    ),
+  )
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
