@@ -14,6 +14,15 @@ import { calculateCourseProgress } from "@/features/progress/services/progress.s
 
 interface CourseLibraryPageProps {
   params: Promise<{ courseId: string }>
+  searchParams: Promise<{ preview?: string | string[] }>
+}
+
+function isPreviewRequested(value: string | string[] | undefined): boolean {
+  if (Array.isArray(value)) {
+    return value.includes("1")
+  }
+
+  return value === "1"
 }
 
 export async function generateMetadata({
@@ -38,7 +47,10 @@ export async function generateMetadata({
   }
 }
 
-export default async function CourseLibraryPage({ params }: CourseLibraryPageProps) {
+export default async function CourseLibraryPage({
+  params,
+  searchParams,
+}: CourseLibraryPageProps) {
   const profileResult = await getCurrentProfile()
 
   if (!profileResult.success) {
@@ -46,7 +58,12 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
   }
 
   const { courseId } = await params
-  const result = await getAccessibleCourse(profileResult.data.id, courseId)
+  const { preview } = await searchParams
+  const previewRequested = isPreviewRequested(preview)
+
+  const result = await getAccessibleCourse(profileResult.data.id, courseId, {
+    preview: { requested: previewRequested, role: profileResult.data.role },
+  })
 
   if (!result.success) {
     if (result.error.code === "not_found") {
@@ -70,13 +87,22 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
   }
 
   const course = result.data
+  const isPreview = course.preview
+  const comingSoonCount = course.modules.reduce(
+    (total, module) =>
+      total + module.lessons.filter((lesson) => !lesson.isAvailable).length,
+    0
+  )
+
   const progressResult = await calculateCourseProgress(profileResult.data.id, {
     courseId: course.id,
   })
 
   let certificate = null
 
+  // Certificates are never issued as a side effect of previewing draft content.
   if (
+    !isPreview &&
     course.certificateEnabled &&
     progressResult.success &&
     progressResult.data.completedAt
@@ -101,13 +127,29 @@ export default async function CourseLibraryPage({ params }: CourseLibraryPagePro
         description={course.description}
       />
 
+      {isPreview ? (
+        <div className="rounded-2xl border border-blue/30 bg-blue-soft/20 px-4 py-3 text-sm text-ink">
+          <span className="font-semibold text-blue">Preview mode</span> · You are
+          viewing unpublished draft content. Draft lessons are not yet available to
+          members.
+        </div>
+      ) : null}
+
       {progressResult.success ? (
-        <CourseProgressSummary progress={progressResult.data} />
+        <CourseProgressSummary
+          progress={progressResult.data}
+          preview={isPreview}
+          comingSoonCount={comingSoonCount}
+        />
       ) : null}
 
       {certificate ? <CourseCertificateCard certificate={certificate} /> : null}
 
-      <LibraryModuleList courseId={course.id} modules={course.modules} />
+      <LibraryModuleList
+        courseId={course.id}
+        modules={course.modules}
+        preview={isPreview}
+      />
     </div>
   )
 }

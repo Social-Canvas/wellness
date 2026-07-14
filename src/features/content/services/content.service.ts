@@ -3,7 +3,9 @@ import "server-only"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import type { UserRole } from "@/features/auth/types"
 import type {
+  LibraryContentStatus,
   LibraryCourse,
   LibraryCourseDetail,
   LibraryLesson,
@@ -22,8 +24,42 @@ import {
 import {
   canAccessCourse,
   canAccessLesson,
+  canPreviewDraftContent,
 } from "@/server/services/entitlement.service"
+import {
+  combinePreviewDecision,
+  deriveLessonAvailability,
+  selectContentStatuses,
+} from "@/server/services/preview-eligibility"
 import { createClient } from "@/lib/supabase/server"
+
+/** Untrusted preview request intent plus the profile used to authorize it. */
+export type PreviewContext = {
+  requested: boolean
+  role: UserRole
+}
+
+/**
+ * Resolves whether a draft-content preview is authorized for this request.
+ * The `requested` flag (from `?preview=1`) alone never grants preview; the
+ * profile must independently satisfy {@link canPreviewDraftContent}. Any error
+ * or missing context degrades safely to published-only (no preview).
+ */
+async function resolvePreviewAuthorized(
+  userId: string,
+  preview: PreviewContext | undefined
+): Promise<boolean> {
+  const requested = preview?.requested ?? false
+
+  if (!requested || !preview) {
+    return false
+  }
+
+  const previewResult = await canPreviewDraftContent({ id: userId, role: preview.role })
+  const eligible = previewResult.success && previewResult.data
+
+  return combinePreviewDecision(requested, eligible)
+}
 
 const userIdSchema = z.uuid("Invalid user id.")
 const courseIdSchema = z.uuid("Invalid course id.")
@@ -36,7 +72,14 @@ type VideoSummaryRow = Pick<
 
 type LessonWithVideo = Pick<
   Lesson,
-  "id" | "module_id" | "title" | "slug" | "sort_order" | "is_required" | "video_id"
+  | "id"
+  | "module_id"
+  | "title"
+  | "slug"
+  | "sort_order"
+  | "is_required"
+  | "video_id"
+  | "status"
 > & {
   videos: VideoSummaryRow | VideoSummaryRow[] | null
 }
@@ -101,11 +144,17 @@ function mapLibraryVideo(video: VideoSummaryRow | null): LibraryVideoSummary | n
   }
 }
 
+function toLibraryStatus(status: string): LibraryContentStatus {
+  return status === "draft" ? "draft" : "published"
+}
+
 function mapLibraryLesson(
   lesson: LessonWithVideo,
   isCompleted = false
 ): LibraryLesson {
   const video = normalizeVideoRow(lesson.videos)
+  const status = toLibraryStatus(lesson.status)
+  const isAvailable = status === "published"
 
   return {
     id: lesson.id,
@@ -117,7 +166,10 @@ function mapLibraryLesson(
     videoId: lesson.video_id,
     hasVideo: Boolean(lesson.video_id && video),
     durationSeconds: video?.duration_seconds ?? null,
-    isCompleted,
+    // Draft lessons are never counted as completed in preview.
+    isCompleted: isAvailable ? isCompleted : false,
+    status,
+    isAvailable,
   }
 }
 
@@ -132,6 +184,7 @@ function mapLibraryModule(
     slug: module.slug,
     description: module.description,
     sortOrder: module.sort_order,
+    status: toLibraryStatus(module.status),
     lessons,
   }
 }
@@ -206,7 +259,8 @@ export async function listAccessibleCourses(
 
 export async function getAccessibleCourse(
   userId: string,
-  courseId: string
+  courseId: string,
+  options?: { preview?: PreviewContext }
 ): Promise<ActionResult<LibraryCourseDetail>> {
   const parsedUserId = userIdSchema.safeParse(userId)
   const parsedCourseId = courseIdSchema.safeParse(courseId)
@@ -229,9 +283,19 @@ export async function getAccessibleCourse(
     return failure("not_found", "Course not found.")
   }
 
+  // Preview authorization is derived server-side from the profile; the request
+  // flag alone can never enable it. Non-entitled users never reach this point.
+  const previewAuthorized = await resolvePreviewAuthorized(
+    parsedUserId.data,
+    options?.preview
+  )
+  const contentStatuses = selectContentStatuses(previewAuthorized)
+
   try {
     const supabase = await createClient()
 
+    // The course container itself must always be published; preview only ever
+    // exposes draft modules/lessons of an already-entitled, published course.
     const { data: course, error: courseError } = await supabase
       .from("courses")
       .select("*")
@@ -251,7 +315,7 @@ export async function getAccessibleCourse(
       .from("modules")
       .select("*")
       .eq("course_id", parsedCourseId.data)
-      .eq("status", "published")
+      .in("status", contentStatuses)
       .order("sort_order", { ascending: true })
 
     if (modulesError) {
@@ -263,6 +327,7 @@ export async function getAccessibleCourse(
     if (moduleRows.length === 0) {
       return success({
         ...mapLibraryCourse(course),
+        preview: previewAuthorized,
         modules: [],
       })
     }
@@ -272,10 +337,10 @@ export async function getAccessibleCourse(
     const { data: lessons, error: lessonsError } = await supabase
       .from("lessons")
       .select(
-        "id, module_id, title, slug, sort_order, is_required, video_id, videos(id, title, duration_seconds, thumbnail_url, mux_playback_id)"
+        "id, module_id, title, slug, sort_order, is_required, video_id, status, videos(id, title, duration_seconds, thumbnail_url, mux_playback_id)"
       )
       .in("module_id", moduleIds)
-      .eq("status", "published")
+      .in("status", contentStatuses)
       .order("sort_order", { ascending: true })
 
     if (lessonsError) {
@@ -321,6 +386,7 @@ export async function getAccessibleCourse(
 
     return success({
       ...mapLibraryCourse(course),
+      preview: previewAuthorized,
       modules: moduleRows.map((moduleRow) =>
         mapLibraryModule(moduleRow, lessonsByModuleId.get(moduleRow.id) ?? [])
       ),
@@ -339,6 +405,7 @@ type LessonDetailRow = Pick<
   | "description"
   | "sort_order"
   | "is_required"
+  | "status"
 > & {
   videos: VideoSummaryRow | VideoSummaryRow[] | null
   modules: (Pick<Module, "id" | "title" | "slug" | "course_id" | "status"> & {
@@ -349,7 +416,8 @@ type LessonDetailRow = Pick<
 export async function getAccessibleLesson(
   userId: string,
   courseId: string,
-  lessonId: string
+  lessonId: string,
+  options?: { preview?: PreviewContext }
 ): Promise<ActionResult<LibraryLessonDetail>> {
   const parsedUserId = userIdSchema.safeParse(userId)
   const parsedCourseId = courseIdSchema.safeParse(courseId)
@@ -377,6 +445,12 @@ export async function getAccessibleLesson(
     return failure("not_found", "Lesson not found.")
   }
 
+  const previewAuthorized = await resolvePreviewAuthorized(
+    parsedUserId.data,
+    options?.preview
+  )
+  const lessonStatuses = selectContentStatuses(previewAuthorized)
+
   try {
     const supabase = await createClient()
 
@@ -391,6 +465,7 @@ export async function getAccessibleLesson(
         description,
         sort_order,
         is_required,
+        status,
         videos ( id, title, duration_seconds, thumbnail_url, mux_playback_id ),
         modules!inner (
           id,
@@ -403,7 +478,7 @@ export async function getAccessibleLesson(
       `
       )
       .eq("id", parsedLessonId.data)
-      .eq("status", "published")
+      .in("status", lessonStatuses)
       .maybeSingle()
 
     if (error) {
@@ -416,14 +491,51 @@ export async function getAccessibleLesson(
 
     const lesson = data as LessonDetailRow
     const lessonModule = lesson.modules
+    const allowedModuleStatuses = selectContentStatuses(previewAuthorized)
 
+    // The course container is always required to be published; modules may be
+    // draft only under an authorized preview.
     if (
       !lessonModule ||
       lessonModule.course_id !== parsedCourseId.data ||
-      lessonModule.status !== "published" ||
+      !allowedModuleStatuses.includes(toLibraryStatus(lessonModule.status)) ||
       lessonModule.courses?.status !== "published"
     ) {
       return failure("not_found", "Lesson not found.")
+    }
+
+    const lessonStatus = toLibraryStatus(lesson.status)
+    const isAvailable = deriveLessonAvailability(lesson.status, lessonModule.status)
+
+    // Draft/unavailable lessons never expose video, playback IDs, progress, or
+    // completion — the caller renders a "coming soon" view instead.
+    if (!isAvailable) {
+      return success({
+        id: lesson.id,
+        moduleId: lesson.module_id,
+        courseId: lessonModule.course_id,
+        title: lesson.title,
+        slug: lesson.slug,
+        description: lesson.description,
+        sortOrder: lesson.sort_order,
+        isRequired: lesson.is_required,
+        video: null,
+        videoProgress: null,
+        isCompleted: false,
+        status: lessonStatus,
+        isAvailable: false,
+        preview: previewAuthorized,
+        course: {
+          id: lessonModule.courses.id,
+          title: lessonModule.courses.title,
+          slug: lessonModule.courses.slug,
+        },
+        module: {
+          id: lessonModule.id,
+          title: lessonModule.title,
+          slug: lessonModule.slug,
+        },
+      })
     }
 
     const video = mapLibraryVideo(normalizeVideoRow(lesson.videos))
@@ -455,6 +567,9 @@ export async function getAccessibleLesson(
       video,
       videoProgress,
       isCompleted,
+      status: lessonStatus,
+      isAvailable: true,
+      preview: previewAuthorized,
       course: {
         id: lessonModule.courses.id,
         title: lessonModule.courses.title,

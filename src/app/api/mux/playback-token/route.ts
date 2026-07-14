@@ -4,7 +4,10 @@ import { z } from "zod"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { getVideo } from "@/features/videos/services/videos.service"
 import { createPlaybackToken } from "@/server/integrations/mux/playback"
-import { canAccessVideo } from "@/server/services/entitlement.service"
+import {
+  canAccessVideo,
+  isVideoInPublishedLesson,
+} from "@/server/services/entitlement.service"
 
 export const runtime = "nodejs"
 
@@ -88,6 +91,26 @@ export async function POST(request: Request) {
         error: {
           code: "entitlement_required",
           message: "You do not have access to this video.",
+        },
+      },
+      { status: 403 }
+    )
+  }
+
+  // Defense in depth: never mint a token for a video that is not attached to a
+  // fully published lesson, even for entitled or preview-authorized users.
+  const publishedResult = await isVideoInPublishedLesson(video.id)
+
+  if (!publishedResult.success) {
+    return NextResponse.json({ error: publishedResult.error }, { status: 500 })
+  }
+
+  if (!publishedResult.data) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "entitlement_required",
+          message: "This video is not available for playback yet.",
         },
       },
       { status: 403 }

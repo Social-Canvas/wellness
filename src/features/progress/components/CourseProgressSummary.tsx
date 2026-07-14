@@ -2,13 +2,32 @@ import type { CourseProgress } from "@/features/progress/types"
 
 interface CourseProgressSummaryProps {
   progress: CourseProgress
+  /** In preview: number of draft lessons not yet available. */
+  comingSoonCount?: number
+  preview?: boolean
 }
 
-export function CourseProgressSummary({ progress }: CourseProgressSummaryProps) {
-  const label =
+export function CourseProgressSummary({
+  progress,
+  comingSoonCount = 0,
+  preview = false,
+}: CourseProgressSummaryProps) {
+  // Progress is always computed over published lessons only, so draft lessons
+  // never reduce completion. In preview we make the "available" framing explicit
+  // and surface how many lessons are still coming soon.
+  const baseLabel =
     progress.totalLessons > 0
-      ? `${progress.completedLessons} of ${progress.totalLessons} lessons complete`
-      : "No lessons yet"
+      ? preview
+        ? `${progress.completedLessons} of ${progress.totalLessons} available lessons complete`
+        : `${progress.completedLessons} of ${progress.totalLessons} lessons complete`
+      : preview
+        ? "No available lessons yet"
+        : "No lessons yet"
+
+  const label =
+    preview && comingSoonCount > 0
+      ? `${baseLabel} · ${comingSoonCount} ${comingSoonCount === 1 ? "lesson" : "lessons"} coming soon`
+      : baseLabel
 
   return (
     <div className="space-y-2">

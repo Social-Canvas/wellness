@@ -3,27 +3,22 @@ import "server-only"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import type { UserRole } from "@/features/auth/types"
 import { createAdminClient } from "@/lib/supabase/admin"
+import {
+  COMP_PREVIEW_MARKER_PREFIX,
+  evaluatePreviewEligibility,
+  isActiveSubscription,
+} from "@/server/services/preview-eligibility"
 import type { Database } from "@/types/database/supabase"
 
 type ContentType = Database["public"]["Enums"]["content_type"]
-type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"]
-
-type ActiveSubscriptionSnapshot = Pick<
-  Subscription,
-  "status" | "current_period_end" | "cancel_at_period_end"
->
 
 const userIdSchema = z.uuid("Invalid user id.")
 const courseIdSchema = z.uuid("Invalid course id.")
 const lessonIdSchema = z.uuid("Invalid lesson id.")
 const videoIdSchema = z.uuid("Invalid video id.")
 const productIdSchema = z.uuid("Invalid product id.")
-
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set<Subscription["status"]>([
-  "active",
-  "trialing",
-])
 
 function success<T>(data: T): ActionResult<T> {
   return { success: true, data }
@@ -47,29 +42,6 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
   }
 
   return failure("provider_error", "Unable to evaluate entitlement. Please try again.")
-}
-
-function isActiveSubscription(subscription: ActiveSubscriptionSnapshot): boolean {
-  const now = Date.now()
-  const periodEnd = subscription.current_period_end
-    ? Date.parse(subscription.current_period_end)
-    : null
-  const hasValidPeriodEnd =
-    periodEnd !== null && !Number.isNaN(periodEnd) && periodEnd > now
-
-  if (periodEnd !== null && !Number.isNaN(periodEnd) && periodEnd <= now) {
-    return false
-  }
-
-  if (ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
-    return true
-  }
-
-  if (subscription.cancel_at_period_end && hasValidPeriodEnd) {
-    return true
-  }
-
-  return false
 }
 
 async function getActivePlanIdsForUser(userId: string): Promise<ActionResult<string[]>> {
@@ -273,6 +245,95 @@ async function hasProductGrantedCourseAccess(
     }
 
     return success(false)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+/**
+ * Server-side check for draft-content preview eligibility.
+ *
+ * Returns true only when the caller is an admin/super_admin, or holds an active
+ * complimentary launch-testing subscription (marker prefix
+ * `comp_launch_testing_`). This is intentionally independent of the ordinary
+ * entitlement path: it decides whether a user may *see* drafts of a course they
+ * are already entitled to. Callers must still run the normal entitlement checks;
+ * this never grants access on its own, and the `?preview=1` request flag never
+ * grants access without this returning true.
+ */
+export async function canPreviewDraftContent(profile: {
+  id: string
+  role: UserRole
+}): Promise<ActionResult<boolean>> {
+  const parsedUserId = userIdSchema.safeParse(profile.id)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("status, current_period_end, cancel_at_period_end, stripe_subscription_id")
+      .eq("user_id", parsedUserId.data)
+      .like("stripe_subscription_id", `${COMP_PREVIEW_MARKER_PREFIX}%`)
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    return success(
+      evaluatePreviewEligibility({
+        role: profile.role,
+        subscriptions: data ?? [],
+      })
+    )
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+/**
+ * Defense-in-depth gate for signed playback: confirms a video is attached to at
+ * least one fully published lesson (published module + published course). Draft
+ * or unavailable lessons must never yield a Mux token even for authorized
+ * previewers, so playback token issuance requires this in addition to
+ * entitlement.
+ */
+export async function isVideoInPublishedLesson(
+  videoId: string
+): Promise<ActionResult<boolean>> {
+  const parsedVideoId = videoIdSchema.safeParse(videoId)
+
+  if (!parsedVideoId.success) {
+    return validationFailure(firstValidationMessage(parsedVideoId.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("id, status, modules!inner ( status, courses!inner ( status ) )")
+      .eq("video_id", parsedVideoId.data)
+      .eq("status", "published")
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    const playable = (data ?? []).some((lesson) => {
+      const lessonModule = Array.isArray(lesson.modules)
+        ? lesson.modules[0]
+        : lesson.modules
+      const course = Array.isArray(lessonModule?.courses)
+        ? lessonModule?.courses[0]
+        : lessonModule?.courses
+
+      return lessonModule?.status === "published" && course?.status === "published"
+    })
+
+    return success(playable)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
