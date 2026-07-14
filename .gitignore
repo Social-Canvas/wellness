@@ -43,4 +43,5 @@ next-env.d.ts
 
 # reset media migration operator files
 scripts/reset-media-manifest.json
+scripts/reset-media-manifest.backup-*.json
 docs/7-day-elevated-reset-media-migration-status.json
