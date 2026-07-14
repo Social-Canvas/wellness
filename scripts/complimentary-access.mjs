@@ -74,6 +74,18 @@ function redactId(id) {
   return `${id.slice(0, 6)}***${id.slice(-4)}`
 }
 
+// The complimentary marker embeds the full profile id
+// (`comp_launch_testing_<profileId>`). Keep the marker prefix visible for
+// auditability, but never print the raw profile id it contains.
+function redactMarker(marker) {
+  if (!marker) return "(none)"
+  const prefix = `${COMP_PREFIX}_`
+  if (marker.startsWith(prefix)) {
+    return `${prefix}${redactId(marker.slice(prefix.length))}`
+  }
+  return redactId(marker)
+}
+
 function projectRefFromUrl(url) {
   const host = String(url).replace(/^https?:\/\//, "").replace(/\/.*$/, "")
   const ref = host.split(".")[0] ?? ""
@@ -223,7 +235,7 @@ async function commandStatus({ client, projectRef, email, planSlug }) {
     const comps = await findCompSubscriptions(client, profile.id)
     summary.complimentaryGrants = comps.map((c) => ({
       subscriptionIdRedacted: redactId(c.id),
-      marker: c.stripe_subscription_id,
+      marker: redactMarker(c.stripe_subscription_id),
       status: c.status,
       currentPeriodEnd: c.current_period_end,
       cancelAtPeriodEnd: c.cancel_at_period_end,
@@ -319,7 +331,7 @@ async function commandGrant({ client, projectRef, email, planSlug, dryRun }) {
     auditReason: AUDIT_REASON,
     action: reusedForPlan ? "reused/updated" : "created",
     subscriptionIdRedacted: redactId(data.id),
-    marker: data.stripe_subscription_id,
+    marker: redactMarker(data.stripe_subscription_id),
     plan: plan.slug,
     status: data.status,
     currentPeriodEnd: data.current_period_end,
@@ -389,7 +401,7 @@ async function commandRevoke({ client, projectRef, email }) {
         profileIdRedacted: redactId(profile.id),
         action: "revoked",
         revokedCount: (data ?? []).length,
-        markers: (data ?? []).map((row) => row.stripe_subscription_id),
+        markers: (data ?? []).map((row) => redactMarker(row.stripe_subscription_id)),
       },
       null,
       2
