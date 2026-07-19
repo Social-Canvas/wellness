@@ -3,8 +3,12 @@ import { test } from "node:test"
 
 import type { LibraryLesson, LibraryModule } from "../types/index.ts"
 import {
+  availableProgressPercent,
   buildLessonContextLine,
+  buildModuleProgressSummary,
   deriveLessonHeadline,
+  deriveOutlineLessonTitle,
+  shouldShowRequiredLabel,
 } from "./lesson-display.ts"
 import {
   buildLessonNavigation,
@@ -208,6 +212,7 @@ test("completed lesson redirects to the correct next available lesson", () => {
       id: "day-1-afternoon",
       title: "Day 1: Afternoon",
       moduleTitle: "Day 1",
+      durationSeconds: 333,
     },
   })
 
@@ -246,6 +251,7 @@ test("mark-complete-and-continue destination is idempotent for same next", () =>
     id: "day-1-afternoon",
     title: "Afternoon",
     moduleTitle: "Day 1",
+    durationSeconds: 333,
   }
 
   const first = resolveContinueDestination({
@@ -270,6 +276,13 @@ test("deriveLessonHeadline strips module prefix once", () => {
   assert.equal(deriveLessonHeadline("Welcome", "Welcome"), "Welcome")
 })
 
+test("deriveOutlineLessonTitle matches headline stripping", () => {
+  assert.equal(
+    deriveOutlineLessonTitle("Day 1: Afternoon Regroup / Refocus", "Day 1"),
+    "Afternoon Regroup / Refocus"
+  )
+})
+
 test("buildLessonContextLine reports available index", () => {
   assert.equal(
     buildLessonContextLine({
@@ -280,6 +293,49 @@ test("buildLessonContextLine reports available index", () => {
     }),
     "Day 1 · Lesson 2 of 19 available"
   )
+})
+
+test("shouldShowRequiredLabel only when required/optional mix exists", () => {
+  assert.equal(
+    shouldShowRequiredLabel(
+      [{ isRequired: true }, { isRequired: true }],
+      true
+    ),
+    false
+  )
+  assert.equal(
+    shouldShowRequiredLabel(
+      [{ isRequired: true }, { isRequired: false }],
+      true
+    ),
+    true
+  )
+  assert.equal(
+    shouldShowRequiredLabel(
+      [{ isRequired: true }, { isRequired: false }],
+      false
+    ),
+    false
+  )
+})
+
+test("buildModuleProgressSummary and available progress percent", () => {
+  assert.equal(
+    buildModuleProgressSummary([
+      { isAvailable: true, isCompleted: true },
+      { isAvailable: true, isCompleted: false },
+      { isAvailable: false, isCompleted: false },
+    ]),
+    "1/2 complete"
+  )
+  assert.equal(
+    buildModuleProgressSummary([
+      { isAvailable: false, isCompleted: false },
+    ]),
+    "Coming soon"
+  )
+  assert.equal(availableProgressPercent(2, 19), 11)
+  assert.equal(availableProgressPercent(0, 0), 0)
 })
 
 test("invalid or missing poster does not resolve to a renderable URL", () => {

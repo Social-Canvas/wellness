@@ -9,6 +9,7 @@ export type AdjacentLessonRef = {
   id: string
   title: string
   moduleTitle: string
+  durationSeconds: number | null
 }
 
 export type LessonNavigationModel = {
@@ -32,6 +33,7 @@ function toAdjacent(lesson: FlatOutlineLesson): AdjacentLessonRef {
     id: lesson.id,
     title: lesson.title,
     moduleTitle: lesson.moduleTitle,
+    durationSeconds: lesson.durationSeconds,
   }
 }
 
