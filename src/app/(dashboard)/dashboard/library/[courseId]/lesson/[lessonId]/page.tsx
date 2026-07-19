@@ -2,12 +2,12 @@ import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import { LessonPlayerView, LibraryPageHeader } from "@/features/content/components"
 import {
-  LibraryLessonComingSoonView,
-  LibraryLessonDetailView,
-  LibraryPageHeader,
-} from "@/features/content/components"
-import { getAccessibleLesson } from "@/features/content/services/content.service"
+  getAccessibleCourse,
+  getAccessibleLesson,
+} from "@/features/content/services/content.service"
+import { buildLessonNavigation } from "@/features/content/utils/lesson-navigation"
 
 interface LessonLibraryPageProps {
   params: Promise<{ courseId: string; lessonId: string }>
@@ -64,13 +64,17 @@ export default async function LessonLibraryPage({
   const { courseId, lessonId } = await params
   const { preview } = await searchParams
   const previewRequested = isPreviewRequested(preview)
-
-  const result = await getAccessibleLesson(profileResult.data.id, courseId, lessonId, {
+  const previewContext = {
     preview: { requested: previewRequested, role: profileResult.data.role },
-  })
+  }
 
-  if (!result.success) {
-    if (result.error.code === "not_found") {
+  const [lessonResult, courseResult] = await Promise.all([
+    getAccessibleLesson(profileResult.data.id, courseId, lessonId, previewContext),
+    getAccessibleCourse(profileResult.data.id, courseId, previewContext),
+  ])
+
+  if (!lessonResult.success) {
+    if (lessonResult.error.code === "not_found") {
       notFound()
     }
 
@@ -85,43 +89,45 @@ export default async function LessonLibraryPage({
           title="Lesson"
         />
         <div className="rounded-2xl border border-line bg-surface px-6 py-6">
-          <p className="text-sm text-destructive">{result.error.message}</p>
+          <p className="text-sm text-destructive">{lessonResult.error.message}</p>
         </div>
       </div>
     )
   }
 
-  const lesson = result.data
-  const isPreview = lesson.preview
-  const courseHref = isPreview
-    ? `/dashboard/library/${courseId}?preview=1`
-    : `/dashboard/library/${courseId}`
+  if (!courseResult.success) {
+    if (courseResult.error.code === "not_found") {
+      notFound()
+    }
+
+    return (
+      <div className="mt-9 space-y-6">
+        <LibraryPageHeader
+          breadcrumb={[
+            { label: "Library", href: "/dashboard/library" },
+            { label: "Course", href: `/dashboard/library/${courseId}` },
+            { label: "Lesson" },
+          ]}
+          title="Lesson"
+        />
+        <div className="rounded-2xl border border-line bg-surface px-6 py-6">
+          <p className="text-sm text-destructive">{courseResult.error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const lesson = lessonResult.data
+  const course = courseResult.data
+  // Course entitlement was resolved once in getAccessibleCourse; outline modules
+  // reuse that result — no per-lesson entitlement loop.
+  const navigation = buildLessonNavigation(course.modules, lesson.id)
 
   return (
-    <div className="mt-9 space-y-6">
-      <LibraryPageHeader
-        breadcrumb={[
-          { label: "Library", href: "/dashboard/library" },
-          { label: lesson.course.title, href: courseHref },
-          { label: lesson.module.title, href: courseHref },
-          { label: lesson.title },
-        ]}
-        title={lesson.title}
-        description={`${lesson.course.title} · ${lesson.module.title}`}
-      />
-
-      {isPreview ? (
-        <div className="rounded-2xl border border-blue/30 bg-blue-soft/20 px-4 py-3 text-sm text-ink">
-          <span className="font-semibold text-blue">Preview mode</span> · Viewing
-          unpublished draft content.
-        </div>
-      ) : null}
-
-      {lesson.isAvailable ? (
-        <LibraryLessonDetailView lesson={lesson} />
-      ) : (
-        <LibraryLessonComingSoonView lesson={lesson} />
-      )}
-    </div>
+    <LessonPlayerView
+      lesson={lesson}
+      modules={course.modules}
+      navigation={navigation}
+    />
   )
 }

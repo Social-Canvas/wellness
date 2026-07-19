@@ -4,6 +4,7 @@ import MuxPlayer from "@mux/mux-player-react"
 import { AlertCircle, Lock, Loader2 } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 
+import { resolvePosterUrl } from "@/features/content/utils/poster-url"
 import { cn } from "@/lib/utils"
 
 type PlaybackState =
@@ -39,14 +40,18 @@ type PlaybackTokenResponse = {
 function PlayerPlaceholder({
   children,
   className,
+  label,
 }: {
   children: ReactNode
   className?: string
+  label: string
 }) {
   return (
     <div
+      role="status"
+      aria-label={label}
       className={cn(
-        "flex aspect-video flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-line bg-gradient-to-br from-blue-soft to-green-soft px-6 text-center",
+        "relative flex aspect-video w-full max-w-4xl flex-col items-center justify-center gap-3 overflow-hidden rounded-[var(--radius-card)] border border-line bg-gradient-to-br from-blue-soft to-green-soft px-6 text-center",
         className
       )}
     >
@@ -66,6 +71,7 @@ export function SecureMuxPlayer({
   onEnded,
 }: SecureMuxPlayerProps) {
   const [playback, setPlayback] = useState<PlaybackState>({ status: "loading" })
+  const safePoster = resolvePosterUrl(poster)
 
   useEffect(() => {
     let cancelled = false
@@ -142,7 +148,7 @@ export function SecureMuxPlayer({
     return (
       <div
         className={cn(
-          "overflow-hidden rounded-[var(--radius-card)] border border-line",
+          "relative aspect-video w-full max-w-4xl overflow-hidden rounded-[var(--radius-card)] border border-line bg-ink/5",
           className
         )}
       >
@@ -150,10 +156,12 @@ export function SecureMuxPlayer({
           playbackId={playback.playbackId}
           tokens={{ playback: playback.token }}
           metadata={{ video_title: title }}
-          poster={poster ?? undefined}
+          {...(safePoster ? { poster: safePoster } : {})}
           streamType="on-demand"
           startTime={startTime}
-          className="aspect-video w-full"
+          aria-label={`Video player: ${title}`}
+          className="absolute inset-0 h-full w-full"
+          style={{ aspectRatio: "16 / 9", width: "100%", height: "100%" }}
           onTimeUpdate={(event) => onTimeUpdate?.(readMediaPayload(event))}
           onPause={(event) => onPause?.(readMediaPayload(event))}
           onEnded={(event) => onEnded?.(readMediaPayload(event))}
@@ -164,7 +172,7 @@ export function SecureMuxPlayer({
 
   if (playback.status === "loading") {
     return (
-      <PlayerPlaceholder className={className}>
+      <PlayerPlaceholder className={className} label={`Loading video: ${title}`}>
         <Loader2 className="size-8 animate-spin text-blue" aria-hidden="true" />
         <p className="text-sm font-medium text-ink-soft">Preparing video...</p>
       </PlayerPlaceholder>
@@ -173,7 +181,7 @@ export function SecureMuxPlayer({
 
   if (playback.status === "locked") {
     return (
-      <PlayerPlaceholder className={className}>
+      <PlayerPlaceholder className={className} label={`Video locked: ${title}`}>
         <Lock className="size-8 text-blue" aria-hidden="true" />
         <div className="space-y-1">
           <p className="text-sm font-medium text-ink">Video locked</p>
@@ -184,7 +192,7 @@ export function SecureMuxPlayer({
   }
 
   return (
-    <PlayerPlaceholder className={className}>
+    <PlayerPlaceholder className={className} label={`Unable to play video: ${title}`}>
       <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
       <div className="space-y-1">
         <p className="text-sm font-medium text-ink">Unable to play video</p>

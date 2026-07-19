@@ -3,10 +3,8 @@
 import { useCallback, useEffect, useRef } from "react"
 
 import { SecureMuxPlayer } from "@/features/content/components/SecureMuxPlayer"
-import {
-  markVideoCompleteAction,
-  saveVideoProgressAction,
-} from "@/features/progress/actions/progress.actions"
+import { resolvePosterUrl } from "@/features/content/utils/poster-url"
+import { saveVideoProgressAction } from "@/features/progress/actions/progress.actions"
 
 const PROGRESS_SAVE_INTERVAL_MS = 17_000
 
@@ -18,6 +16,8 @@ interface ProgressTrackedMuxPlayerProps {
   startTimeSeconds?: number
   isCompleted?: boolean
   className?: string
+  /** Fired when playback ends; does not auto-complete the lesson. */
+  onEnded?: () => void
 }
 
 export function ProgressTrackedMuxPlayer({
@@ -28,6 +28,7 @@ export function ProgressTrackedMuxPlayer({
   startTimeSeconds = 0,
   isCompleted = false,
   className,
+  onEnded,
 }: ProgressTrackedMuxPlayerProps) {
   const lastSavedAtRef = useRef(0)
   const latestProgressRef = useRef({
@@ -35,6 +36,7 @@ export function ProgressTrackedMuxPlayer({
     durationSeconds: 0,
   })
   const isSavingRef = useRef(false)
+  const safePoster = resolvePosterUrl(poster)
 
   const persistProgress = useCallback(
     async (positionSeconds: number, durationSeconds: number) => {
@@ -102,7 +104,7 @@ export function ProgressTrackedMuxPlayer({
     <SecureMuxPlayer
       videoId={videoId}
       title={title}
-      poster={poster}
+      poster={safePoster}
       className={className}
       startTime={resumeTime}
       onTimeUpdate={({ currentTime, duration }) => {
@@ -113,7 +115,8 @@ export function ProgressTrackedMuxPlayer({
       }}
       onEnded={({ currentTime, duration }) => {
         maybePersistProgress(currentTime, duration, true)
-        void markVideoCompleteAction({ videoId, lessonId })
+        // Do not auto-mark complete — completion requires an explicit user action.
+        onEnded?.()
       }}
     />
   )
