@@ -7,7 +7,6 @@ import {
   getCurrentUser,
 } from "@/features/auth/services/auth.service"
 import { AdminShell } from "@/features/admin/components"
-import { createClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -19,21 +18,21 @@ export default async function AdminLayout({
 }: {
   children: ReactNode
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/login")
-  }
-
   const [userResult, profileResult] = await Promise.all([
     getCurrentUser(),
     getCurrentProfile(),
   ])
 
   if (!userResult.success || !profileResult.success) {
+    if (
+      (!userResult.success &&
+        userResult.error.code === "authentication_required") ||
+      (!profileResult.success &&
+        profileResult.error.code === "authentication_required")
+    ) {
+      redirect("/login")
+    }
+
     const message = !userResult.success
       ? userResult.error.message
       : !profileResult.success

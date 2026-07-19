@@ -8,7 +8,6 @@ import {
 } from "@/features/auth/services/auth.service"
 import { getCurrentSubscription } from "@/features/billing/services/billing.service"
 import { DashboardShell } from "@/features/dashboard/components"
-import { createClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -20,21 +19,23 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/login")
-  }
-
+  // getCurrentUser / getCurrentProfile share a request-scoped cached auth
+  // context (React cache). Proxy still refreshes the session separately.
   const [userResult, profileResult] = await Promise.all([
     getCurrentUser(),
     getCurrentProfile(),
   ])
 
   if (!userResult.success || !profileResult.success) {
+    if (
+      (!userResult.success &&
+        userResult.error.code === "authentication_required") ||
+      (!profileResult.success &&
+        profileResult.error.code === "authentication_required")
+    ) {
+      redirect("/login")
+    }
+
     const message = !userResult.success
       ? userResult.error.message
       : !profileResult.success

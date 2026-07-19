@@ -194,11 +194,16 @@ async function filterEntitledLessons(
   lessons: LessonWithVideo[],
   progressByVideoId: Record<string, { completedAt: string | null }>
 ): Promise<ActionResult<LibraryLesson[]>> {
+  const accessResults = await Promise.all(
+    lessons.map(async (lesson) => {
+      const accessResult = await canAccessLesson(userId, lesson.id)
+      return { lesson, accessResult }
+    })
+  )
+
   const entitledLessons: LibraryLesson[] = []
 
-  for (const lesson of lessons) {
-    const accessResult = await canAccessLesson(userId, lesson.id)
-
+  for (const { lesson, accessResult } of accessResults) {
     if (!accessResult.success) {
       return accessResult
     }
@@ -237,11 +242,17 @@ export async function listAccessibleCourses(
       return mapDatabaseError(error)
     }
 
+    const courses = data ?? []
+    const accessResults = await Promise.all(
+      courses.map(async (course) => {
+        const accessResult = await canAccessCourse(parsedUserId.data, course.id)
+        return { course, accessResult }
+      })
+    )
+
     const accessibleCourses: LibraryCourse[] = []
 
-    for (const course of data ?? []) {
-      const accessResult = await canAccessCourse(parsedUserId.data, course.id)
-
+    for (const { course, accessResult } of accessResults) {
       if (!accessResult.success) {
         return accessResult
       }
@@ -366,22 +377,27 @@ export async function getAccessibleCourse(
     )
 
     const lessonsByModuleId = new Map<string, LibraryLesson[]>()
+    const moduleLessonResults = await Promise.all(
+      moduleRows.map(async (moduleRow) => {
+        const moduleLessons = lessonRows.filter(
+          (lesson) => lesson.module_id === moduleRow.id
+        )
+        const entitledLessonsResult = await filterEntitledLessons(
+          parsedUserId.data,
+          moduleLessons,
+          progressByVideoId
+        )
 
-    for (const moduleRow of moduleRows) {
-      const moduleLessons = lessonRows.filter(
-        (lesson) => lesson.module_id === moduleRow.id
-      )
-      const entitledLessonsResult = await filterEntitledLessons(
-        parsedUserId.data,
-        moduleLessons,
-        progressByVideoId
-      )
+        return { moduleId: moduleRow.id, entitledLessonsResult }
+      })
+    )
 
+    for (const { moduleId, entitledLessonsResult } of moduleLessonResults) {
       if (!entitledLessonsResult.success) {
         return entitledLessonsResult
       }
 
-      lessonsByModuleId.set(moduleRow.id, entitledLessonsResult.data)
+      lessonsByModuleId.set(moduleId, entitledLessonsResult.data)
     }
 
     return success({

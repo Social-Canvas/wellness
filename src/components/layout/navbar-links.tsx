@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
@@ -25,7 +26,7 @@ function NavbarLinks({ links }: NavbarLinksProps) {
             : pathname === link.href || pathname.startsWith(`${link.href}/`)
 
         return (
-          <a
+          <Link
             key={link.href}
             href={link.href}
             aria-current={isActive ? "page" : undefined}
@@ -35,7 +36,7 @@ function NavbarLinks({ links }: NavbarLinksProps) {
             )}
           >
             {link.label}
-          </a>
+          </Link>
         )
       })}
     </div>

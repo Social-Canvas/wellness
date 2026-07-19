@@ -1,5 +1,6 @@
 import "server-only"
 
+import { cache } from "react"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
@@ -44,27 +45,34 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
   return failure("provider_error", "Unable to evaluate entitlement. Please try again.")
 }
 
-async function getActivePlanIdsForUser(userId: string): Promise<ActionResult<string[]>> {
-  try {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("plan_id, status, current_period_end, cancel_at_period_end")
-      .eq("user_id", userId)
+/**
+ * Request-scoped memoization of active plan IDs. Course outlines call
+ * canAccessLesson per lesson; without this each check re-queries subscriptions.
+ * React cache() is per-request only — never shared across users.
+ */
+const getActivePlanIdsForUser = cache(
+  async (userId: string): Promise<ActionResult<string[]>> => {
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("plan_id, status, current_period_end, cancel_at_period_end")
+        .eq("user_id", userId)
 
-    if (error) {
-      return mapDatabaseError(error)
+      if (error) {
+        return mapDatabaseError(error)
+      }
+
+      const planIds = (data ?? [])
+        .filter((subscription) => isActiveSubscription(subscription))
+        .map((subscription) => subscription.plan_id)
+
+      return success([...new Set(planIds)])
+    } catch {
+      return failure("unknown_error", "Something went wrong. Please try again.")
     }
-
-    const planIds = (data ?? [])
-      .filter((subscription) => isActiveSubscription(subscription))
-      .map((subscription) => subscription.plan_id)
-
-    return success([...new Set(planIds)])
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
   }
-}
+)
 
 async function hasContentAccessForPlans(
   planIds: string[],
@@ -108,13 +116,17 @@ async function hasSubscriptionContentAccess(
     return success(false)
   }
 
-  for (const check of checks) {
-    const accessResult = await hasContentAccessForPlans(
-      planIdsResult.data,
-      check.contentType,
-      check.contentId
+  const accessResults = await Promise.all(
+    checks.map((check) =>
+      hasContentAccessForPlans(
+        planIdsResult.data,
+        check.contentType,
+        check.contentId
+      )
     )
+  )
 
+  for (const accessResult of accessResults) {
     if (!accessResult.success) {
       return accessResult
     }
@@ -339,75 +351,77 @@ export async function isVideoInPublishedLesson(
   }
 }
 
-export async function canAccessCourse(
-  userId: string,
-  courseId: string
-): Promise<ActionResult<boolean>> {
-  const parsedUserId = userIdSchema.safeParse(userId)
-  const parsedCourseId = courseIdSchema.safeParse(courseId)
+export const canAccessCourse = cache(
+  async (userId: string, courseId: string): Promise<ActionResult<boolean>> => {
+    const parsedUserId = userIdSchema.safeParse(userId)
+    const parsedCourseId = courseIdSchema.safeParse(courseId)
 
-  if (!parsedUserId.success) {
-    return validationFailure(firstValidationMessage(parsedUserId.error))
+    if (!parsedUserId.success) {
+      return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    if (!parsedCourseId.success) {
+      return validationFailure(firstValidationMessage(parsedCourseId.error))
+    }
+
+    const subscriptionAccessResult = await hasSubscriptionContentAccess(
+      parsedUserId.data,
+      [{ contentType: "course", contentId: parsedCourseId.data }]
+    )
+
+    if (!subscriptionAccessResult.success) {
+      return subscriptionAccessResult
+    }
+
+    if (subscriptionAccessResult.data) {
+      return success(true)
+    }
+
+    return hasProductGrantedCourseAccess(parsedUserId.data, parsedCourseId.data)
   }
+)
 
-  if (!parsedCourseId.success) {
-    return validationFailure(firstValidationMessage(parsedCourseId.error))
+export const canAccessLesson = cache(
+  async (userId: string, lessonId: string): Promise<ActionResult<boolean>> => {
+    const parsedUserId = userIdSchema.safeParse(userId)
+    const parsedLessonId = lessonIdSchema.safeParse(lessonId)
+
+    if (!parsedUserId.success) {
+      return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    if (!parsedLessonId.success) {
+      return validationFailure(firstValidationMessage(parsedLessonId.error))
+    }
+
+    const chainResult = await getLessonContentChain(parsedLessonId.data)
+
+    if (!chainResult.success) {
+      return chainResult
+    }
+
+    const { lessonId: resolvedLessonId, moduleId, courseId } = chainResult.data
+
+    const subscriptionAccessResult = await hasSubscriptionContentAccess(
+      parsedUserId.data,
+      [
+        { contentType: "lesson", contentId: resolvedLessonId },
+        { contentType: "module", contentId: moduleId },
+        { contentType: "course", contentId: courseId },
+      ]
+    )
+
+    if (!subscriptionAccessResult.success) {
+      return subscriptionAccessResult
+    }
+
+    if (subscriptionAccessResult.data) {
+      return success(true)
+    }
+
+    return hasProductGrantedCourseAccess(parsedUserId.data, courseId)
   }
-
-  const subscriptionAccessResult = await hasSubscriptionContentAccess(parsedUserId.data, [
-    { contentType: "course", contentId: parsedCourseId.data },
-  ])
-
-  if (!subscriptionAccessResult.success) {
-    return subscriptionAccessResult
-  }
-
-  if (subscriptionAccessResult.data) {
-    return success(true)
-  }
-
-  return hasProductGrantedCourseAccess(parsedUserId.data, parsedCourseId.data)
-}
-
-export async function canAccessLesson(
-  userId: string,
-  lessonId: string
-): Promise<ActionResult<boolean>> {
-  const parsedUserId = userIdSchema.safeParse(userId)
-  const parsedLessonId = lessonIdSchema.safeParse(lessonId)
-
-  if (!parsedUserId.success) {
-    return validationFailure(firstValidationMessage(parsedUserId.error))
-  }
-
-  if (!parsedLessonId.success) {
-    return validationFailure(firstValidationMessage(parsedLessonId.error))
-  }
-
-  const chainResult = await getLessonContentChain(parsedLessonId.data)
-
-  if (!chainResult.success) {
-    return chainResult
-  }
-
-  const { lessonId: resolvedLessonId, moduleId, courseId } = chainResult.data
-
-  const subscriptionAccessResult = await hasSubscriptionContentAccess(parsedUserId.data, [
-    { contentType: "lesson", contentId: resolvedLessonId },
-    { contentType: "module", contentId: moduleId },
-    { contentType: "course", contentId: courseId },
-  ])
-
-  if (!subscriptionAccessResult.success) {
-    return subscriptionAccessResult
-  }
-
-  if (subscriptionAccessResult.data) {
-    return success(true)
-  }
-
-  return hasProductGrantedCourseAccess(parsedUserId.data, courseId)
-}
+)
 
 export async function canAccessVideo(
   userId: string,

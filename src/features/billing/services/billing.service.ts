@@ -1,6 +1,7 @@
 import "server-only"
 
 import type Stripe from "stripe"
+import { cache } from "react"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
@@ -536,52 +537,56 @@ export async function syncSubscriptionFromStripe(
   }
 }
 
-export async function getCurrentSubscription(
-  userId: string
-): Promise<ActionResult<CurrentSubscription | null>> {
-  const parsedUserId = userIdSchema.safeParse(userId)
+export const getCurrentSubscription = cache(
+  async (userId: string): Promise<ActionResult<CurrentSubscription | null>> => {
+    const parsedUserId = userIdSchema.safeParse(userId)
 
-  if (!parsedUserId.success) {
-    return validationFailure(firstValidationMessage(parsedUserId.error))
-  }
+    if (!parsedUserId.success) {
+      return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
 
-  try {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select(
-        `
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select(
+          `
         *,
         plans ( id, name, slug )
       `
+        )
+        .eq("user_id", parsedUserId.data)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        return mapDatabaseError(error)
+      }
+
+      const rows = (data ?? []) as SubscriptionWithPlan[]
+
+      if (rows.length === 0) {
+        return success(null)
+      }
+
+      const activeStatuses = new Set<Subscription["status"]>([
+        "active",
+        "trialing",
+        "past_due",
+      ])
+      const preferred =
+        rows.find((row) => activeStatuses.has(row.status)) ?? rows[0]
+
+      const { data: planPrice } = await supabase
+        .from("plan_prices")
+        .select("billing_interval")
+        .eq("stripe_price_id", preferred.stripe_price_id)
+        .maybeSingle()
+
+      return success(
+        mapCurrentSubscription(preferred, planPrice?.billing_interval ?? null)
       )
-      .eq("user_id", parsedUserId.data)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      return mapDatabaseError(error)
+    } catch {
+      return failure("unknown_error", "Something went wrong. Please try again.")
     }
-
-    const rows = (data ?? []) as SubscriptionWithPlan[]
-
-    if (rows.length === 0) {
-      return success(null)
-    }
-
-    const activeStatuses = new Set<Subscription["status"]>(["active", "trialing", "past_due"])
-    const preferred =
-      rows.find((row) => activeStatuses.has(row.status)) ?? rows[0]
-
-    const { data: planPrice } = await supabase
-      .from("plan_prices")
-      .select("billing_interval")
-      .eq("stripe_price_id", preferred.stripe_price_id)
-      .maybeSingle()
-
-    return success(
-      mapCurrentSubscription(preferred, planPrice?.billing_interval ?? null)
-    )
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
   }
-}
+)

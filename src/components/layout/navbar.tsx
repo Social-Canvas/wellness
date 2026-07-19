@@ -1,4 +1,5 @@
 import * as React from "react"
+import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Container } from "@/components/layout/container"
@@ -47,18 +48,18 @@ type NavbarProps = React.ComponentProps<"header"> & {
 
 function NavbarBackLink({ label, href }: NavbarBackLink) {
   return (
-    <a
+    <Link
       href={href}
       className="inline-flex items-center gap-1 rounded-[30px] border border-line bg-surface px-3.5 py-[7px] font-body text-[13.5px] font-bold text-ink-soft transition-colors hover:border-blue hover:text-blue"
     >
       {label}
-    </a>
+    </Link>
   )
 }
 
 function NavbarLinkItem({ label, href, active }: NavbarLink) {
   return (
-    <a
+    <Link
       href={href}
       data-active={active ? "" : undefined}
       className={cn(
@@ -67,7 +68,7 @@ function NavbarLinkItem({ label, href, active }: NavbarLink) {
       )}
     >
       {label}
-    </a>
+    </Link>
   )
 }
 
@@ -86,9 +87,9 @@ function NavbarActionLink({ label, href, variant = "ghost" }: NavbarAction) {
   const buttonVariant = variant === "primary" ? "default" : "outline"
 
   return (
-    <a href={href} className={cn(buttonVariants({ variant: buttonVariant, size: "sm" }))}>
+    <Link href={href} className={cn(buttonVariants({ variant: buttonVariant, size: "sm" }))}>
       {label}
-    </a>
+    </Link>
   )
 }
 
@@ -100,9 +101,9 @@ function NavbarLogoLink({ accent, suffix, src, alt, href }: NavbarLogo) {
   }
 
   return (
-    <a href={href} className="inline-flex transition-opacity hover:opacity-90">
+    <Link href={href} className="inline-flex transition-opacity hover:opacity-90">
       {logo}
-    </a>
+    </Link>
   )
 }
 

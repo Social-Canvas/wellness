@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { AuthError, SupabaseClient } from "@supabase/supabase-js"
+import { cache } from "react"
 
 import {
   forgotPasswordSchema,
@@ -517,63 +518,74 @@ export async function resetPassword(
   }
 }
 
-export async function getCurrentUser(): Promise<ActionResult<AuthSessionUser>> {
-  try {
-    const supabase = await createClient()
-    const authUserResult = await getAuthenticatedAuthUser(supabase)
+/**
+ * Request-scoped auth + profile load. Dedupes getUser/profile across layout,
+ * page, navbar, and generateMetadata within a single RSC render. Never persists
+ * across requests or users (React cache() is per-request only).
+ */
+const getCachedAuthContext = cache(
+  async (): Promise<
+    ActionResult<{ authUserId: string; email: string; profile: Profile }>
+  > => {
+    try {
+      const supabase = await createClient()
+      const authUserResult = await getAuthenticatedAuthUser(supabase)
 
-    if (!authUserResult.success) {
-      return authUserResult
+      if (!authUserResult.success) {
+        return authUserResult
+      }
+
+      const profileResult = await loadProfileForAuthUser(
+        supabase,
+        authUserResult.data.id,
+        authUserResult.data.email,
+        { fullName: authUserResult.data.fullName, allowRepair: true }
+      )
+
+      if (!profileResult.success) {
+        return profileResult
+      }
+
+      return success({
+        authUserId: authUserResult.data.id,
+        email: authUserResult.data.email,
+        profile: profileResult.data,
+      })
+    } catch {
+      return failure("unknown_error", "Something went wrong. Please try again.")
     }
+  }
+)
 
-    const profileResult = await loadProfileForAuthUser(
-      supabase,
-      authUserResult.data.id,
-      authUserResult.data.email,
-      { fullName: authUserResult.data.fullName, allowRepair: true }
-    )
+export const getCurrentUser = cache(
+  async (): Promise<ActionResult<AuthSessionUser>> => {
+    const context = await getCachedAuthContext()
 
-    if (!profileResult.success) {
-      return profileResult
+    if (!context.success) {
+      return context
     }
 
     return success(
       buildAuthSessionUser(
-        profileResult.data,
-        authUserResult.data.id,
-        authUserResult.data.email
+        context.data.profile,
+        context.data.authUserId,
+        context.data.email
       )
     )
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
   }
-}
+)
 
-export async function getCurrentProfile(): Promise<ActionResult<ProfileView>> {
-  try {
-    const supabase = await createClient()
-    const authUserResult = await getAuthenticatedAuthUser(supabase)
+export const getCurrentProfile = cache(
+  async (): Promise<ActionResult<ProfileView>> => {
+    const context = await getCachedAuthContext()
 
-    if (!authUserResult.success) {
-      return authUserResult
+    if (!context.success) {
+      return context
     }
 
-    const profileResult = await loadProfileForAuthUser(
-      supabase,
-      authUserResult.data.id,
-      authUserResult.data.email,
-      { fullName: authUserResult.data.fullName, allowRepair: true }
-    )
-
-    if (!profileResult.success) {
-      return profileResult
-    }
-
-    return success(mapProfile(profileResult.data))
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+    return success(mapProfile(context.data.profile))
   }
-}
+)
 
 export async function updateProfile(
   input: UpdateProfileInput
