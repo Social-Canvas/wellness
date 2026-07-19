@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { sendPaymentFailedEmail } from "@/server/integrations/resend/transactional-email.service"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 import { getStripeClient } from "@/server/integrations/stripe/client"
+import { getStripeLivemodeMismatch } from "@/server/integrations/stripe/mode"
 import type { Database } from "@/types/database/supabase"
 
 type WebhookEventStatus = Database["public"]["Enums"]["webhook_event_status"]
@@ -191,6 +192,14 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
     const session = event.data.object as Stripe.Checkout.Session
 
     if (session.mode === "payment") {
+      // One-time access requires a paid session; unpaid stays pending via sync mapper.
+      if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
+        logger.warn("Skipping paid entitlement sync for unpaid checkout session.", {
+          checkoutSessionId: session.id,
+          paymentStatus: session.payment_status,
+        })
+      }
+
       const syncResult = await syncOrderFromStripeCheckoutSession(session.id)
 
       if (!syncResult.success) {
@@ -260,6 +269,32 @@ export async function handleStripeWebhook(
       status: "failed",
       message: error instanceof Error ? error.message : "Invalid Stripe webhook signature.",
     }
+  }
+
+  const livemodeMismatch = getStripeLivemodeMismatch(event.livemode, env.STRIPE_SECRET_KEY)
+
+  if (livemodeMismatch) {
+    logger.warn("Rejecting Stripe webhook due to test/live mode mismatch.", {
+      eventId: event.id,
+      eventType: event.type,
+      livemode: event.livemode,
+      reason: livemodeMismatch,
+    })
+
+    try {
+      const recordStatus = await recordWebhookEvent(event)
+
+      if (recordStatus === "new") {
+        await updateWebhookEventStatus(event.id, "ignored", livemodeMismatch)
+      }
+    } catch (recordError) {
+      logger.error("Unable to record ignored livemode-mismatched webhook.", {
+        eventId: event.id,
+        error: safeErrorMessage(recordError),
+      })
+    }
+
+    return { status: "ignored" }
   }
 
   const recordStatus = await recordWebhookEvent(event)

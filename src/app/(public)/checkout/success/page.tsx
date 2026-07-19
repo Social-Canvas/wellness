@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
-import { BackButton, Container, Section } from "@/components/layout"
-import { CheckoutConfirmation } from "@/components/marketing/modals"
-import type { CheckoutConsentType } from "@/features/checkout/utils/checkout-urls"
+import { Container, Section } from "@/components/layout"
+import { CheckoutSuccessStatus } from "@/features/checkout/components/checkout-success-status"
+import { resolveCheckoutSuccessView } from "@/features/checkout/services/checkout-success.service"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 
 export const metadata: Metadata = {
@@ -13,57 +14,53 @@ export const metadata: Metadata = {
 
 type SuccessPageProps = {
   searchParams: Promise<{
-    type?: CheckoutConsentType
-    item?: string
-    returnTo?: string
+    session_id?: string
   }>
-}
-
-function resolveSuccessCopy(type: CheckoutConsentType | undefined) {
-  if (type === "membership") {
-    return {
-      message: "You're enrolled. Welcome to your membership.",
-      actionHref: "/dashboard",
-      actionLabel: "Go to my dashboard",
-      secondaryHref: "/dashboard/library",
-      secondaryLabel: "Browse library",
-    }
-  }
-
-  return {
-    message: "Your purchase is confirmed. Access will appear in your account shortly.",
-    actionHref: "/dashboard/library",
-    actionLabel: "Go to library",
-    secondaryHref: "/shop",
-    secondaryLabel: "Back to shop",
-  }
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
   const profileResult = await getCurrentProfile()
+
+  if (!profileResult.success) {
+    const params = await searchParams
+    const sessionId = params.session_id ?? ""
+    const returnTo = sessionId
+      ? `/checkout/success?session_id=${encodeURIComponent(sessionId)}`
+      : "/checkout/success"
+    redirect(`/login?redirectTo=${encodeURIComponent(returnTo)}`)
+  }
+
   const params = await searchParams
-  const itemName = params.item ? decodeURIComponent(params.item) : "Your purchase"
-  const copy = resolveSuccessCopy(params.type)
-  const emailNote = profileResult.success
-    ? `✓ A receipt and invoice have been emailed to ${profileResult.data.email} automatically.`
-    : null
+  const viewResult = await resolveCheckoutSuccessView(
+    profileResult.data.id,
+    params.session_id
+  )
+
+  const view = viewResult.success
+    ? viewResult.data
+    : {
+        state: "invalid" as const,
+        title: "Unable to confirm checkout",
+        message:
+          "We could not verify this checkout session. If you completed a payment, check My Library or your account.",
+        productName: "Purchase",
+        purchaseType: "unknown" as const,
+        destination: null,
+        accessReady: false,
+      }
 
   return (
     <main>
       <Section padding="default">
         <Container className="max-w-2xl">
-          <div className="mb-4">
-            <BackButton fallbackHref={params.returnTo ?? copy.actionHref} label="← Back" />
-          </div>
-
-          <CheckoutConfirmation
-            message={copy.message}
-            itemName={itemName}
-            emailNote={emailNote}
-            actionHref={copy.actionHref}
-            actionLabel={copy.actionLabel}
-            secondaryHref={copy.secondaryHref}
-            secondaryLabel={copy.secondaryLabel}
+          <CheckoutSuccessStatus
+            sessionId={params.session_id ?? ""}
+            initialState={view.state}
+            initialMessage={view.message}
+            productName={view.productName}
+            destinationHref={view.destination?.href ?? null}
+            destinationLabel={view.destination?.label ?? null}
+            autoRedirect={view.destination?.autoRedirect ?? false}
           />
 
           <p className="mt-6 text-center text-sm text-ink-soft">

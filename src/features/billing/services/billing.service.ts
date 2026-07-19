@@ -20,6 +20,10 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { sendMembershipActivatedEmail } from "@/server/integrations/resend/transactional-email.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import {
+  assertCheckoutUsesTestModeKeys,
+  isConfiguredStripePriceId,
+} from "@/server/integrations/stripe/mode"
+import {
   getStripeCustomerId,
   mapStripeSubscriptionToUpdate,
   mapStripeSubscriptionToUpsert,
@@ -285,21 +289,20 @@ export async function createCheckoutSession(
     return planPriceResult
   }
 
-  let planName = "Membership"
+  const modeCheck = assertCheckoutUsesTestModeKeys({
+    secretKey: env.STRIPE_SECRET_KEY,
+    publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  })
 
-  try {
-    const supabase = createAdminClient()
-    const { data: plan } = await supabase
-      .from("plans")
-      .select("name")
-      .eq("id", planPriceResult.data.plan_id)
-      .maybeSingle()
+  if (!modeCheck.ok) {
+    return failure("provider_error", modeCheck.message)
+  }
 
-    if (plan?.name) {
-      planName = plan.name
-    }
-  } catch {
-    // Keep default plan label when plan lookup fails.
+  if (!isConfiguredStripePriceId(planPriceResult.data.stripe_price_id)) {
+    return failure(
+      "provider_error",
+      "This plan is not configured with a Stripe test Price ID yet."
+    )
   }
 
   const customerResult = await ensureStripeCustomer(profileResult.data)
@@ -320,18 +323,12 @@ export async function createCheckoutSession(
           quantity: 1,
         },
       ],
-      success_url: buildCheckoutSuccessUrl({
-        type: "membership",
-        item: planName,
-        returnTo: "/programs",
-      }),
-      cancel_url: buildCheckoutCancelUrl({
-        type: "membership",
-        returnTo: "/programs",
-      }),
+      success_url: buildCheckoutSuccessUrl(),
+      cancel_url: buildCheckoutCancelUrl({ type: "membership" }),
       metadata: {
         profile_id: parsedUserId.data,
         plan_price_id: parsedPlanPriceId.data,
+        purchase_type: "membership",
       },
       subscription_data: {
         metadata: {

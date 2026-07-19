@@ -14,6 +14,11 @@ import {
   type CreateProductCheckoutInput,
   type GenerateProductDownloadUrlInput,
 } from "@/features/shop/schemas"
+import { env } from "@/lib/config"
+import {
+  assertCheckoutUsesTestModeKeys,
+  isConfiguredStripePriceId,
+} from "@/server/integrations/stripe/mode"
 import {
   isProgramCatalogProductType,
   isPurchasableCatalogProductType,
@@ -418,6 +423,22 @@ export async function createProductCheckoutSession(
       )
     }
 
+    const modeCheck = assertCheckoutUsesTestModeKeys({
+      secretKey: env.STRIPE_SECRET_KEY,
+      publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    })
+
+    if (!modeCheck.ok) {
+      return failure("provider_error", modeCheck.message)
+    }
+
+    if (!isConfiguredStripePriceId(product.stripe_price_id)) {
+      return failure(
+        "provider_error",
+        "This product is not configured with a Stripe test Price ID yet."
+      )
+    }
+
     const profileResult = await getProfileByUserId(parsedUserId.data)
 
     if (!profileResult.success) {
@@ -430,10 +451,6 @@ export async function createProductCheckoutSession(
       return customerResult
     }
 
-    const returnTo = isShopCatalogProductType(product.product_type)
-      ? `/shop/${product.slug}`
-      : "/programs"
-
     const stripe = getStripeClient()
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -445,18 +462,12 @@ export async function createProductCheckoutSession(
           quantity: 1,
         },
       ],
-      success_url: buildCheckoutSuccessUrl({
-        type: "product",
-        item: product.title,
-        returnTo,
-      }),
-      cancel_url: buildCheckoutCancelUrl({
-        type: "product",
-        returnTo,
-      }),
+      success_url: buildCheckoutSuccessUrl(),
+      cancel_url: buildCheckoutCancelUrl({ type: "product" }),
       metadata: {
         profile_id: parsedUserId.data,
         product_id: product.id,
+        purchase_type: "product",
       },
     })
 

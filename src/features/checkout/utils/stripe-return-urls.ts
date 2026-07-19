@@ -3,32 +3,23 @@ import "server-only"
 import { env } from "@/lib/config"
 
 import type { CheckoutConsentType } from "./checkout-urls"
+import {
+  buildCheckoutCancelUrlFromBase,
+  buildCheckoutSuccessUrlFromBase,
+} from "./stripe-return-url-builders"
 
-export function buildCheckoutSuccessUrl(params: {
-  type: CheckoutConsentType
-  item: string
-  returnTo?: string
-}): string {
-  const search = new URLSearchParams({
-    type: params.type,
-    item: params.item,
-  })
+export {
+  CHECKOUT_SESSION_ID_PLACEHOLDER,
+  buildCheckoutCancelUrlFromBase,
+  buildCheckoutSuccessUrlFromBase,
+} from "./stripe-return-url-builders"
 
-  if (params.returnTo) {
-    search.set("returnTo", params.returnTo)
-  }
-
-  return `${env.NEXT_PUBLIC_APP_URL}/checkout/success?${search.toString()}`
+export function buildCheckoutSuccessUrl(): string {
+  return buildCheckoutSuccessUrlFromBase(env.NEXT_PUBLIC_APP_URL)
 }
 
-export function buildCheckoutCancelUrl(params: {
-  type: CheckoutConsentType
-  returnTo: string
+export function buildCheckoutCancelUrl(params?: {
+  type?: CheckoutConsentType
 }): string {
-  const search = new URLSearchParams({
-    type: params.type,
-    returnTo: params.returnTo,
-  })
-
-  return `${env.NEXT_PUBLIC_APP_URL}/checkout/cancel?${search.toString()}`
+  return buildCheckoutCancelUrlFromBase(env.NEXT_PUBLIC_APP_URL, params)
 }
