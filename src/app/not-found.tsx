@@ -1,14 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
-import { Container, Footer, Logo } from "@/components/layout"
+import { BrandLogo } from "@/components/layout/brand-logo"
+import { Container, Footer } from "@/components/layout"
 import { PublicNavbar } from "@/components/layout/public-navbar"
 import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
-import { PUBLIC_LEGAL_DISCLAIMER, PUBLIC_LOGO } from "@/lib/constants/public-site"
+import { PUBLIC_LEGAL_DISCLAIMER } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -27,13 +28,7 @@ export default async function NotFoundPage() {
         <Container className="max-w-5xl">
           <div className="grid items-center gap-10 min-[861px]:grid-cols-[1fr_0.85fr]">
             <div className="text-center min-[861px]:text-left">
-              <Logo
-                accent={PUBLIC_LOGO.accent}
-                suffix={PUBLIC_LOGO.suffix}
-                src={PUBLIC_LOGO.src}
-                alt={PUBLIC_LOGO.alt}
-                className="[&_img]:h-12"
-              />
+              <BrandLogo variant="horizontal" size="lg" href="/" className="justify-center min-[861px]:justify-start" />
               <p className="mt-8 text-xs font-bold tracking-[0.18em] text-blue uppercase">
                 404
               </p>

@@ -1,4 +1,10 @@
 export { BackButton, type BackButtonProps } from "./back-button"
+export {
+  BrandLogo,
+  brandLogoVariants,
+  type BrandLogoProps,
+  type BrandLogoSize,
+} from "./brand-logo"
 export { Container, containerVariants } from "./container"
 export { Footer, type FooterProps } from "./footer"
 export { Logo, logoVariants } from "./logo"

@@ -1,4 +1,4 @@
-import { Logo } from "@/components/layout"
+import { BrandLogo } from "@/components/layout/brand-logo"
 import { cn } from "@/lib/utils"
 
 import { AdminNavItem } from "./AdminNavItem"
@@ -41,8 +41,8 @@ export function AdminSidebar({ mobileOpen, onNavigate }: AdminSidebarProps) {
         aria-label="Admin navigation"
       >
         <div className="mb-6 px-2">
-          <Logo accent="Elevate" suffix="Admin" />
-          <p className="mt-1 text-xs text-ink-soft">Platform management</p>
+          <BrandLogo variant="horizontal" size="sm" />
+          <p className="mt-1 text-xs text-ink-soft">Admin · Platform management</p>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">

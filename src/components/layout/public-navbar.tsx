@@ -5,7 +5,7 @@ import { NavbarLinks } from "@/components/layout/navbar-links"
 import { NavbarSignOutButton } from "@/components/layout/navbar-sign-out-button"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
-import { PUBLIC_LOGO, PUBLIC_NAV_LINKS } from "@/lib/constants/public-site"
+import { PUBLIC_NAV_LINKS } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 async function PublicNavbar() {
@@ -15,11 +15,8 @@ async function PublicNavbar() {
   return (
     <Navbar
       logo={{
-        accent: PUBLIC_LOGO.accent,
-        suffix: PUBLIC_LOGO.suffix,
-        src: PUBLIC_LOGO.src,
-        alt: PUBLIC_LOGO.alt,
         href: "/",
+        hideWordmarkBelow: "sm",
       }}
       links={[]}
       actions={[]}

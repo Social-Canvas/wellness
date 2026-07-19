@@ -3,7 +3,7 @@ import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Container } from "@/components/layout/container"
-import { Logo } from "@/components/layout/logo"
+import { BrandLogo } from "@/components/layout/brand-logo"
 import { cn } from "@/lib/utils"
 
 type NavbarLink = {
@@ -29,11 +29,9 @@ type NavbarBackLink = {
 }
 
 type NavbarLogo = {
-  accent: string
-  suffix?: string
-  src?: string
-  alt?: string
   href?: string
+  /** Hide wordmark on very narrow headers; mark remains. */
+  hideWordmarkBelow?: "sm" | "md"
 }
 
 type NavbarProps = React.ComponentProps<"header"> & {
@@ -93,20 +91,6 @@ function NavbarActionLink({ label, href, variant = "ghost" }: NavbarAction) {
   )
 }
 
-function NavbarLogoLink({ accent, suffix, src, alt, href }: NavbarLogo) {
-  const logo = <Logo accent={accent} suffix={suffix} src={src} alt={alt} />
-
-  if (!href) {
-    return logo
-  }
-
-  return (
-    <Link href={href} className="inline-flex transition-opacity hover:opacity-90">
-      {logo}
-    </Link>
-  )
-}
-
 function Navbar({
   className,
   logo,
@@ -134,7 +118,13 @@ function Navbar({
         >
           <div className="flex min-w-0 items-center gap-3.5">
             {back ? <NavbarBackLink {...back} /> : null}
-            <NavbarLogoLink {...logo} />
+            <BrandLogo
+              variant="horizontal"
+              size="md"
+              href={logo.href}
+              hideWordmarkBelow={logo.hideWordmarkBelow}
+              priority
+            />
           </div>
 
           {navMiddle ??

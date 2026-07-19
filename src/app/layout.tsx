@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Mulish, Poppins } from "next/font/google";
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand";
+import { BRAND_LOGO_MARK } from "@/lib/brand/logo";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
   title: ELEVATE_BRAND.name,
   description: ELEVATE_BRAND.tagline,
   icons: {
-    icon: "/brand/elevate-logo-mark.png",
-    apple: "/brand/elevate-logo-mark.png",
+    icon: BRAND_LOGO_MARK.src,
+    apple: BRAND_LOGO_MARK.src,
   },
 };
 

@@ -1,4 +1,5 @@
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import { getBrandLogoAbsoluteMarkUrl } from "@/lib/brand/logo"
 
 type ElevateEmailLayoutOptions = {
   preheader: string
@@ -25,6 +26,32 @@ function renderBodyLines(lines: string[]): string {
   return lines
     .map((line) => `<p style="margin:0 0 12px;color:#1f3a43;line-height:1.6;">${escapeHtml(line)}</p>`)
     .join("")
+}
+
+function renderBrandHeader(): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const brandName = escapeHtml(ELEVATE_BRAND.name)
+  const philosophy = escapeHtml(ELEVATE_BRAND.philosophy)
+
+  const textBlock = `<p style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${brandName}</p>
+                <p style="margin:4px 0 0;color:#d8e8e4;font-size:13px;">${philosophy}</p>`
+
+  if (!appUrl) {
+    return textBlock
+  }
+
+  const markUrl = escapeHtml(getBrandLogoAbsoluteMarkUrl(appUrl))
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="vertical-align:middle;padding-right:12px;">
+                      <img src="${markUrl}" width="40" height="36" alt="" style="display:block;border:0;width:40px;height:auto;" />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      ${textBlock}
+                    </td>
+                  </tr>
+                </table>`
 }
 
 export function renderElevateEmailLayout({
@@ -62,8 +89,7 @@ export function renderElevateEmailLayout({
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #d8e8e4;">
             <tr>
               <td style="background:#1f3a43;padding:20px 24px;">
-                <p style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${escapeHtml(ELEVATE_BRAND.name)}</p>
-                <p style="margin:4px 0 0;color:#d8e8e4;font-size:13px;">${escapeHtml(ELEVATE_BRAND.philosophy)}</p>
+                ${renderBrandHeader()}
               </td>
             </tr>
             <tr>

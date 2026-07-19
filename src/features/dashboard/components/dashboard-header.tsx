@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
 
+import { BrandLogo } from "@/components/layout/brand-logo"
 import { Container } from "@/components/layout/container"
-import { Logo } from "@/components/layout/logo"
 import { NavbarSignOutButton } from "@/components/layout/navbar-sign-out-button"
 import { Badge, Button } from "@/components/ui"
 import {
@@ -14,7 +14,6 @@ import {
   type DashboardNavItem,
 } from "@/features/dashboard/constants/navigation"
 import type { UserRole } from "@/features/auth/types"
-import { PUBLIC_LOGO } from "@/lib/constants/public-site"
 import { cn } from "@/lib/utils"
 
 type DashboardHeaderProps = {
@@ -101,14 +100,13 @@ export function DashboardHeader({
               {mobileOpen ? <X /> : <Menu />}
             </Button>
 
-            <Link href="/" className="inline-flex shrink-0 transition-opacity hover:opacity-90">
-              <Logo
-                accent={PUBLIC_LOGO.accent}
-                suffix={PUBLIC_LOGO.suffix}
-                src={PUBLIC_LOGO.src}
-                alt={PUBLIC_LOGO.alt}
-              />
-            </Link>
+            <BrandLogo
+              variant="horizontal"
+              size="md"
+              href="/"
+              hideWordmarkBelow="sm"
+              priority
+            />
           </div>
 
           <nav
