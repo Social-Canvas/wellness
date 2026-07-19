@@ -12,7 +12,7 @@ export const RESET_LIBRARY_PATH = `/dashboard/library/${RESET_COURSE_ID}` as con
 
 export const MEMBERSHIP_LIBRARY_PATH = "/dashboard/library" as const
 
-export const EBOOK_LIBRARY_PATH = "/dashboard/library" as const
+export const EBOOK_LIBRARY_PATH = "/dashboard/downloads" as const
 
 export type PostPurchaseDestination = {
   href: string
@@ -68,7 +68,7 @@ export function resolvePostPurchaseDestination(
   if (input.productType === "ebook") {
     return {
       href: EBOOK_LIBRARY_PATH,
-      label: "Go to My Library",
+      label: "Go to My Downloads",
       autoRedirect: false,
     }
   }

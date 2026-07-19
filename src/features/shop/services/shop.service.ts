@@ -11,8 +11,12 @@ import {
 import {
   RESET_COURSE_ID,
   RESET_LIBRARY_PATH,
+  EBOOK_LIBRARY_PATH,
 } from "@/features/checkout/constants/destinations"
 import { shouldRefuseCheckoutForExistingResetAccess } from "@/features/checkout/utils/reset-plan-offer-state"
+import {
+  PRODUCT_DOWNLOAD_URL_EXPIRES_SECONDS,
+} from "@/features/shop/utils/ebook-delivery"
 import {
   createProductCheckoutSchema,
   generateProductDownloadUrlSchema,
@@ -32,6 +36,7 @@ import {
 import type {
   ProductCheckoutResult,
   ProductDownloadUrlResult,
+  PurchasedDownloadItem,
   ShopProduct,
   ShopProductDetail,
 } from "@/features/shop/types"
@@ -59,7 +64,7 @@ const slugSchema = z
   .max(80, "Slug is too long.")
 const checkoutSessionIdSchema = z.string().min(1, "Invalid checkout session id.")
 
-const DOWNLOAD_URL_EXPIRES_SECONDS = 900
+const DOWNLOAD_URL_EXPIRES_SECONDS = PRODUCT_DOWNLOAD_URL_EXPIRES_SECONDS
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 type ProductFileRow = Database["public"]["Tables"]["product_files"]["Row"]
@@ -264,16 +269,168 @@ export async function listPublishedProducts(): Promise<ActionResult<ShopProduct[
   }
 }
 
-export async function listShopCatalogProducts(): Promise<ActionResult<ShopProduct[]>> {
+export async function listShopCatalogProducts(
+  userId?: string | null
+): Promise<ActionResult<ShopProduct[]>> {
   const result = await listPublishedProducts()
 
   if (!result.success) {
     return result
   }
 
-  return success(
-    result.data.filter((product) => isShopCatalogProductType(product.productType))
+  const catalog = result.data.filter((product) =>
+    isShopCatalogProductType(product.productType)
   )
+
+  if (!userId) {
+    return success(catalog.map((product) => ({ ...product, isPurchased: false })))
+  }
+
+  const parsedUserId = userIdSchema.safeParse(userId)
+
+  if (!parsedUserId.success) {
+    return success(catalog.map((product) => ({ ...product, isPurchased: false })))
+  }
+
+  const withAccess = await Promise.all(
+    catalog.map(async (product) => {
+      const purchaseResult = await canDownloadProduct(
+        parsedUserId.data,
+        product.id
+      )
+      return {
+        ...product,
+        isPurchased: purchaseResult.success ? purchaseResult.data : false,
+      }
+    })
+  )
+
+  return success(withAccess)
+}
+
+export async function listPurchasedDownloads(
+  userId: string
+): Promise<ActionResult<PurchasedDownloadItem[]>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("id, created_at")
+      .eq("user_id", parsedUserId.data)
+      .eq("status", "paid")
+      .order("created_at", { ascending: false })
+
+    if (ordersError) {
+      return mapDatabaseError(ordersError)
+    }
+
+    if (!orders?.length) {
+      return success([])
+    }
+
+    const orderIds = orders.map((order) => order.id)
+    const purchasedAtByOrderId = new Map(
+      orders.map((order) => [order.id, order.created_at] as const)
+    )
+
+    const { data: items, error: itemsError } = await supabase
+      .from("order_items")
+      .select("order_id, product_id")
+      .in("order_id", orderIds)
+
+    if (itemsError) {
+      return mapDatabaseError(itemsError)
+    }
+
+    const productIds = [
+      ...new Set((items ?? []).map((item) => item.product_id).filter(Boolean)),
+    ] as string[]
+
+    if (productIds.length === 0) {
+      return success([])
+    }
+
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("*")
+      .in("id", productIds)
+      .eq("status", "published")
+
+    if (productsError) {
+      return mapDatabaseError(productsError)
+    }
+
+    const catalogProducts = (products ?? []).filter((product) =>
+      isShopCatalogProductType(product.product_type)
+    )
+
+    if (catalogProducts.length === 0) {
+      return success([])
+    }
+
+    const { data: files, error: filesError } = await supabase
+      .from("product_files")
+      .select("id, product_id, file_name, mime_type, size_bytes")
+      .in(
+        "product_id",
+        catalogProducts.map((product) => product.id)
+      )
+      .order("created_at", { ascending: true })
+
+    if (filesError) {
+      return mapDatabaseError(filesError)
+    }
+
+    const filesByProductId = new Map<
+      string,
+      Array<{
+        id: string
+        fileName: string
+        mimeType: string | null
+        sizeBytes: number | null
+      }>
+    >()
+
+    for (const file of files ?? []) {
+      const list = filesByProductId.get(file.product_id) ?? []
+      list.push({
+        id: file.id,
+        fileName: file.file_name,
+        mimeType: file.mime_type,
+        sizeBytes: file.size_bytes,
+      })
+      filesByProductId.set(file.product_id, list)
+    }
+
+    const earliestPurchaseByProduct = new Map<string, string | null>()
+    for (const item of items ?? []) {
+      const purchasedAt = purchasedAtByOrderId.get(item.order_id) ?? null
+      const current = earliestPurchaseByProduct.get(item.product_id)
+      if (!current || (purchasedAt && purchasedAt < current)) {
+        earliestPurchaseByProduct.set(item.product_id, purchasedAt)
+      }
+    }
+
+    return success(
+      catalogProducts.map((product) => ({
+        productId: product.id,
+        productSlug: product.slug,
+        productTitle: product.title,
+        productType: product.product_type,
+        coverImageUrl: product.cover_image_url,
+        purchasedAt: earliestPurchaseByProduct.get(product.id) ?? null,
+        files: filesByProductId.get(product.id) ?? [],
+      }))
+    )
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
 }
 
 export async function listProgramCatalogProducts(): Promise<ActionResult<ShopProduct[]>> {
@@ -452,8 +609,16 @@ export async function createProductCheckoutSession(
     }
 
     if (purchaseResult.data) {
-      // Course-granting products already handled above; other owned products
-      // (e.g. ebooks) remain non-repurchasable without opening Stripe.
+      // Course-granting products already handled above; owned ebooks/digital
+      // downloads skip Stripe and return the trusted downloads destination.
+      if (isShopCatalogProductType(product.product_type)) {
+        return success({
+          sessionId: null,
+          url: EBOOK_LIBRARY_PATH,
+          alreadyEntitled: true,
+        })
+      }
+
       return failure("already_purchased", "You already own this product.")
     }
 
@@ -832,11 +997,20 @@ export async function generateProductDownloadUrl(
     const productFile = file as ProductFileRow
     const { data: signedUrl, error: signedUrlError } = await supabase.storage
       .from(productFile.storage_bucket)
-      .createSignedUrl(productFile.storage_path, DOWNLOAD_URL_EXPIRES_SECONDS)
+      .createSignedUrl(productFile.storage_path, DOWNLOAD_URL_EXPIRES_SECONDS, {
+        download: productFile.file_name,
+      })
 
     if (signedUrlError || !signedUrl?.signedUrl) {
       return failure("provider_error", "Unable to generate download URL.")
     }
+
+    logger.info("Product download URL issued.", {
+      userId: parsedUserId.data,
+      productId: parsedInput.data.productId,
+      fileId: productFile.id,
+      expiresInSeconds: DOWNLOAD_URL_EXPIRES_SECONDS,
+    })
 
     return success({
       url: signedUrl.signedUrl,

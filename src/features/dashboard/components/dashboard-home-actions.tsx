@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Award, BookOpen, CreditCard, ShoppingBag, Sparkles } from "lucide-react"
+import { Award, BookOpen, CreditCard, Download, ShoppingBag, Sparkles } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
@@ -19,6 +19,13 @@ const DASHBOARD_ACTIONS = [
     href: "/programs",
     label: "View programs",
     icon: Sparkles,
+  },
+  {
+    title: "My Downloads",
+    description: "Open ebooks and digital products you have purchased.",
+    href: "/dashboard/downloads",
+    label: "Open downloads",
+    icon: Download,
   },
   {
     title: "Visit Shop",

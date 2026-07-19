@@ -6,9 +6,13 @@ import { cn } from "@/lib/utils"
 
 interface BuyProductButtonProps {
   productSlug: string
+  label?: string
 }
 
-export function BuyProductButton({ productSlug }: BuyProductButtonProps) {
+export function BuyProductButton({
+  productSlug,
+  label = "Buy now",
+}: BuyProductButtonProps) {
   return (
     <Link
       href={buildCheckoutConsentUrl({
@@ -17,7 +21,7 @@ export function BuyProductButton({ productSlug }: BuyProductButtonProps) {
       })}
       className={cn(buttonVariants({ variant: "default", size: "default" }))}
     >
-      Buy now
+      {label}
     </Link>
   )
 }

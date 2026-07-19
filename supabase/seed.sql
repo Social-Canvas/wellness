@@ -572,8 +572,8 @@ values
   ),
   (
     'ebook-1',
-    'Ebook 1',
-    'Digital ebook download.',
+    'Clean Living Recipes',
+    'A Root Cause Care recipe guide for nourishing meals that support inflammation, gut health, and sustained energy.',
     'ebook',
     2499,
     'usd',
@@ -611,6 +611,30 @@ values
     'published'
   )
 on conflict (slug) do nothing;
+
+insert into public.product_files (
+  product_id,
+  storage_bucket,
+  storage_path,
+  file_name,
+  mime_type,
+  size_bytes
+)
+select
+  p.id,
+  'product-files',
+  'clean-living-recipes/v1/clean-living-recipes.pdf',
+  'Elevate-Clean-Living-Recipes.pdf',
+  'application/pdf',
+  20568335
+from public.products as p
+where p.slug = 'ebook-1'
+  and not exists (
+    select 1
+    from public.product_files as pf
+    where pf.product_id = p.id
+      and pf.storage_path = 'clean-living-recipes/v1/clean-living-recipes.pdf'
+  );
 
 update public.products as p
 set granted_course_id = c.id

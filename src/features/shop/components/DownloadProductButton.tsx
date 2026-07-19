@@ -8,6 +8,7 @@ interface DownloadProductButtonProps {
   productId: string
   fileId?: string
   fileName?: string
+  label?: string
 }
 
 type DownloadResponse = {
@@ -25,6 +26,7 @@ export function DownloadProductButton({
   productId,
   fileId,
   fileName,
+  label,
 }: DownloadProductButtonProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,7 +38,11 @@ export function DownloadProductButton({
     try {
       const response = await fetch("/api/products/download-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
         body: JSON.stringify({ productId, fileId }),
       })
 
@@ -55,10 +61,14 @@ export function DownloadProductButton({
     }
   }
 
+  const buttonLabel =
+    label ??
+    (fileName ? `Download ${fileName}` : "Download")
+
   return (
     <div className="space-y-2">
       <Button type="button" variant="outline" onClick={handleDownload} disabled={isSubmitting}>
-        {isSubmitting ? "Preparing..." : `Download${fileName ? ` ${fileName}` : ""}`}
+        {isSubmitting ? "Preparing..." : buttonLabel}
       </Button>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>

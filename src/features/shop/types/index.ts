@@ -14,10 +14,26 @@ export type ShopProduct = {
   priceAmount: number
   currency: string
   coverImageUrl: string | null
+  isPurchased?: boolean
 }
 
 export type ShopProductDetail = ShopProduct & {
   isPurchased: boolean
+  files: Array<{
+    id: string
+    fileName: string
+    mimeType: string | null
+    sizeBytes: number | null
+  }>
+}
+
+export type PurchasedDownloadItem = {
+  productId: string
+  productSlug: string
+  productTitle: string
+  productType: ProductType
+  coverImageUrl: string | null
+  purchasedAt: string | null
   files: Array<{
     id: string
     fileName: string

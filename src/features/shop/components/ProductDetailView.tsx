@@ -11,9 +11,27 @@ import { DownloadProductButton } from "./DownloadProductButton"
 
 interface ProductDetailViewProps {
   product: ShopProductDetail
+  isAuthenticated?: boolean
 }
 
-export function ProductDetailView({ product }: ProductDetailViewProps) {
+function formatFileSize(sizeBytes: number | null): string | null {
+  if (sizeBytes == null || sizeBytes <= 0) {
+    return null
+  }
+
+  const mb = sizeBytes / (1024 * 1024)
+  if (mb >= 1) {
+    return `${mb.toFixed(1)} MB`
+  }
+
+  const kb = sizeBytes / 1024
+  return `${Math.max(1, Math.round(kb))} KB`
+}
+
+export function ProductDetailView({
+  product,
+  isAuthenticated = false,
+}: ProductDetailViewProps) {
   const coverImage = resolveProductCoverImage(product.slug, product.coverImageUrl)
   const previewImage = getProgramOfferBrandImage(product.slug)
   const brandedCopy = ELEVATE_SHOP_COPY.products[product.slug as keyof typeof ELEVATE_SHOP_COPY.products]
@@ -52,26 +70,37 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
 
       <Card className="h-fit shadow-sm">
         <CardContent className="space-y-5 p-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Price</p>
-            <p className="mt-1 font-display text-3xl font-medium text-ink">
-              {formatProductPrice(product.priceAmount, product.currency)}
-            </p>
-          </div>
+          {!product.isPurchased ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Price
+              </p>
+              <p className="mt-1 font-display text-3xl font-medium text-ink">
+                {formatProductPrice(product.priceAmount, product.currency)}
+              </p>
+            </div>
+          ) : null}
 
           {product.isPurchased ? (
             <div className="space-y-3">
               <p className="text-sm text-ink-soft">
-                Your purchase is ready. Download files below.
+                Your purchase is ready. Download your ebook below.
               </p>
               {product.files.length > 0 ? (
                 product.files.map((file) => (
-                  <DownloadProductButton
-                    key={file.id}
-                    productId={product.id}
-                    fileId={file.id}
-                    fileName={file.fileName}
-                  />
+                  <div key={file.id} className="space-y-1">
+                    <DownloadProductButton
+                      productId={product.id}
+                      fileId={file.id}
+                      fileName={file.fileName}
+                      label="Download ebook"
+                    />
+                    {formatFileSize(file.sizeBytes) ? (
+                      <p className="text-xs text-ink-soft">
+                        {formatFileSize(file.sizeBytes)}
+                      </p>
+                    ) : null}
+                  </div>
                 ))
               ) : (
                 <p className="text-sm text-ink-soft">
@@ -80,7 +109,18 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
               )}
             </div>
           ) : (
-            <BuyProductButton productSlug={product.slug} />
+            <BuyProductButton
+              productSlug={product.slug}
+              label={
+                product.productType === "ebook"
+                  ? isAuthenticated
+                    ? "Buy ebook"
+                    : "Get the ebook"
+                  : isAuthenticated
+                    ? "Buy now"
+                    : "Get it"
+              }
+            />
           )}
         </CardContent>
       </Card>

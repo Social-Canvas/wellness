@@ -205,7 +205,7 @@ test("open redirects are rejected by safe path helpers and destinations", () => 
     productType: "ebook",
     grantedCourseId: "00000000-0000-4000-8000-000000000099",
   })
-  assert.equal(forged.href, "/dashboard/library")
+  assert.equal(forged.href, "/dashboard/downloads")
   assert.notEqual(forged.href, `/dashboard/library/00000000-0000-4000-8000-000000000099`)
 })
 

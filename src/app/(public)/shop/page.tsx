@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 import { BrandImage } from "@/components/media"
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ShopProductGrid } from "@/features/shop/components"
 import { listShopCatalogProducts } from "@/features/shop/services/shop.service"
 import {
@@ -16,7 +17,9 @@ export const metadata: Metadata = {
 }
 
 export default async function ShopPage() {
-  const result = await listShopCatalogProducts()
+  const profileResult = await getCurrentProfile()
+  const userId = profileResult.success ? profileResult.data.id : null
+  const result = await listShopCatalogProducts(userId)
 
   return (
     <div className="space-y-10">
@@ -42,7 +45,10 @@ export default async function ShopPage() {
       </div>
 
       {result.success ? (
-        <ShopProductGrid products={result.data} />
+        <ShopProductGrid
+          products={result.data}
+          isAuthenticated={Boolean(userId)}
+        />
       ) : (
         <div className="rounded-2xl border border-line bg-surface px-6 py-6">
           <p className="text-sm text-destructive">{result.error.message}</p>

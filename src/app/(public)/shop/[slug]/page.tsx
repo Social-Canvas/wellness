@@ -44,7 +44,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="mb-4">
         <BackButton fallbackHref="/shop" label="← Back to shop" />
       </div>
-      <ProductDetailView product={result.data} />
+      <ProductDetailView
+        product={result.data}
+        isAuthenticated={profileResult.success}
+      />
     </>
   )
 }
