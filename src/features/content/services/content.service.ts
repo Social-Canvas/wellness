@@ -189,36 +189,22 @@ function mapLibraryModule(
   }
 }
 
-async function filterEntitledLessons(
-  userId: string,
+/**
+ * Maps lessons for a course outline after course entitlement has already been
+ * resolved once. Does not call canAccessLesson per lesson (avoids N+1).
+ */
+function mapCourseOutlineLessons(
   lessons: LessonWithVideo[],
   progressByVideoId: Record<string, { completedAt: string | null }>
-): Promise<ActionResult<LibraryLesson[]>> {
-  const accessResults = await Promise.all(
-    lessons.map(async (lesson) => {
-      const accessResult = await canAccessLesson(userId, lesson.id)
-      return { lesson, accessResult }
-    })
-  )
+): LibraryLesson[] {
+  return lessons.map((lesson) => {
+    const video = normalizeVideoRow(lesson.videos)
+    const isCompleted = video?.id
+      ? Boolean(progressByVideoId[video.id]?.completedAt)
+      : true
 
-  const entitledLessons: LibraryLesson[] = []
-
-  for (const { lesson, accessResult } of accessResults) {
-    if (!accessResult.success) {
-      return accessResult
-    }
-
-    if (accessResult.data) {
-      const video = normalizeVideoRow(lesson.videos)
-      const isCompleted = video?.id
-        ? Boolean(progressByVideoId[video.id]?.completedAt)
-        : true
-
-      entitledLessons.push(mapLibraryLesson(lesson, isCompleted))
-    }
-  }
-
-  return success(entitledLessons)
+    return mapLibraryLesson(lesson, isCompleted)
+  })
 }
 
 export async function listAccessibleCourses(
@@ -376,28 +362,18 @@ export async function getAccessibleCourse(
       ])
     )
 
+    // Course access was already confirmed above. Apply that result to every
+    // lesson in the outline — do not re-query entitlement per lesson.
     const lessonsByModuleId = new Map<string, LibraryLesson[]>()
-    const moduleLessonResults = await Promise.all(
-      moduleRows.map(async (moduleRow) => {
-        const moduleLessons = lessonRows.filter(
-          (lesson) => lesson.module_id === moduleRow.id
-        )
-        const entitledLessonsResult = await filterEntitledLessons(
-          parsedUserId.data,
-          moduleLessons,
-          progressByVideoId
-        )
 
-        return { moduleId: moduleRow.id, entitledLessonsResult }
-      })
-    )
-
-    for (const { moduleId, entitledLessonsResult } of moduleLessonResults) {
-      if (!entitledLessonsResult.success) {
-        return entitledLessonsResult
-      }
-
-      lessonsByModuleId.set(moduleId, entitledLessonsResult.data)
+    for (const moduleRow of moduleRows) {
+      const moduleLessons = lessonRows.filter(
+        (lesson) => lesson.module_id === moduleRow.id
+      )
+      lessonsByModuleId.set(
+        moduleRow.id,
+        mapCourseOutlineLessons(moduleLessons, progressByVideoId)
+      )
     }
 
     return success({

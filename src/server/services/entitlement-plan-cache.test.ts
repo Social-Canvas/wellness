@@ -4,7 +4,8 @@ import { test } from "node:test"
 /**
  * Documents the request-scoped memoization contract used by entitlement
  * orchestration. React cache() itself is framework-provided; this test locks
- * the expected call-reduction behavior for plan-id reuse across N lesson checks.
+ * the expected call-reduction behavior for plan-id reuse across N lesson checks
+ * on direct lesson routes (outline path no longer calls canAccessLesson at all).
  */
 test("active plan ids should be reusable across N lesson entitlement checks", () => {
   let planLookupCount = 0
