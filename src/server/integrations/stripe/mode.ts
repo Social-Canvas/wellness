@@ -3,7 +3,12 @@
  */
 
 export function isStripeTestSecretKey(secretKey: string): boolean {
-  return secretKey.startsWith("sk_test_") || secretKey.startsWith("rk_test_")
+  // sk_test_ / rk_test_ standard keys; rkcs_test_ = Stripe CLI sandbox restricted keys
+  return (
+    secretKey.startsWith("sk_test_") ||
+    secretKey.startsWith("rk_test_") ||
+    secretKey.startsWith("rkcs_test_")
+  )
 }
 
 export function isStripeLiveSecretKey(secretKey: string): boolean {
@@ -70,7 +75,7 @@ export function assertCheckoutUsesTestModeKeys(params: {
     return {
       ok: false,
       message:
-        "Stripe secret key must be a test-mode key (sk_test_ / rk_test_) until live mode is enabled.",
+        "Stripe secret key must be a test-mode key (sk_test_ / rk_test_ / rkcs_test_) until live mode is enabled.",
     }
   }
 

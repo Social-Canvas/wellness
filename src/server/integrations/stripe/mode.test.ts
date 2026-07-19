@@ -29,14 +29,26 @@ test("live webhook events are rejected when app uses test secret key", () => {
 test("checkout refuses non-test keys and placeholder prices", () => {
   assert.equal(isStripeTestSecretKey("sk_test_abc"), true)
   assert.equal(isStripeTestSecretKey("rk_test_abc"), true)
+  assert.equal(isStripeTestSecretKey("rkcs_test_abc"), true)
   assert.equal(isStripeLiveSecretKey("sk_live_abc"), true)
   assert.equal(isStripeTestSecretKey("mk_not_a_stripe_key"), false)
+  assert.equal(getStripeLivemodeMismatch(false, "rkcs_test_abc"), null)
+  assert.equal(
+    getStripeLivemodeMismatch(true, "rkcs_test_abc"),
+    "live_event_in_test_mode"
+  )
 
   const ok = assertCheckoutUsesTestModeKeys({
     secretKey: "sk_test_abc",
     publishableKey: "pk_test_abc",
   })
   assert.equal(ok.ok, true)
+
+  const sandboxOk = assertCheckoutUsesTestModeKeys({
+    secretKey: "rkcs_test_abc",
+    publishableKey: "pk_test_abc",
+  })
+  assert.equal(sandboxOk.ok, true)
 
   const bad = assertCheckoutUsesTestModeKeys({
     secretKey: "sk_live_abc",
