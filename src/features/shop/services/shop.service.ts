@@ -9,6 +9,11 @@ import {
   buildCheckoutSuccessUrl,
 } from "@/features/checkout/utils/stripe-return-urls"
 import {
+  RESET_COURSE_ID,
+  RESET_LIBRARY_PATH,
+} from "@/features/checkout/constants/destinations"
+import { shouldRefuseCheckoutForExistingResetAccess } from "@/features/checkout/utils/reset-plan-offer-state"
+import {
   createProductCheckoutSchema,
   generateProductDownloadUrlSchema,
   type CreateProductCheckoutInput,
@@ -39,7 +44,10 @@ import {
 } from "@/server/integrations/resend/transactional-email.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
-import { canDownloadProduct } from "@/server/services/entitlement.service"
+import {
+  canAccessCourse,
+  canDownloadProduct,
+} from "@/server/services/entitlement.service"
 import type { Database } from "@/types/database/supabase"
 
 const userIdSchema = z.uuid("Invalid user id.")
@@ -382,19 +390,6 @@ export async function createProductCheckoutSession(
     return validationFailure(firstValidationMessage(parsedInput.error))
   }
 
-  const purchaseResult = await canDownloadProduct(
-    parsedUserId.data,
-    parsedInput.data.productId
-  )
-
-  if (!purchaseResult.success) {
-    return purchaseResult
-  }
-
-  if (purchaseResult.data) {
-    return failure("already_purchased", "You already own this product.")
-  }
-
   try {
     const supabase = createAdminClient()
     const { data: product, error } = await supabase
@@ -414,6 +409,52 @@ export async function createProductCheckoutSession(
 
     if (!isPurchasableCatalogProductType(product.product_type)) {
       return failure("not_found", "Product not found.")
+    }
+
+    // Defense in depth: never send entitled Reset/course users to Stripe.
+    if (product.granted_course_id) {
+      const courseAccessResult = await canAccessCourse(
+        parsedUserId.data,
+        product.granted_course_id
+      )
+
+      if (!courseAccessResult.success) {
+        return courseAccessResult
+      }
+
+      if (
+        shouldRefuseCheckoutForExistingResetAccess({
+          productSlug: product.slug,
+          grantedCourseId: product.granted_course_id,
+          hasCourseAccess: courseAccessResult.data,
+        })
+      ) {
+        const destination =
+          product.granted_course_id === RESET_COURSE_ID
+            ? RESET_LIBRARY_PATH
+            : `/dashboard/library/${product.granted_course_id}`
+
+        return success({
+          sessionId: null,
+          url: destination,
+          alreadyEntitled: true,
+        })
+      }
+    }
+
+    const purchaseResult = await canDownloadProduct(
+      parsedUserId.data,
+      parsedInput.data.productId
+    )
+
+    if (!purchaseResult.success) {
+      return purchaseResult
+    }
+
+    if (purchaseResult.data) {
+      // Course-granting products already handled above; other owned products
+      // (e.g. ebooks) remain non-repurchasable without opening Stripe.
+      return failure("already_purchased", "You already own this product.")
     }
 
     if (!product.stripe_price_id) {
@@ -478,6 +519,7 @@ export async function createProductCheckoutSession(
     return success({
       sessionId: session.id,
       url: session.url,
+      alreadyEntitled: false,
     })
   } catch {
     return failure("provider_error", "Unable to create checkout session. Please try again.")

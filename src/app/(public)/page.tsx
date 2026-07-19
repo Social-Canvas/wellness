@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 import {
-  CtaBand,
   FaqAccordion,
   HeroSection,
   OfferCardsSection,
@@ -12,8 +11,9 @@ import {
 } from "@/components/marketing"
 import { Container, Section } from "@/components/layout"
 import { buttonVariants } from "@/components/ui/button"
+import { ResetPlanOfferBand } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
-import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS, RESET_PLAN, RESET_PLAN_CTA_FEATURES } from "@/lib/constants/elevate-brand"
+import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
@@ -152,17 +152,7 @@ export default function HomePage() {
 
       <Section padding="default">
         <Container>
-          <CtaBand
-            contained={false}
-            eyebrow="Start here"
-            title={RESET_PLAN.name}
-            description={RESET_PLAN.description}
-            features={[...RESET_PLAN_CTA_FEATURES]}
-            price={RESET_PLAN.priceLabel}
-            priceNote="one-time entry offer"
-            action={{ label: "Start Reset Plan", href: "/programs#reset-plan" }}
-            image={BRAND_IMAGES.productJournalReset}
-          />
+          <ResetPlanOfferBand contained={false} />
         </Container>
       </Section>
 

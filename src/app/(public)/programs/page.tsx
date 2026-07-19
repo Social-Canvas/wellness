@@ -3,7 +3,7 @@ import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
-import { ProgramOfferCard } from "@/features/checkout/components"
+import { ProgramOfferCard, ResetPlanOfferBand } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
 import {
   BREATHWORK_ROADMAP,
@@ -11,7 +11,6 @@ import {
   ELEVATE_MEMBERSHIPS,
   ELEVATE_PROGRAM_OFFERS,
   RESET_PLAN,
-  RESET_PLAN_CTA_FEATURES,
   VIP_COACHING_CTA_FEATURES,
   RETREATS_CTA_FEATURES,
 } from "@/lib/constants/elevate-brand"
@@ -115,23 +114,7 @@ export default async function ProgramsPage() {
 
       <Section id="reset-plan" variant="soft" padding="default">
         <Container>
-          <CtaBand
-            contained={false}
-            eyebrow="Start here"
-            title={RESET_PLAN.name}
-            description={RESET_PLAN.description}
-            features={[...RESET_PLAN_CTA_FEATURES]}
-            price={RESET_PLAN.priceLabel}
-            priceNote="one-time entry offer"
-            action={{
-              label: "Start Reset Plan",
-              href: buildCheckoutConsentUrl({
-                type: "product",
-                productSlug: RESET_PLAN.slug,
-              }),
-            }}
-            image={BRAND_IMAGES.productJournalReset}
-          />
+          <ResetPlanOfferBand contained={false} />
         </Container>
       </Section>
 

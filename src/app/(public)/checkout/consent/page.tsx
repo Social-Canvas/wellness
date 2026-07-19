@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 
 import { BackButton, Container, Section } from "@/components/layout"
 import { CheckoutConsentForm } from "@/features/checkout/components"
 import { resolveCheckoutConsentContext } from "@/features/checkout/services/checkout.service"
+import { resolveExistingCourseGrantDestination } from "@/features/checkout/services/reset-plan-offer.service"
 import type { CheckoutConsentType } from "@/features/checkout/utils/checkout-urls"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import type { BillingInterval } from "@/features/plans/types"
@@ -44,6 +45,21 @@ export default async function CheckoutConsentPage({ searchParams }: ConsentPageP
   }
 
   const context = contextResult.data
+
+  if (
+    profileResult.success &&
+    context.type === "product" &&
+    context.productId
+  ) {
+    const entitledResult = await resolveExistingCourseGrantDestination({
+      userId: profileResult.data.id,
+      productId: context.productId,
+    })
+
+    if (entitledResult.success && entitledResult.data) {
+      redirect(entitledResult.data)
+    }
+  }
 
   return (
     <main>

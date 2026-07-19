@@ -27,8 +27,9 @@ export type ShopProductDetail = ShopProduct & {
 }
 
 export type ProductCheckoutResult = {
-  sessionId: string
+  sessionId: string | null
   url: string
+  alreadyEntitled: boolean
 }
 
 export type ProductDownloadUrlResult = {
