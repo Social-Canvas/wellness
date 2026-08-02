@@ -32,7 +32,7 @@ Purchase confirmation, Reset course unlock, and certificate emails remain direct
 
 `GET/POST /api/cron/transactional-email` with `Authorization: Bearer $CRON_SECRET`.
 
-Vercel Cron: `vercel.json` schedules every 5 minutes. Immediate best-effort send also runs after enqueue.
+Vercel Cron: `vercel.json` schedules daily at 06:00 UTC (`0 6 * * *`) as retry/recovery on Hobby. Immediate best-effort send also runs after enqueue.
 
 ## Controlled test mode
 
