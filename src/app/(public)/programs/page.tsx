@@ -86,13 +86,13 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   )
 
   const individualsPanel = (
-    <div className="grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {ELEVATE_MEMBERSHIPS.map((tier) => (
         <article
           id={`membership-${tier.slug === "plan-1" ? "core" : tier.slug === "plan-2" ? "gold" : "platinum"}`}
           key={tier.slug}
           className={cn(
-            "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-24",
+            "relative flex h-full flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-32",
             tier.featured ? "border-2 border-blue" : "border-line"
           )}
         >
@@ -199,9 +199,14 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
         </Container>
       </Section>
 
-      <Section id="memberships" className="scroll-mt-24" padding="default">
-        <Container className="max-w-full overflow-x-hidden">
+      <Section
+        id="memberships"
+        className="scroll-mt-32 overflow-x-hidden"
+        padding="default"
+      >
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
           <SectionHeader
+            className="mx-auto max-w-3xl"
             eyebrow={MEMBERSHIP_SECTION_COPY.eyebrow}
             title={MEMBERSHIP_SECTION_COPY.title}
             subtitle={MEMBERSHIP_SECTION_COPY.subtitle}
@@ -211,7 +216,7 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
             initialAudience={initialAudience}
             individualsPanel={individualsPanel}
           />
-        </Container>
+        </div>
       </Section>
 
       <Section id="programs-offers" variant="soft" padding="default">

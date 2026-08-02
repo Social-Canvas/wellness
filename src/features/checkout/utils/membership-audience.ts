@@ -43,25 +43,90 @@ export const MEMBERSHIP_TABS = [
   },
 ] as const
 
-/** Confirmed seat pricing is not published on main — inquiry overview only. */
-export const NONPROFIT_PUBLIC_PRICING_CONFIRMED = false
+/** Confirmed seat pricing is published as inquiry-only visual plans (no Checkout). */
+export const NONPROFIT_PUBLIC_PRICING_CONFIRMED = true
+
+export const NONPROFIT_PLAN_SLUGS = [
+  "small",
+  "mid-size",
+  "large",
+  "enterprise",
+] as const
+
+export type NonprofitPlanSlug = (typeof NONPROFIT_PLAN_SLUGS)[number]
+
+export type NonprofitSeatPlan = {
+  slug: NonprofitPlanSlug
+  name: string
+  seatRangeLabel: string
+  priceLabel: string
+  priceSuffix: string
+  ctaLabel: string
+  customPricing: boolean
+}
+
+/**
+ * Approved nonprofit seat plans — visual/inquiry only.
+ * Do not wire these amounts to self-serve Checkout.
+ */
+export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
+  {
+    slug: "small",
+    name: "Small Organization",
+    seatRangeLabel: "1–25 participants",
+    priceLabel: "$497",
+    priceSuffix: "/ month",
+    ctaLabel: "Request this plan",
+    customPricing: false,
+  },
+  {
+    slug: "mid-size",
+    name: "Mid-Size Organization",
+    seatRangeLabel: "26–75 participants",
+    priceLabel: "$997",
+    priceSuffix: "/ month",
+    ctaLabel: "Request this plan",
+    customPricing: false,
+  },
+  {
+    slug: "large",
+    name: "Large Organization",
+    seatRangeLabel: "76–200 participants",
+    priceLabel: "$1,997",
+    priceSuffix: "/ month",
+    ctaLabel: "Request this plan",
+    customPricing: false,
+  },
+  {
+    slug: "enterprise",
+    name: "Enterprise",
+    seatRangeLabel: "201+ participants",
+    priceLabel: "$3,000–$5,000",
+    priceSuffix: "/ month · custom",
+    ctaLabel: "Discuss enterprise access",
+    customPricing: true,
+  },
+] as const
 
 export const NONPROFIT_INQUIRY_CTA = "Request nonprofit membership information"
 
 export const NONPROFIT_INQUIRY_HREF =
   "/private-events?intent=nonprofit-partnership" as const
 
-/** Plain-language nonprofit benefits (no capability-table jargon). */
+/** Compact shared benefits for nonprofit pricing cards (public language). */
 export const NONPROFIT_MEMBERSHIP_BENEFITS = [
-  "Individual member accounts — no shared organization login",
-  "Shared Elevate course library (same content as individual memberships)",
+  "Individual member accounts",
+  "Elevate course library",
+  "Weekly live reset sessions",
+  "Breathwork and guided practices",
+  "Integration Journal",
   "Organization administrator dashboard",
-  "Seat invitations and member management",
-  "Member statuses: active, invited, suspended, and removed",
-  "Membership privileges based on the assigned plan",
-  "Upgrade and downgrade support",
-  "In-person eligibility based on the assigned membership level",
+  "Seat invitations and member-status management",
+  "Session replays when available",
 ] as const
+
+export const NONPROFIT_SUPPORTING_NOTE =
+  "Every participant receives an individual account, while the nonprofit administrator manages invitations and available seats."
 
 export const SPONSORED_BILLING_COPY =
   "Billing is managed by your nonprofit sponsor. Contact your administrator for seat or plan changes."
@@ -155,4 +220,37 @@ export function isPanelVisible(
   panel: MembershipAudienceId
 ): boolean {
   return active === panel
+}
+
+export function isNonprofitPlanSlug(
+  value: string | null | undefined
+): value is NonprofitPlanSlug {
+  return (
+    value === "small" ||
+    value === "mid-size" ||
+    value === "large" ||
+    value === "enterprise"
+  )
+}
+
+/**
+ * Normalize nonprofit plan query param. Invalid / missing → null (ignored safely).
+ */
+export function parseNonprofitPlanParam(
+  value: string | string[] | null | undefined
+): NonprofitPlanSlug | null {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (isNonprofitPlanSlug(raw)) {
+    return raw
+  }
+  return null
+}
+
+/** Inquiry URL for a nonprofit seat plan (never self-serve Checkout). */
+export function buildNonprofitInquiryHref(plan: NonprofitPlanSlug): string {
+  const params = new URLSearchParams({
+    intent: "nonprofit-partnership",
+    plan,
+  })
+  return `/private-events?${params.toString()}`
 }
