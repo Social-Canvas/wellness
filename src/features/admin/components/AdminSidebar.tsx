@@ -10,6 +10,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Videos", href: "/admin/videos" },
   { label: "Products", href: "/admin/products" },
   { label: "Members", href: "/admin/members" },
+  { label: "Nonprofits", href: "/dashboard/nonprofit" },
   { label: "Certificates", href: "/admin/certificates" },
   { label: "Bookings", href: "/admin/bookings" },
   { label: "Leads", href: "/admin/leads" },

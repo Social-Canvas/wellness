@@ -10,6 +10,7 @@ import { sendPaymentFailedEmail } from "@/server/integrations/resend/transaction
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import { getStripeLivemodeMismatch } from "@/server/integrations/stripe/mode"
+import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
 import type { Database } from "@/types/database/supabase"
 
 type WebhookEventStatus = Database["public"]["Enums"]["webhook_event_status"]
@@ -226,8 +227,56 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
     throw new Error(syncResult.error.message)
   }
 
+  if (event.type === "customer.subscription.created") {
+    const subscription = event.data.object as Stripe.Subscription
+    await recordMembershipLifecycleEvent({
+      eventType: "membership_started",
+      sourceEventId: event.id,
+      planId: null,
+      metadata: {
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+      },
+    })
+  }
+
+  if (event.type === "customer.subscription.updated") {
+    const subscription = event.data.object as Stripe.Subscription
+    if (subscription.cancel_at_period_end) {
+      await recordMembershipLifecycleEvent({
+        eventType: "membership_cancellation_scheduled",
+        sourceEventId: `${event.id}:cancel_at_period_end`,
+        metadata: { stripeSubscriptionId: subscription.id },
+      })
+    } else if (subscription.status === "active") {
+      await recordMembershipLifecycleEvent({
+        eventType: "membership_payment_recovered",
+        sourceEventId: `${event.id}:active`,
+        metadata: { stripeSubscriptionId: subscription.id },
+      })
+    }
+  }
+
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription
+    await recordMembershipLifecycleEvent({
+      eventType: "membership_cancelled",
+      sourceEventId: event.id,
+      metadata: { stripeSubscriptionId: subscription.id },
+    })
+  }
+
   if (event.type === "invoice.payment_failed") {
     const invoice = event.data.object as Stripe.Invoice
+
+    await recordMembershipLifecycleEvent({
+      eventType: "membership_payment_failed",
+      sourceEventId: event.id,
+      metadata: {
+        stripeSubscriptionId: subscriptionId,
+        stripeInvoiceId: invoice.id ?? null,
+      },
+    })
 
     try {
       const paymentContext = await getPaymentFailedEmailContext(subscriptionId)

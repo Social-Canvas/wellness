@@ -27,7 +27,8 @@ export const metadata: Metadata = {
 
 const PROGRAMS_NAV = [
   { label: "Start here", href: "#reset-plan" },
-  { label: "Memberships", href: "#memberships" },
+  { label: "For Individuals", href: "#individuals" },
+  { label: "For Nonprofit Organizations", href: "/programs/nonprofit-organizations" },
   { label: "Programs", href: "#programs-offers" },
   { label: "VIP coaching", href: "#vip-package" },
   { label: "Retreats", href: "#retreats-private-events" },
@@ -118,20 +119,21 @@ export default async function ProgramsPage() {
         </Container>
       </Section>
 
-      <Section id="memberships" padding="default">
+      <Section id="individuals" className="scroll-mt-24" padding="default">
         <Container>
           <SectionHeader
-            eyebrow="Memberships"
+            eyebrow="For Individuals"
             title="Elevate Core, Gold & Platinum"
-            subtitle="Choose the level of support, live access, and implementation guidance that fits your season. Elevate Platinum is the only tier that includes the full live Elevate experience."
+            subtitle="All active membership tiers include the same course library. Tiers differ through privileges such as in-person session eligibility — Core does not include in-person sessions; Gold does."
           />
 
-          <div className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
+          <div id="memberships" className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
             {ELEVATE_MEMBERSHIPS.map((tier) => (
               <article
+                id={`membership-${tier.slug === "plan-1" ? "core" : tier.slug === "plan-2" ? "gold" : "platinum"}`}
                 key={tier.slug}
                 className={cn(
-                  "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm",
+                  "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-24",
                   tier.featured ? "border-2 border-blue" : "border-line"
                 )}
               >
@@ -188,6 +190,17 @@ export default async function ProgramsPage() {
               </article>
             ))}
           </div>
+
+          <p className="mt-8 text-center text-sm text-ink-soft">
+            Representing a nonprofit?{" "}
+            <Link
+              href="/programs/nonprofit-organizations"
+              className="font-semibold text-blue underline-offset-2 hover:underline"
+            >
+              Explore nonprofit partnership enrollment
+            </Link>
+            .
+          </p>
         </Container>
       </Section>
 

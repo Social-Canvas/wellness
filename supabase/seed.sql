@@ -9,63 +9,63 @@ insert into public.plans (slug, name, description, sort_order, is_active)
 values
   (
     'plan-1',
-    'Plan 1',
-    'All 21 meditation classes (5 min each) plus the core course library (~30 videos, 20–40 min). New content added every week.',
+    'Elevate Core',
+    'Starter recurring membership with the full Elevate course library. In-person sessions are not included.',
     1,
     true
   ),
   (
     'plan-2',
-    'Plan 2',
-    'Everything in Plan 1, plus two virtual live sessions per month (recorded and added to the session library).',
+    'Elevate Gold',
+    'Mid-tier membership with the full course library and in-person session eligibility.',
     2,
     true
   ),
   (
     'plan-3',
-    'Plan 3',
-    'Everything in Plan 2, plus one in-person live session per month and monthly member extras.',
+    'Elevate Platinum',
+    'Premium membership with the full course library and the highest-touch Elevate experience.',
     3,
     true
   )
 on conflict (slug) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Plan prices (placeholder Stripe price IDs — amounts still to confirm)
+-- Plan prices (placeholder Stripe price IDs — amounts confirmed for individuals)
 -- ---------------------------------------------------------------------------
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_1_monthly', 'monthly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_1_monthly', 'monthly', 'usd', 4700, true
 from public.plans p
 where p.slug = 'plan-1'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_1_yearly', 'yearly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_1_yearly', 'yearly', 'usd', 56400, true
 from public.plans p
 where p.slug = 'plan-1'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_2_monthly', 'monthly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_2_monthly', 'monthly', 'usd', 9900, true
 from public.plans p
 where p.slug = 'plan-2'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_2_yearly', 'yearly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_2_yearly', 'yearly', 'usd', 118800, true
 from public.plans p
 where p.slug = 'plan-2'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_3_monthly', 'monthly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_3_monthly', 'monthly', 'usd', 14900, true
 from public.plans p
 where p.slug = 'plan-3'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_3_yearly', 'yearly', 'usd', 0, true
+select p.id, 'price_placeholder_plan_3_yearly', 'yearly', 'usd', 178800, true
 from public.plans p
 where p.slug = 'plan-3'
 on conflict (stripe_price_id) do nothing;

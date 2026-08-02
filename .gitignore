@@ -45,3 +45,6 @@ next-env.d.ts
 scripts/reset-media-manifest.json
 scripts/reset-media-manifest.backup-*.json
 docs/7-day-elevated-reset-media-migration-status.json
+
+# local operator / private working files
+/private/

@@ -40,56 +40,70 @@ export const ELEVATE_MEMBERSHIPS: MembershipTierContent[] = [
   {
     slug: "plan-1",
     name: "Elevate Core",
-    priceLabel: "$97",
-    priceCents: 9700,
+    priceLabel: "$47",
+    priceCents: 4700,
     whoItIsFor:
-      "Simple, affordable ongoing support and an easy way to stay connected to Elevate.",
+      "Starter recurring membership with the full Elevate course library. In-person sessions are not included.",
     featured: false,
     features: [
-      "Monthly digital Elevate content",
+      "Full membership course library",
+      "Live online session access",
+      "Session replays",
       "Foundational breathwork resources",
       "Nervous system support tools",
-      "Themed monthly guidance",
-      "Basic member-only resources",
-      "Community-style support",
+      "In-person sessions not included",
     ],
     ctaVariant: "outline",
   },
   {
     slug: "plan-2",
     name: "Elevate Gold",
-    priceLabel: "$197",
-    priceCents: 19700,
+    priceLabel: "$99",
+    priceCents: 9900,
     whoItIsFor:
-      "Deeper support, more access, and a more immersive Elevate experience.",
+      "Mid-tier membership with the same course library plus in-person session eligibility.",
     featured: true,
     features: [
       "Everything in Elevate Core",
-      "More live access and guided support",
+      "In-person sessions included",
+      "Live online session access",
+      "Session replays",
       "Stronger accountability",
-      "Expanded implementation support",
-      "Premium member resources",
     ],
     ctaVariant: "default",
   },
   {
     slug: "plan-3",
     name: "Elevate Platinum",
-    priceLabel: "$333",
-    priceCents: 33300,
+    priceLabel: "$149",
+    priceCents: 14900,
     whoItIsFor:
-      "The highest-touch experience with full access to the live Elevate model.",
+      "Premium membership with the full course library and the highest-touch Elevate experience.",
     featured: false,
     features: [
       "Everything in Elevate Gold",
-      "Full live Elevate experience",
-      "Premium member perks",
-      "VIP-style access",
-      "Highest level of support",
+      "In-person sessions included",
+      "Priority support",
+      "Highest-touch live Elevate experience",
+      "Additional Platinum privileges configurable",
     ],
     ctaVariant: "outline",
   },
 ]
+
+/** Public audience model for Programs navigation (unified lifecycle). */
+export const MEMBERSHIP_AUDIENCES = [
+  {
+    id: "individuals",
+    label: "For Individuals",
+    href: "/programs#individuals",
+  },
+  {
+    id: "nonprofit-organizations",
+    label: "For Nonprofit Organizations",
+    href: "/programs/nonprofit-organizations",
+  },
+] as const
 
 export const RESET_PLAN = {
   slug: "7-day-reset",
