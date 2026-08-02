@@ -85,23 +85,22 @@ export const ELEVATE_MEMBERSHIPS: MembershipTierContent[] = [
       "In-person sessions included",
       "Priority support",
       "Highest-touch live Elevate experience",
-      "Additional Platinum privileges configurable",
     ],
     ctaVariant: "outline",
   },
 ]
 
-/** Public audience model for Programs navigation (unified lifecycle). */
+/** Public audience model for Programs membership tabs (unified lifecycle). */
 export const MEMBERSHIP_AUDIENCES = [
   {
     id: "individuals",
-    label: "For Individuals",
-    href: "/programs#individuals",
+    label: "Individuals",
+    href: "/programs?membership=individuals#memberships",
   },
   {
-    id: "nonprofit-organizations",
-    label: "For Nonprofit Organizations",
-    href: "/programs/nonprofit-organizations",
+    id: "nonprofit",
+    label: "Nonprofit Organizations",
+    href: "/programs?membership=nonprofit#memberships",
   },
 ] as const
 

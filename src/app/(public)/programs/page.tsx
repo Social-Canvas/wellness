@@ -3,8 +3,16 @@ import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
-import { ProgramOfferCard, ResetPlanOfferBand } from "@/features/checkout/components"
+import {
+  MembershipAudienceTabs,
+  ProgramOfferCard,
+  ResetPlanOfferBand,
+} from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import {
+  MEMBERSHIP_SECTION_COPY,
+  parseMembershipAudienceParam,
+} from "@/features/checkout/utils/membership-audience"
 import {
   BREATHWORK_ROADMAP,
   ELEVATE_BRAND,
@@ -27,8 +35,7 @@ export const metadata: Metadata = {
 
 const PROGRAMS_NAV = [
   { label: "Start here", href: "#reset-plan" },
-  { label: "For Individuals", href: "#individuals" },
-  { label: "For Nonprofit Organizations", href: "/programs/nonprofit-organizations" },
+  { label: "Memberships", href: "#memberships" },
   { label: "Programs", href: "#programs-offers" },
   { label: "VIP coaching", href: "#vip-package" },
   { label: "Retreats", href: "#retreats-private-events" },
@@ -57,7 +64,14 @@ function membershipCheckoutHref(planSlug: string): string {
   })
 }
 
-export default async function ProgramsPage() {
+type ProgramsPageProps = {
+  searchParams: Promise<{ membership?: string | string[] }>
+}
+
+export default async function ProgramsPage({ searchParams }: ProgramsPageProps) {
+  const params = await searchParams
+  const initialAudience = parseMembershipAudienceParam(params.membership)
+
   const productsResult = await listProgramCatalogProducts()
 
   const publishedProductSlugs = new Set(
@@ -69,6 +83,72 @@ export default async function ProgramsPage() {
       product.slug,
       product,
     ])
+  )
+
+  const individualsPanel = (
+    <div className="grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
+      {ELEVATE_MEMBERSHIPS.map((tier) => (
+        <article
+          id={`membership-${tier.slug === "plan-1" ? "core" : tier.slug === "plan-2" ? "gold" : "platinum"}`}
+          key={tier.slug}
+          className={cn(
+            "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-24",
+            tier.featured ? "border-2 border-blue" : "border-line"
+          )}
+        >
+          {tier.featured ? (
+            <span className="absolute top-[-13px] left-1/2 -translate-x-1/2 rounded-[20px] bg-blue px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-white uppercase">
+              Most popular
+            </span>
+          ) : null}
+
+          <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
+            Membership
+          </span>
+          <h3 className="mt-1.5 font-display text-2xl font-medium text-ink">
+            {tier.name}
+          </h3>
+          <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
+            {tier.priceLabel}
+            <small className="ml-1 font-body text-sm font-normal text-ink-soft">
+              / mo
+            </small>
+          </div>
+
+          <p className="mb-3 text-sm text-ink-soft">{tier.whoItIsFor}</p>
+
+          <ul className="mb-5 list-none">
+            {tier.features.map((feature) => (
+              <li
+                key={feature}
+                className="relative py-1.5 pl-[22px] text-sm text-ink-soft"
+              >
+                <span
+                  aria-hidden
+                  className="absolute left-0 font-bold text-blue"
+                >
+                  ✓
+                </span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <Link
+            href={membershipCheckoutHref(tier.slug)}
+            className={cn(
+              buttonVariants({
+                variant: tier.ctaVariant,
+                size: "block",
+              }),
+              "mt-auto"
+            )}
+          >
+            Join {tier.name}
+          </Link>
+        </article>
+      ))}
+    </div>
   )
 
   return (
@@ -119,88 +199,18 @@ export default async function ProgramsPage() {
         </Container>
       </Section>
 
-      <Section id="individuals" className="scroll-mt-24" padding="default">
-        <Container>
+      <Section id="memberships" className="scroll-mt-24" padding="default">
+        <Container className="max-w-full overflow-x-hidden">
           <SectionHeader
-            eyebrow="For Individuals"
-            title="Elevate Core, Gold & Platinum"
-            subtitle="All active membership tiers include the same course library. Tiers differ through privileges such as in-person session eligibility — Core does not include in-person sessions; Gold does."
+            eyebrow={MEMBERSHIP_SECTION_COPY.eyebrow}
+            title={MEMBERSHIP_SECTION_COPY.title}
+            subtitle={MEMBERSHIP_SECTION_COPY.subtitle}
           />
 
-          <div id="memberships" className="mt-9 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
-            {ELEVATE_MEMBERSHIPS.map((tier) => (
-              <article
-                id={`membership-${tier.slug === "plan-1" ? "core" : tier.slug === "plan-2" ? "gold" : "platinum"}`}
-                key={tier.slug}
-                className={cn(
-                  "relative flex flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-24",
-                  tier.featured ? "border-2 border-blue" : "border-line"
-                )}
-              >
-                {tier.featured ? (
-                  <span className="absolute top-[-13px] left-1/2 -translate-x-1/2 rounded-[20px] bg-blue px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-white uppercase">
-                    Most popular
-                  </span>
-                ) : null}
-
-                <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
-                  Membership
-                </span>
-                <h3 className="mt-1.5 font-display text-2xl font-medium text-ink">
-                  {tier.name}
-                </h3>
-                <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
-                  {tier.priceLabel}
-                  <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-                    / mo
-                  </small>
-                </div>
-
-                <p className="mb-3 text-sm text-ink-soft">{tier.whoItIsFor}</p>
-
-                <ul className="mb-5 list-none">
-                  {tier.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="relative py-1.5 pl-[22px] text-sm text-ink-soft"
-                    >
-                      <span
-                        aria-hidden
-                        className="absolute left-0 font-bold text-blue"
-                      >
-                        ✓
-                      </span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={membershipCheckoutHref(tier.slug)}
-                  className={cn(
-                    buttonVariants({
-                      variant: tier.ctaVariant,
-                      size: "block",
-                    }),
-                    "mt-auto"
-                  )}
-                >
-                  Join {tier.name}
-                </Link>
-              </article>
-            ))}
-          </div>
-
-          <p className="mt-8 text-center text-sm text-ink-soft">
-            Representing a nonprofit?{" "}
-            <Link
-              href="/programs/nonprofit-organizations"
-              className="font-semibold text-blue underline-offset-2 hover:underline"
-            >
-              Explore nonprofit partnership enrollment
-            </Link>
-            .
-          </p>
+          <MembershipAudienceTabs
+            initialAudience={initialAudience}
+            individualsPanel={individualsPanel}
+          />
         </Container>
       </Section>
 

@@ -24,7 +24,11 @@ test("individual membership prices display as $47/$99/$149", () => {
 test("public audience model is Individuals + Nonprofit Organizations only", () => {
   assert.equal(MEMBERSHIP_AUDIENCES.length, 2)
   assert.equal(MEMBERSHIP_AUDIENCES[0]?.id, "individuals")
-  assert.equal(MEMBERSHIP_AUDIENCES[1]?.id, "nonprofit-organizations")
+  assert.equal(MEMBERSHIP_AUDIENCES[1]?.id, "nonprofit")
+  assert.equal(
+    MEMBERSHIP_AUDIENCES.some((a) => /organizations?/i.test(a.label) && a.id !== "nonprofit"),
+    false
+  )
 })
 
 test("all active membership plans receive the same course library capability", () => {

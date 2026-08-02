@@ -36,7 +36,7 @@ export default function NonprofitOrganizationsPage() {
               Partner with Elevate
             </Link>
             <Link
-              href="/programs#individuals"
+              href="/programs?membership=individuals#memberships"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
             >
               View individual memberships
