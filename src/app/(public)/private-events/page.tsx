@@ -2,10 +2,13 @@ import type { Metadata } from "next"
 
 import { LeadCaptureForm } from "@/features/leads/components/LeadCaptureForm"
 import { LeadPageShell } from "@/features/leads/components/LeadPageShell"
+import { NonprofitPartnershipEnquiryPage } from "@/features/leads/components/NonprofitPartnershipEnquiryPage"
 import {
   NONPROFIT_SEAT_PLANS,
   parseNonprofitPlanParam,
 } from "@/features/checkout/utils/membership-audience"
+import { NONPROFIT_ENQUIRY_INTENT } from "@/features/leads/utils/nonprofit-enquiry"
+import { getCurrentUser } from "@/features/auth/services/auth.service"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 
@@ -33,40 +36,33 @@ export default async function PrivateEventsLeadPage({
 }: PrivateEventsPageProps) {
   const params = await searchParams
   const intent = firstParam(params.intent)
-  const planSlug = parseNonprofitPlanParam(params.plan)
-  const isNonprofitInquiry = intent === "nonprofit-partnership"
-  const selectedPlan = planSlug
-    ? NONPROFIT_SEAT_PLANS.find((plan) => plan.slug === planSlug)
-    : undefined
+  const isNonprofitInquiry = intent === NONPROFIT_ENQUIRY_INTENT
 
-  const title = isNonprofitInquiry
-    ? "Nonprofit partnership enquiry"
-    : "Private Events"
+  if (isNonprofitInquiry) {
+    // Only approved plan ids resolve; invalid/missing → generic enquiry UI.
+    const planSlug = parseNonprofitPlanParam(params.plan)
+    const selectedPlan = planSlug
+      ? (NONPROFIT_SEAT_PLANS.find((plan) => plan.slug === planSlug) ?? null)
+      : null
+    const userResult = await getCurrentUser()
+    const isAuthenticated = userResult.success
 
-  const description = isNonprofitInquiry
-    ? selectedPlan
-      ? `You selected ${selectedPlan.name} (${selectedPlan.seatRangeLabel}, ${selectedPlan.priceLabel}${selectedPlan.priceSuffix}${selectedPlan.customPricing ? ", custom pricing" : ""}). Tell us about your organization and we will follow up with a partnership proposal — this is not a Checkout purchase.`
-      : "Tell us about your nonprofit, approximate team or community size, and partnership goals. We will follow up with a proposal — this is not a Checkout purchase."
-    : "Planning a private breathwork, sound bath, or Elevate experience for your group? Send an enquiry and we will follow up with availability."
-
-  const source = isNonprofitInquiry
-    ? selectedPlan
-      ? `nonprofit_partnership_${selectedPlan.slug}`
-      : "nonprofit_partnership"
-    : "private_events_page"
-
-  const submitLabel = isNonprofitInquiry
-    ? "Request nonprofit partnership information"
-    : "Enquire about private events"
+    return (
+      <NonprofitPartnershipEnquiryPage
+        selectedPlan={selectedPlan}
+        isAuthenticated={isAuthenticated}
+      />
+    )
+  }
 
   return (
     <LeadPageShell image={BRAND_IMAGES.retreatSpiritual}>
       <LeadCaptureForm
         leadType="private_event"
-        source={source}
-        title={title}
-        description={description}
-        submitLabel={submitLabel}
+        source="private_events_page"
+        title="Private Events"
+        description="Planning a private breathwork, sound bath, or Elevate experience for your group? Send an enquiry and we will follow up with availability."
+        submitLabel="Enquire about private events"
       />
     </LeadPageShell>
   )

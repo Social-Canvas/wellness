@@ -13,10 +13,12 @@ export const submitLeadSchema = z.object({
   message: z
     .string()
     .trim()
-    .max(2000, "Message is too long.")
+    .max(4000, "Message is too long.")
     .optional()
     .nullable(),
   source: z.string().trim().max(120).optional().nullable(),
+  /** Structured enquiry details (e.g. approved nonprofit plan). */
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 })
 
 export type SubmitLeadInput = z.infer<typeof submitLeadSchema>
