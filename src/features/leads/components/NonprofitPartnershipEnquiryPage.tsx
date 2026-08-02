@@ -1,7 +1,11 @@
 import Link from "next/link"
 
-import { Badge } from "@/components/ui/badge"
 import { NonprofitPartnershipForm } from "@/features/leads/components/NonprofitPartnershipForm"
+import {
+  EnquiryHero,
+  EnquiryNextSteps,
+  EnquiryPageShell,
+} from "@/features/leads/components/enquiry"
 import {
   NONPROFIT_CUSTOM_PRICING_LABEL,
   type NonprofitSeatPlan,
@@ -99,67 +103,35 @@ function SelectedPlanSummary({
   )
 }
 
-function WhatHappensNext() {
-  return (
-    <section
-      aria-labelledby="nonprofit-next-steps-heading"
-      className="mt-6 rounded-2xl border border-line bg-green/5 p-5 sm:p-6"
-    >
-      <h2
-        id="nonprofit-next-steps-heading"
-        className="font-display text-lg font-medium text-ink"
-      >
-        What happens next
-      </h2>
-      <ol className="mt-4 space-y-3">
-        {NONPROFIT_ENQUIRY_NEXT_STEPS.map((step, index) => (
-          <li key={step} className="flex items-start gap-3 text-sm text-ink-soft">
-            <span
-              aria-hidden
-              className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-surface text-xs font-bold text-blue ring-1 ring-line"
-            >
-              {index + 1}
-            </span>
-            <span className="pt-1">{step}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
 function NonprofitPartnershipEnquiryPage({
   selectedPlan,
   isAuthenticated,
 }: NonprofitPartnershipEnquiryPageProps) {
   return (
-    <main className="overflow-x-hidden">
-      <div className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10 sm:pb-16 lg:px-8">
-        <header className="max-w-2xl">
-          <Badge variant="eyebrow">{NONPROFIT_ENQUIRY_EYEBROW}</Badge>
-          <h1 className="mt-3 font-display text-[clamp(1.75rem,3.2vw,2.5rem)] font-medium tracking-tight text-ink">
-            {NONPROFIT_ENQUIRY_HEADING}
-          </h1>
-          <p className="mt-3.5 text-base text-ink-soft">
-            {NONPROFIT_ENQUIRY_DESCRIPTION}
-          </p>
-        </header>
-
-        <div className="mt-8 grid grid-cols-1 items-start gap-8 min-[900px]:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] min-[900px]:gap-10 lg:gap-12">
-          <aside className="min-w-0">
-            <SelectedPlanSummary plan={selectedPlan} />
-            <WhatHappensNext />
-          </aside>
-
-          <div className="min-w-0">
-            <NonprofitPartnershipForm
-              planSlug={selectedPlan?.slug ?? null}
-              isAuthenticated={isAuthenticated}
-            />
-          </div>
-        </div>
-      </div>
-    </main>
+    <EnquiryPageShell
+      hero={
+        <EnquiryHero
+          eyebrow={NONPROFIT_ENQUIRY_EYEBROW}
+          heading={NONPROFIT_ENQUIRY_HEADING}
+          description={NONPROFIT_ENQUIRY_DESCRIPTION}
+        />
+      }
+      summary={
+        <>
+          <SelectedPlanSummary plan={selectedPlan} />
+          <EnquiryNextSteps
+            steps={NONPROFIT_ENQUIRY_NEXT_STEPS}
+            headingId="nonprofit-next-steps-heading"
+          />
+        </>
+      }
+      form={
+        <NonprofitPartnershipForm
+          planSlug={selectedPlan?.slug ?? null}
+          isAuthenticated={isAuthenticated}
+        />
+      }
+    />
   )
 }
 

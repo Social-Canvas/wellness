@@ -1,13 +1,17 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, useTransition } from "react"
+import { useId, useState, useTransition } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  EnquiryFormCard,
+  EnquirySuccessPanel,
+} from "@/features/leads/components/enquiry"
 import { submitNonprofitPartnershipAction } from "@/features/leads/actions/leads.actions"
 import {
   submitNonprofitPartnershipSchema,
@@ -26,7 +30,6 @@ import {
 } from "@/features/leads/utils/nonprofit-enquiry"
 import { EDUCATIONAL_DISCLAIMER } from "@/features/checkout/constants/disclaimer"
 import type { NonprofitPlanSlug } from "@/features/checkout/utils/membership-audience"
-import { cn } from "@/lib/utils"
 
 type NonprofitPartnershipFormProps = {
   planSlug: NonprofitPlanSlug | null
@@ -61,7 +64,6 @@ function NonprofitPartnershipForm({
   const [submitted, setSubmitted] = useState(false)
   const [submitLocked, setSubmitLocked] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const successRef = useRef<HTMLHeadingElement>(null)
 
   const {
     register,
@@ -83,12 +85,6 @@ function NonprofitPartnershipForm({
       planSlug: planSlug ?? null,
     },
   })
-
-  useEffect(() => {
-    if (submitted) {
-      successRef.current?.focus()
-    }
-  }, [submitted])
 
   function onInvalid() {
     const order: (keyof SubmitNonprofitPartnershipInput)[] = [
@@ -141,44 +137,12 @@ function NonprofitPartnershipForm({
 
   if (submitted) {
     return (
-      <div
-        className={cn(
-          "rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8",
-          className
-        )}
-        role="status"
-        aria-live="polite"
-      >
-        <h2
-          ref={successRef}
-          tabIndex={-1}
-          className="font-display text-2xl font-medium text-ink outline-none"
-        >
-          {NONPROFIT_ENQUIRY_SUCCESS_HEADING}
-        </h2>
-        <p className="mt-3 text-sm text-ink-soft sm:text-base">
-          {NONPROFIT_ENQUIRY_SUCCESS_BODY}
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/programs"
-            className={cn(buttonVariants({ variant: "default" }), "justify-center")}
-          >
-            Return to Programs
-          </Link>
-          {isAuthenticated ? (
-            <Link
-              href="/dashboard"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "justify-center"
-              )}
-            >
-              Go to Dashboard
-            </Link>
-          ) : null}
-        </div>
-      </div>
+      <EnquirySuccessPanel
+        heading={NONPROFIT_ENQUIRY_SUCCESS_HEADING}
+        body={NONPROFIT_ENQUIRY_SUCCESS_BODY}
+        isAuthenticated={isAuthenticated}
+        className={className}
+      />
     )
   }
 
@@ -194,19 +158,11 @@ function NonprofitPartnershipForm({
   const serverErrorId = `${formId}-server-error`
 
   return (
-    <div
-      className={cn(
-        "w-full max-w-[620px] rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8",
-        className
-      )}
+    <EnquiryFormCard
+      heading={NONPROFIT_ENQUIRY_FORM_HEADING}
+      support={NONPROFIT_ENQUIRY_FORM_SUPPORT}
+      className={className}
     >
-      <h2 className="font-display text-xl font-medium text-ink sm:text-2xl">
-        {NONPROFIT_ENQUIRY_FORM_HEADING}
-      </h2>
-      <p className="mt-2 text-sm text-ink-soft sm:text-base">
-        {NONPROFIT_ENQUIRY_FORM_SUPPORT}
-      </p>
-
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit, onInvalid)}
@@ -441,7 +397,7 @@ function NonprofitPartnershipForm({
       <p className="mt-5 text-xs leading-relaxed text-ink-soft/80">
         {EDUCATIONAL_DISCLAIMER}
       </p>
-    </div>
+    </EnquiryFormCard>
   )
 }
 

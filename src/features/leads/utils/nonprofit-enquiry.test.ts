@@ -55,16 +55,20 @@ function planBySlug(slug: string) {
 // 1. Two-column layout renders at desktop width
 test("1. Two-column layout renders at desktop width", () => {
   const page = enquiryPageSource()
-  assert.match(page, /max-w-6xl/)
-  assert.match(page, /0\.42fr/)
-  assert.match(page, /0\.58fr/)
-  assert.match(page, /min-\[900px\]:grid-cols-/)
+  const shell = readSrc(
+    "features/leads/components/enquiry/EnquiryPageShell.tsx"
+  )
+  assert.match(page, /EnquiryPageShell/)
+  assert.match(shell, /max-w-6xl/)
+  assert.match(shell, /0\.42fr/)
+  assert.match(shell, /0\.58fr/)
+  assert.match(shell, /min-\[900px\]:grid-cols-/)
 })
 
 // 2. Mobile layout stacks correctly
 test("2. Mobile layout stacks correctly", () => {
   const page = enquiryPageSource()
-  assert.match(page, /grid-cols-1/)
+  assert.match(page, /EnquiryPageShell/)
   assert.match(page, /SelectedPlanSummary/)
   assert.match(page, /NonprofitPartnershipForm/)
   const summaryIdx = page.indexOf("<SelectedPlanSummary")
@@ -211,11 +215,15 @@ test("12. Duplicate submission is prevented", () => {
 // 13. Success state renders
 test("13. Success state renders", () => {
   const form = formSource()
+  const success = readSrc(
+    "features/leads/components/enquiry/EnquirySuccessPanel.tsx"
+  )
+  assert.match(form, /EnquirySuccessPanel/)
   assert.match(form, /NONPROFIT_ENQUIRY_SUCCESS_HEADING/)
-  assert.match(form, /Return to Programs/)
-  assert.match(form, /Go to Dashboard/)
-  assert.match(form, /role="status"/)
-  assert.match(form, /successRef/)
+  assert.match(success, /Return to Programs/)
+  assert.match(success, /Go to Dashboard/)
+  assert.match(success, /role="status"/)
+  assert.match(success, /successRef/)
 })
 
 // 14. Server failure preserves form values
@@ -273,22 +281,32 @@ test("17. Medical disclaimer has reduced visual prominence", () => {
 // 18. No horizontal overflow at 375px
 test("18. No horizontal overflow at 375px", () => {
   const page = enquiryPageSource()
-  assert.match(page, /overflow-x-hidden/)
-  assert.match(page, /min-w-0/)
-  assert.match(page, /px-4/)
-  assert.match(formSource(), /max-w-\[620px\]/)
+  const shell = readSrc(
+    "features/leads/components/enquiry/EnquiryPageShell.tsx"
+  )
+  const formCard = readSrc(
+    "features/leads/components/enquiry/EnquiryFormCard.tsx"
+  )
+  assert.match(shell, /overflow-x-hidden/)
+  assert.match(shell, /min-w-0/)
+  assert.match(shell, /px-4/)
+  assert.match(formCard, /max-w-\[620px\]/)
+  assert.match(page, /EnquiryPageShell/)
 })
 
 // 19. Keyboard and focus behavior work
 test("19. Keyboard and focus behavior work", () => {
   const form = formSource()
+  const success = readSrc(
+    "features/leads/components/enquiry/EnquirySuccessPanel.tsx"
+  )
   assert.match(form, /setFocus\(first\)/)
   assert.match(form, /onInvalid/)
   assert.match(form, /aria-describedby/)
   assert.match(form, /aria-invalid/)
   assert.match(form, /aria-required/)
-  assert.match(form, /successRef\.current\?\.focus/)
-  assert.match(form, /tabIndex=\{-1\}/)
+  assert.match(success, /successRef\.current\?\.focus/)
+  assert.match(success, /tabIndex=\{-1\}/)
 })
 
 // 20. Existing enquiry persistence and email behavior remain intact
