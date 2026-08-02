@@ -17,7 +17,7 @@ import {
 } from "@/features/checkout/utils/stripe-return-urls"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { sendMembershipActivatedEmail } from "@/server/integrations/resend/transactional-email.service"
+import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import {
   assertCheckoutUsesTestModeKeys,
@@ -28,7 +28,6 @@ import {
   mapStripeSubscriptionToUpdate,
   mapStripeSubscriptionToUpsert,
 } from "@/server/integrations/stripe/mapper"
-import { logger, safeErrorMessage } from "@/server/utils/logger"
 import type { Database } from "@/types/database/supabase"
 
 const userIdSchema = z.uuid("Invalid user id.")
@@ -252,16 +251,6 @@ async function resolveUserIdForSubscription(
   }
 }
 
-async function getPlanNameById(planId: string): Promise<string> {
-  try {
-    const supabase = createAdminClient()
-    const { data } = await supabase.from("plans").select("name").eq("id", planId).maybeSingle()
-    return data?.name ?? "Membership"
-  } catch {
-    return "Membership"
-  }
-}
-
 export async function createCheckoutSession(
   userId: string,
   planPriceId: string
@@ -460,30 +449,16 @@ export async function syncSubscriptionFromStripe(
       }
 
       if (shouldSendMembershipActivatedEmail) {
-        try {
-          const profileResult = await getProfileByUserId(userIdResult.data)
-          const planName = await getPlanNameById(planPriceResult.data.plan_id)
-
-          if (profileResult.success) {
-            await sendMembershipActivatedEmail({
-              to: profileResult.data.email,
-              fullName: profileResult.data.full_name,
-              planName,
-              stripeSubscriptionId: data.stripe_subscription_id,
-            })
-          } else {
-            logger.warn("Could not load profile for membership activation email.", {
-              userId: userIdResult.data,
-              stripeSubscriptionId: subscription.id,
-            })
-          }
-        } catch (emailError) {
-          logger.error("Membership activation email failed without blocking sync.", {
+        await recordMembershipLifecycleEvent({
+          eventType: "membership_started",
+          sourceEventId: `membership_started:${subscription.id}:${data.status}`,
+          userId: userIdResult.data,
+          planId: planPriceResult.data.plan_id,
+          metadata: {
             stripeSubscriptionId: subscription.id,
-            userId: userIdResult.data,
-            error: safeErrorMessage(emailError),
-          })
-        }
+            accessSource: "personal_stripe",
+          },
+        })
       }
 
       return success(data)
@@ -502,30 +477,16 @@ export async function syncSubscriptionFromStripe(
     }
 
     if (shouldSendMembershipActivatedEmail) {
-      try {
-        const profileResult = await getProfileByUserId(userIdResult.data)
-        const planName = await getPlanNameById(planPriceResult.data.plan_id)
-
-        if (profileResult.success) {
-          await sendMembershipActivatedEmail({
-            to: profileResult.data.email,
-            fullName: profileResult.data.full_name,
-            planName,
-            stripeSubscriptionId: data.stripe_subscription_id,
-          })
-        } else {
-          logger.warn("Could not load profile for membership activation email.", {
-            userId: userIdResult.data,
-            stripeSubscriptionId: subscription.id,
-          })
-        }
-      } catch (emailError) {
-        logger.error("Membership activation email failed without blocking sync.", {
+      await recordMembershipLifecycleEvent({
+        eventType: "membership_started",
+        sourceEventId: `membership_started:${subscription.id}:${data.status}`,
+        userId: userIdResult.data,
+        planId: planPriceResult.data.plan_id,
+        metadata: {
           stripeSubscriptionId: subscription.id,
-          userId: userIdResult.data,
-          error: safeErrorMessage(emailError),
-        })
-      }
+          accessSource: "personal_stripe",
+        },
+      })
     }
 
     return success(data)

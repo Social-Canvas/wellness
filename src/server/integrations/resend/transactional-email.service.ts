@@ -12,9 +12,12 @@ import {
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 
 import { getResendClient } from "./client"
-
-const TRANSACTIONAL_FROM_EMAIL = "onboarding@resend.dev"
-const TRANSACTIONAL_FROM_NAME = "Elevate Health Solutions"
+import {
+  getTransactionalEmailConfig,
+  isRecipientAllowed,
+  validateTransactionalSender,
+} from "./email-config"
+import { redactProviderError } from "./lifecycle-email.pure"
 
 type SendTransactionalEmailParams = {
   to: string
@@ -26,6 +29,7 @@ type SendTransactionalEmailParams = {
 type SendTransactionalEmailResult = {
   sent: boolean
   providerId?: string
+  skippedReason?: string
 }
 
 async function sendTransactionalEmail({
@@ -34,20 +38,34 @@ async function sendTransactionalEmail({
   template,
   context,
 }: SendTransactionalEmailParams): Promise<SendTransactionalEmailResult> {
-  if (!process.env.RESEND_API_KEY) {
-    logger.warn("Skipping transactional email because RESEND_API_KEY is missing.", {
+  const config = getTransactionalEmailConfig()
+  const sender = validateTransactionalSender(config)
+
+  if (!sender.ok) {
+    logger.warn("Skipping transactional email because sender config is not ready.", {
       dedupeKey,
-      to,
+      reason: sender.reason,
       ...context,
     })
-    return { sent: false }
+    return { sent: false, skippedReason: sender.reason }
+  }
+
+  const allow = isRecipientAllowed(to, config)
+  if (!allow.allowed) {
+    logger.warn("Skipping transactional email because recipient is not allowed.", {
+      dedupeKey,
+      reason: allow.reason,
+      ...context,
+    })
+    return { sent: false, skippedReason: allow.reason }
   }
 
   try {
     const resend = getResendClient()
     const result = await resend.emails.send({
-      from: `${TRANSACTIONAL_FROM_NAME} <${TRANSACTIONAL_FROM_EMAIL}>`,
+      from: sender.fromHeader,
       to,
+      ...(sender.replyTo ? { replyTo: sender.replyTo } : {}),
       subject: template.subject,
       html: template.html,
       text: template.text,
@@ -59,8 +77,7 @@ async function sendTransactionalEmail({
     if (result.error) {
       logger.error("Transactional email send failed.", {
         dedupeKey,
-        to,
-        resendError: result.error,
+        resendError: redactProviderError(result.error),
         ...context,
       })
       return { sent: false }
@@ -68,7 +85,6 @@ async function sendTransactionalEmail({
 
     logger.info("Transactional email sent.", {
       dedupeKey,
-      to,
       providerId: result.data?.id,
       ...context,
     })
@@ -77,7 +93,6 @@ async function sendTransactionalEmail({
   } catch (error) {
     logger.error("Transactional email threw unexpectedly.", {
       dedupeKey,
-      to,
       error: safeErrorMessage(error),
       ...context,
     })
@@ -110,6 +125,10 @@ export async function sendPurchaseConfirmationEmail(input: {
   })
 }
 
+/**
+ * @deprecated Prefer membership_lifecycle_events outbox (`membership_started`).
+ * Kept for backward-compatible direct sends and tests.
+ */
 export async function sendMembershipActivatedEmail(input: {
   to: string
   fullName?: string | null
@@ -156,6 +175,9 @@ export async function sendResetCourseAccessGrantedEmail(input: {
   })
 }
 
+/**
+ * @deprecated Prefer membership_lifecycle_events outbox (`membership_payment_failed`).
+ */
 export async function sendPaymentFailedEmail(input: {
   to: string
   fullName?: string | null

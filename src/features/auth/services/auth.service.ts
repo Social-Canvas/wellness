@@ -353,6 +353,12 @@ export async function signUp(
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
+      options: {
+        emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
+        data: {
+          full_name: parsed.data.fullName,
+        },
+      },
     })
 
     if (error) {
@@ -468,7 +474,7 @@ export async function forgotPassword(
   try {
     const supabase = await createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/reset-password`,
+      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
     })
 
     if (error?.status === 429) {

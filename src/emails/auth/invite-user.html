@@ -1,0 +1,45 @@
+{{ .ConfirmationURL }}
+
+<!--
+  Elevate Auth — Invite user
+  Paste into Supabase Dashboard → Authentication → Email Templates → Invite user
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>You're invited to Elevate</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f6faf9;font-family:Arial,sans-serif;">
+    <span style="display:none !important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">You are invited to Elevate Health Solutions.</span>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6faf9;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #d8e8e4;">
+            <tr>
+              <td style="background:#1f3a43;padding:20px 24px;">
+                <p style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Elevate Health Solutions</p>
+                <p style="margin:4px 0 0;color:#d8e8e4;font-size:13px;">Science + soul</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 24px 18px;">
+                <h1 style="margin:0 0 12px;color:#1f3a43;font-size:24px;line-height:1.25;">You're invited</h1>
+                <p style="margin:0 0 16px;color:#1f3a43;line-height:1.6;">
+                  You have been invited to join Elevate Health Solutions. Accept the invitation to set your password and sign in.
+                </p>
+                <p style="margin:20px 0 28px;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#2f7e96;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;">Accept invitation</a>
+                </p>
+                <p style="margin:0;color:#46616a;font-size:13px;line-height:1.5;">
+                  This invitation does not grant membership access by itself. Access still depends on your purchase or organization sponsorship.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

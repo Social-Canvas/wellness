@@ -155,7 +155,7 @@ async function loadCapabilitiesForPlan(
 
 /**
  * Records an idempotent membership lifecycle event for email automation.
- * Does not send external email.
+ * Persists first; best-effort immediate outbox delivery never blocks or rolls back access.
  */
 export async function recordMembershipLifecycleEvent(input: {
   eventType: string
@@ -165,19 +165,27 @@ export async function recordMembershipLifecycleEvent(input: {
   planId?: string | null
   effectiveAt?: string
   metadata?: Record<string, string | number | boolean | null>
-}): Promise<ActionResult<{ created: boolean }>> {
+  /** When false, skip immediate send (cron will retry). Default true. */
+  processEmailImmediately?: boolean
+}): Promise<ActionResult<{ created: boolean; eventId?: string }>> {
   const supabase = membershipDb()
 
-  const { error } = await supabase.from("membership_lifecycle_events").insert({
-    event_type: input.eventType,
-    source_event_id: input.sourceEventId,
-    user_id: input.userId ?? null,
-    organization_id: input.organizationId ?? null,
-    plan_id: input.planId ?? null,
-    effective_at: input.effectiveAt ?? new Date().toISOString(),
-    status: "pending",
-    metadata: input.metadata ?? {},
-  })
+  const { data, error } = await supabase
+    .from("membership_lifecycle_events")
+    .insert({
+      event_type: input.eventType,
+      source_event_id: input.sourceEventId,
+      user_id: input.userId ?? null,
+      organization_id: input.organizationId ?? null,
+      plan_id: input.planId ?? null,
+      effective_at: input.effectiveAt ?? new Date().toISOString(),
+      status: "pending",
+      email_status: "pending",
+      email_recipient_user_id: input.userId ?? null,
+      metadata: input.metadata ?? {},
+    })
+    .select("id")
+    .maybeSingle()
 
   if (error?.code === "23505") {
     return success({ created: false })
@@ -187,7 +195,20 @@ export async function recordMembershipLifecycleEvent(input: {
     return failure("provider_error", "Unable to record membership lifecycle event.")
   }
 
-  return success({ created: true })
+  const eventId = data ? (data as { id: string }).id : undefined
+
+  if (input.processEmailImmediately !== false && eventId) {
+    try {
+      const { tryProcessLifecycleEmailImmediately } = await import(
+        "@/server/integrations/resend/lifecycle-email-outbox.service"
+      )
+      void tryProcessLifecycleEmailImmediately(eventId)
+    } catch {
+      // Non-blocking: cron retries.
+    }
+  }
+
+  return success({ created: true, eventId })
 }
 
 export const getEffectiveMembership = cache(

@@ -203,3 +203,15 @@ Format:
 **Alternatives considered:** Grant on success URL with pending state.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-02 — Transactional email outbox on membership_lifecycle_events
+
+**Decision:** Deliver membership and nonprofit seat emails via Resend using delivery columns on `membership_lifecycle_events` (not a separate delivery table, not marketing lists). Auth emails stay on Supabase Auth + optional Resend SMTP.
+
+**Reason:** Lifecycle events already provide idempotent enqueue (`source_event_id` + `event_type`). Extending that table keeps claim/retry atomic and avoids dual writes. Capability grant/revoke flips are summarized inside membership emails instead of spamming per-capability mail.
+
+**Alternatives considered:** Separate `email_deliveries` table; direct-only sends without outbox; SendGrid; marketing campaign tooling.
+
+**Status:** Accepted
