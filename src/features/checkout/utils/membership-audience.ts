@@ -102,7 +102,7 @@ export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
     name: "Enterprise",
     seatRangeLabel: "201+ participants",
     priceLabel: "$3,000–$5,000",
-    priceSuffix: "/ month · custom",
+    priceSuffix: "/ month",
     ctaLabel: "Discuss enterprise access",
     customPricing: true,
   },
@@ -113,7 +113,18 @@ export const NONPROFIT_INQUIRY_CTA = "Request nonprofit membership information"
 export const NONPROFIT_INQUIRY_HREF =
   "/private-events?intent=nonprofit-partnership" as const
 
-/** Compact shared benefits for nonprofit pricing cards (public language). */
+export const NONPROFIT_SHARED_BENEFITS_TITLE =
+  "Included with every nonprofit plan" as const
+
+export const NONPROFIT_PLAN_CHOICE_HEADING =
+  "Choose your organization size" as const
+
+export const NONPROFIT_PLAN_CHOICE_DESCRIPTION =
+  "Select the participant range that best matches your organization." as const
+
+export const NONPROFIT_CUSTOM_PRICING_LABEL = "Custom pricing" as const
+
+/** Shared benefits shown once above nonprofit plan cards (public language). */
 export const NONPROFIT_MEMBERSHIP_BENEFITS = [
   "Individual member accounts",
   "Elevate course library",
@@ -121,13 +132,12 @@ export const NONPROFIT_MEMBERSHIP_BENEFITS = [
   "Breathwork and guided practices",
   "Integration Journal",
   "Organization administrator dashboard",
-  "Seat invitations and member-status management",
+  "Seat invitations and member management",
   "Session replays when available",
 ] as const
 
 export const NONPROFIT_SUPPORTING_NOTE =
   "Every participant receives an individual account, while the nonprofit administrator manages invitations and available seats."
-
 export const SPONSORED_BILLING_COPY =
   "Billing is managed by your nonprofit sponsor. Contact your administrator for seat or plan changes."
 

@@ -45,7 +45,7 @@ export default async function PrivateEventsLeadPage({
 
   const description = isNonprofitInquiry
     ? selectedPlan
-      ? `You selected ${selectedPlan.name} (${selectedPlan.seatRangeLabel}, ${selectedPlan.priceLabel}${selectedPlan.priceSuffix.replace(" · custom", "")}). Tell us about your organization and we will follow up with a partnership proposal — this is not a Checkout purchase.`
+      ? `You selected ${selectedPlan.name} (${selectedPlan.seatRangeLabel}, ${selectedPlan.priceLabel}${selectedPlan.priceSuffix}${selectedPlan.customPricing ? ", custom pricing" : ""}). Tell us about your organization and we will follow up with a partnership proposal — this is not a Checkout purchase.`
       : "Tell us about your nonprofit, approximate team or community size, and partnership goals. We will follow up with a proposal — this is not a Checkout purchase."
     : "Planning a private breathwork, sound bath, or Elevate experience for your group? Send an enquiry and we will follow up with availability."
 

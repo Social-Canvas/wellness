@@ -7,14 +7,19 @@ import { buttonVariants } from "@/components/ui/button"
 import {
   MEMBERSHIP_TABS,
   MEMBERSHIP_SECTION_COPY,
+  NONPROFIT_CUSTOM_PRICING_LABEL,
   NONPROFIT_MEMBERSHIP_BENEFITS,
+  NONPROFIT_PLAN_CHOICE_DESCRIPTION,
+  NONPROFIT_PLAN_CHOICE_HEADING,
   NONPROFIT_SEAT_PLANS,
+  NONPROFIT_SHARED_BENEFITS_TITLE,
   NONPROFIT_SUPPORTING_NOTE,
   buildMembershipAudienceUrl,
   buildNonprofitInquiryHref,
   nextAudienceOnKey,
   parseMembershipAudienceParam,
   type MembershipAudienceId,
+  type NonprofitSeatPlan,
 } from "@/features/checkout/utils/membership-audience"
 import { cn } from "@/lib/utils"
 
@@ -160,6 +165,14 @@ export function MembershipAudienceTabs({
   )
 }
 
+function nonprofitPriceAriaLabel(plan: NonprofitSeatPlan): string {
+  const amount = plan.priceLabel.replace(/\$/g, "").replace(/,/g, "")
+  if (plan.customPricing) {
+    return `${amount} dollars per month, custom pricing`
+  }
+  return `${amount} dollars per month`
+}
+
 function NonprofitMembershipPlans() {
   return (
     <div className="mx-auto w-full max-w-[1100px]">
@@ -172,42 +185,76 @@ function NonprofitMembershipPlans() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <section
+        aria-labelledby="nonprofit-shared-benefits-heading"
+        className="mx-auto max-w-[1100px] rounded-2xl border border-line bg-green/5 px-4 py-5 sm:px-6 sm:py-6"
+      >
+        <h4
+          id="nonprofit-shared-benefits-heading"
+          className="text-center font-display text-lg font-medium text-ink sm:text-xl"
+        >
+          {NONPROFIT_SHARED_BENEFITS_TITLE}
+        </h4>
+        <ul className="mt-4 grid list-none grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
+          {NONPROFIT_MEMBERSHIP_BENEFITS.map((benefit) => (
+            <li
+              key={benefit}
+              className="flex items-start gap-2 text-sm text-ink-soft"
+            >
+              <span
+                aria-hidden
+                className="mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-blue/10 text-[10px] font-bold text-blue"
+              >
+                ✓
+              </span>
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-ink-soft">
+          {NONPROFIT_SUPPORTING_NOTE}
+        </p>
+      </section>
+
+      <div className="mx-auto mt-8 mb-5 max-w-2xl text-center">
+        <h4 className="font-display text-lg font-medium text-ink sm:text-xl">
+          {NONPROFIT_PLAN_CHOICE_HEADING}
+        </h4>
+        <p className="mt-1.5 text-sm text-ink-soft">
+          {NONPROFIT_PLAN_CHOICE_DESCRIPTION}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
         {NONPROFIT_SEAT_PLANS.map((plan) => (
           <article
             key={plan.slug}
-            className="relative flex h-full flex-col rounded-[18px] border border-line bg-surface p-[28px_26px] text-left shadow-sm"
+            className="relative flex h-full flex-col rounded-2xl border border-line bg-surface p-5 text-left shadow-sm"
           >
-            <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
+            <span className="text-[11px] font-bold tracking-[0.12em] text-green-deep uppercase">
               Nonprofit
             </span>
-            <h4 className="mt-1.5 font-display text-2xl font-medium text-ink">
+            <h5 className="mt-1.5 font-display text-xl font-medium text-ink">
               {plan.name}
-            </h4>
+            </h5>
             <p className="mt-1 text-sm text-ink-soft">{plan.seatRangeLabel}</p>
-            <div className="mt-1 mb-4 font-display text-[30px] font-semibold text-ink">
+            <p
+              className={cn(
+                "mt-2 font-display text-[26px] font-semibold leading-tight text-ink",
+                plan.customPricing ? "mb-1" : "mb-4"
+              )}
+              aria-label={nonprofitPriceAriaLabel(plan)}
+            >
               {plan.priceLabel}
               <small className="ml-1 font-body text-sm font-normal text-ink-soft">
                 {plan.priceSuffix}
               </small>
-            </div>
-
-            <ul className="mb-5 list-none">
-              {NONPROFIT_MEMBERSHIP_BENEFITS.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="relative py-1 pl-[22px] text-sm text-ink-soft"
-                >
-                  <span
-                    aria-hidden
-                    className="absolute left-0 font-bold text-blue"
-                  >
-                    ✓
-                  </span>
-                  {benefit}
-                </li>
-              ))}
-            </ul>
+            </p>
+            {plan.customPricing ? (
+              <p className="mb-4 text-sm text-ink-soft">
+                {NONPROFIT_CUSTOM_PRICING_LABEL}
+              </p>
+            ) : null}
 
             <Link
               href={buildNonprofitInquiryHref(plan.slug)}
@@ -216,7 +263,7 @@ function NonprofitMembershipPlans() {
                   variant: plan.customPricing ? "outline" : "default",
                   size: "block",
                 }),
-                "mt-auto min-h-11"
+                "mt-auto min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               )}
             >
               {plan.ctaLabel}
@@ -224,10 +271,6 @@ function NonprofitMembershipPlans() {
           </article>
         ))}
       </div>
-
-      <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-ink-soft">
-        {NONPROFIT_SUPPORTING_NOTE}
-      </p>
     </div>
   )
 }
