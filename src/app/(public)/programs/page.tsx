@@ -1,22 +1,30 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { CtaBand } from "@/components/marketing"
 import {
   MembershipAudienceTabs,
+  MembershipPricingCards,
   ProgramOfferCard,
   ResetPlanOfferBand,
 } from "@/features/checkout/components"
+import { getCurrentUser } from "@/features/auth/services/auth.service"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
 import {
   MEMBERSHIP_SECTION_COPY,
   parseMembershipAudienceParam,
 } from "@/features/checkout/utils/membership-audience"
 import {
+  buildAllMembershipPlanCardViews,
+  type MembershipCtaAccessSource,
+  type MembershipCtaStatus,
+  type MembershipPlanSlug,
+  isLiveMembershipAccess,
+} from "@/features/checkout/utils/membership-plan-cta-state"
+import { buildLiveBreathworkOfferView } from "@/features/checkout/utils/live-breathwork-offer-state"
+import {
   BREATHWORK_ROADMAP,
   ELEVATE_BRAND,
-  ELEVATE_MEMBERSHIPS,
   ELEVATE_PROGRAM_OFFERS,
   RESET_PLAN,
   VIP_COACHING_CTA_FEATURES,
@@ -26,6 +34,11 @@ import { getPublicProgramOffers } from "@/lib/constants/catalog-visibility"
 import { getProgramOfferBrandImage, BRAND_IMAGES } from "@/lib/brand/images"
 import { buttonVariants } from "@/components/ui/button"
 import { listProgramCatalogProducts } from "@/features/shop/services/shop.service"
+import {
+  hasConfirmedPublicTrialRegistration,
+  listTrialOpenLiveSessions,
+} from "@/features/live-sessions/services/live-sessions.service"
+import { getEffectiveMembership } from "@/server/services/membership.service"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -46,7 +59,10 @@ const PROGRAM_OFFERS_WITHOUT_RESET = getPublicProgramOffers(
   ELEVATE_PROGRAM_OFFERS
 ).filter((offer) => offer.slug !== RESET_PLAN.slug)
 
-function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<string>): string | null {
+function programCheckoutHref(
+  slug: string,
+  publishedProgramSlugs: ReadonlySet<string>
+): string | null {
   if (slug === "standalone-live-session") {
     return "/live-breathwork"
   }
@@ -61,12 +77,11 @@ function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<st
   })
 }
 
-function membershipCheckoutHref(planSlug: string): string {
-  return buildCheckoutConsentUrl({
-    type: "membership",
-    planSlug,
-    interval: "monthly",
-  })
+function asPlanSlug(value: string | null | undefined): MembershipPlanSlug | null {
+  if (value === "plan-1" || value === "plan-2" || value === "plan-3") {
+    return value
+  }
+  return null
 }
 
 type ProgramsPageProps = {
@@ -77,10 +92,70 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   const params = await searchParams
   const initialAudience = parseMembershipAudienceParam(params.membership)
 
-  const productsResult = await listProgramCatalogProducts()
+  const [productsResult, userResult, trialSessionsResult] = await Promise.all([
+    listProgramCatalogProducts(),
+    getCurrentUser(),
+    listTrialOpenLiveSessions(),
+  ])
+
+  const userId = userResult.success ? userResult.data.id : null
+  const membershipResult = userId
+    ? await getEffectiveMembership(userId)
+    : null
+  const membership =
+    membershipResult && membershipResult.success ? membershipResult.data : null
+
+  const membershipFacts = {
+    isAuthenticated: Boolean(userId),
+    source: (membership?.source ?? "none") as MembershipCtaAccessSource,
+    status: (membership?.status ?? "none") as MembershipCtaStatus,
+    effectiveTierSlug: asPlanSlug(membership?.effectiveTierSlug),
+    hasPersonalBilling: membership?.hasPersonalBilling ?? false,
+    cancelAtPeriodEnd: membership?.cancelAtPeriodEnd ?? false,
+    currentPeriodEnd: membership?.currentPeriodEnd ?? null,
+    scheduledPlanSlug: asPlanSlug(membership?.scheduledPlanSlug),
+    scheduledPlanName: membership?.scheduledPlanName ?? null,
+    organizationName: membership?.organizationName ?? null,
+  }
+
+  const membershipCardViews = buildAllMembershipPlanCardViews(membershipFacts)
+
+  const membershipAccessActive = membership
+    ? isLiveMembershipAccess(membership.status as MembershipCtaStatus)
+    : false
+  const hasLiveCapability =
+    membership?.capabilities.includes("live_online_sessions") ?? false
+
+  const trialSessions = trialSessionsResult.success
+    ? trialSessionsResult.data
+    : []
+  const primaryTrial = trialSessions[0] ?? null
+
+  let alreadyRegistered = false
+  if (userId && primaryTrial) {
+    const regResult = await hasConfirmedPublicTrialRegistration(
+      userId,
+      primaryTrial.id
+    )
+    alreadyRegistered = regResult.success ? regResult.data : false
+  }
+
+  const liveBreathworkView = buildLiveBreathworkOfferView({
+    isAuthenticated: Boolean(userId),
+    hasLiveOnlineSessionsCapability: hasLiveCapability,
+    membershipAccessActive,
+    alreadyRegisteredForSelectedSession: alreadyRegistered,
+    hasEligibleUpcomingSession: Boolean(primaryTrial),
+    registeredHref: primaryTrial
+      ? `/dashboard/live-sessions/${primaryTrial.id}/join?trial=1`
+      : "/dashboard/live-sessions",
+    reserveHref: "/live-breathwork",
+  })
 
   const publishedProductSlugs = new Set(
-    (productsResult.success ? productsResult.data : []).map((product) => product.slug)
+    (productsResult.success ? productsResult.data : []).map(
+      (product) => product.slug
+    )
   )
 
   const publishedProductsBySlug = new Map(
@@ -91,69 +166,7 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   )
 
   const individualsPanel = (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {ELEVATE_MEMBERSHIPS.map((tier) => (
-        <article
-          id={`membership-${tier.slug === "plan-1" ? "core" : tier.slug === "plan-2" ? "gold" : "platinum"}`}
-          key={tier.slug}
-          className={cn(
-            "relative flex h-full flex-col rounded-[18px] border bg-surface p-[28px_26px] text-left shadow-sm scroll-mt-32",
-            tier.featured ? "border-2 border-blue" : "border-line"
-          )}
-        >
-          {tier.featured ? (
-            <span className="absolute top-[-13px] left-1/2 -translate-x-1/2 rounded-[20px] bg-blue px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-white uppercase">
-              Most popular
-            </span>
-          ) : null}
-
-          <span className="text-[11.5px] font-bold tracking-[0.12em] text-green-deep uppercase">
-            Membership
-          </span>
-          <h3 className="mt-1.5 font-display text-2xl font-medium text-ink">
-            {tier.name}
-          </h3>
-          <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
-            {tier.priceLabel}
-            <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-              / mo
-            </small>
-          </div>
-
-          <p className="mb-3 text-sm text-ink-soft">{tier.whoItIsFor}</p>
-
-          <ul className="mb-5 list-none">
-            {tier.features.map((feature) => (
-              <li
-                key={feature}
-                className="relative py-1.5 pl-[22px] text-sm text-ink-soft"
-              >
-                <span
-                  aria-hidden
-                  className="absolute left-0 font-bold text-blue"
-                >
-                  ✓
-                </span>
-                {feature}
-              </li>
-            ))}
-          </ul>
-
-          <Link
-            href={membershipCheckoutHref(tier.slug)}
-            className={cn(
-              buttonVariants({
-                variant: tier.ctaVariant,
-                size: "block",
-              }),
-              "mt-auto"
-            )}
-          >
-            Join {tier.name}
-          </Link>
-        </article>
-      ))}
-    </div>
+    <MembershipPricingCards cardViews={membershipCardViews} />
   )
 
   return (
@@ -237,7 +250,10 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
               const publishedProduct = publishedProductsBySlug.get(offer.slug)
               const priceCents = publishedProduct?.priceAmount ?? 4700
               const currency = publishedProduct?.currency ?? "usd"
-              const checkoutHref = programCheckoutHref(offer.slug, publishedProductSlugs)
+              const isLiveBreathwork = offer.slug === "standalone-live-session"
+              const checkoutHref = isLiveBreathwork
+                ? liveBreathworkView.ctaHref
+                : programCheckoutHref(offer.slug, publishedProductSlugs)
 
               return (
                 <div key={offer.slug} id={`offer-${offer.slug}`}>
@@ -247,11 +263,23 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
                     description={offer.description}
                     priceCents={priceCents}
                     currency={currency}
-                    ctaLabel={offer.ctaLabel}
+                    ctaLabel={
+                      isLiveBreathwork
+                        ? liveBreathworkView.ctaLabel
+                        : offer.ctaLabel
+                    }
                     ctaVariant={offer.ctaVariant}
                     checkoutHref={checkoutHref}
                     fallbackHref="#programs-offers"
                     image={getProgramOfferBrandImage(offer.slug)}
+                    ctaDisabled={
+                      isLiveBreathwork ? liveBreathworkView.ctaDisabled : false
+                    }
+                    supportingText={
+                      isLiveBreathwork
+                        ? liveBreathworkView.supportingText
+                        : null
+                    }
                   />
                 </div>
               )

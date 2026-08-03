@@ -12,6 +12,9 @@ export const RESET_LIBRARY_PATH = `/dashboard/library/${RESET_COURSE_ID}` as con
 
 export const MEMBERSHIP_LIBRARY_PATH = "/dashboard/library" as const
 
+/** Canonical in-app membership hub for current-plan CTAs (live, recordings, account via nav). */
+export const MEMBERSHIP_HOME_PATH = "/dashboard" as const
+
 export const EBOOK_LIBRARY_PATH = "/dashboard/downloads" as const
 
 export type PostPurchaseDestination = {

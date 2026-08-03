@@ -7,6 +7,7 @@ import {
   createCheckoutSession,
   getCurrentSubscription,
 } from "@/features/billing/services/billing.service"
+import { schedulePersonalPlanChange } from "@/features/billing/services/membership-lifecycle.service"
 import type {
   BillingPortalSessionResult,
   CheckoutSessionResult,
@@ -57,4 +58,30 @@ export async function getCurrentSubscriptionAction(): Promise<
   }
 
   return getCurrentSubscription(profileResult.data)
+}
+
+export async function schedulePersonalPlanChangeAction(input: {
+  targetPlanSlug: string
+  mode: "downgrade" | "cancel"
+}): Promise<ActionResult<{ scheduled: true; effectiveAt: string | null }>> {
+  const profileResult = await requireProfileId()
+
+  if (!profileResult.success) {
+    return profileResult
+  }
+
+  return schedulePersonalPlanChange({
+    userId: profileResult.data,
+    targetPlanSlug: input.targetPlanSlug,
+    mode: input.mode,
+  })
+}
+
+export async function schedulePersonalDowngradeAction(
+  targetPlanSlug: "plan-1" | "plan-2" | "plan-3"
+): Promise<ActionResult<{ scheduled: true; effectiveAt: string | null }>> {
+  return schedulePersonalPlanChangeAction({
+    targetPlanSlug,
+    mode: "downgrade",
+  })
 }

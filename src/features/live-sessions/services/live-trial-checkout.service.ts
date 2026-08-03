@@ -9,6 +9,10 @@ import type { CreateLiveTrialCheckoutInput } from "@/features/live-sessions/sche
 import { confirmLiveTrialRegistrationFromWebhook } from "@/features/live-sessions/services/live-sessions.service"
 import { buildLiveTrialCheckoutMetadata } from "@/features/live-sessions/utils/live-sessions"
 import {
+  LIVE_BREATHWORK_MEMBER_CONFLICT,
+  shouldRefuseLiveBreathworkCheckoutForMember,
+} from "@/features/checkout/utils/live-breathwork-offer-state"
+import {
   LIVE_BREATHWORK_TRIAL_PRODUCT_SLUG,
   canStartLiveBreathworkTrialCheckout,
 } from "@/lib/constants/live-breathwork-trial"
@@ -22,6 +26,11 @@ import {
   isStripeLiveSecretKey,
   summarizeStripeProviderError,
 } from "@/server/integrations/stripe/mode"
+import {
+  getEffectiveMembership,
+  type NormalizedMembershipStatus,
+} from "@/server/services/membership.service"
+import { isLiveMembershipAccess } from "@/features/checkout/utils/membership-plan-cta-state"
 import { logger } from "@/server/utils/logger"
 
 function success<T>(data: T): ActionResult<T> {
@@ -103,6 +112,24 @@ export async function createLiveBreathworkTrialCheckoutSession(
 
     if (!product || product.status !== "published") {
       return failure("not_found", "Live Breathwork trial is not available.")
+    }
+
+    const membershipResult = await getEffectiveMembership(userId)
+    if (membershipResult.success) {
+      const membership = membershipResult.data
+      const membershipAccessActive = isLiveMembershipAccess(
+        membership.status as NormalizedMembershipStatus
+      )
+      if (
+        shouldRefuseLiveBreathworkCheckoutForMember({
+          membershipAccessActive,
+          hasLiveOnlineSessionsCapability: membership.capabilities.includes(
+            "live_online_sessions"
+          ),
+        })
+      ) {
+        return failure("conflict", LIVE_BREATHWORK_MEMBER_CONFLICT)
+      }
     }
 
     if (!liveClass) {

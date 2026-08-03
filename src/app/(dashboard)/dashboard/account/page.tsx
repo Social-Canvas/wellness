@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ManageBillingButton } from "@/features/billing/components/manage-billing-button"
+import { ScheduleDowngradeConfirm } from "@/features/billing/components/schedule-downgrade-confirm"
 import { getCurrentSubscription } from "@/features/billing/services/billing.service"
 import { getEffectiveMembership } from "@/server/services/membership.service"
 
@@ -23,12 +24,31 @@ function formatDate(value: string | null): string {
   }).format(new Date(value))
 }
 
-export default async function DashboardAccountPage() {
+function parseDowngradeSlug(
+  value: string | string[] | undefined
+): "plan-1" | "plan-2" | "plan-3" | null {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (raw === "plan-1" || raw === "plan-2" || raw === "plan-3") {
+    return raw
+  }
+  return null
+}
+
+type AccountPageProps = {
+  searchParams: Promise<{ downgrade?: string | string[] }>
+}
+
+export default async function DashboardAccountPage({
+  searchParams,
+}: AccountPageProps) {
   const profileResult = await getCurrentProfile()
 
   if (!profileResult.success) {
     redirect("/login")
   }
+
+  const params = await searchParams
+  const requestedDowngrade = parseDowngradeSlug(params.downgrade)
 
   const [subscriptionResult, membershipResult] = await Promise.all([
     getCurrentSubscription(profileResult.data.id),
@@ -37,6 +57,17 @@ export default async function DashboardAccountPage() {
   const subscription = subscriptionResult.success ? subscriptionResult.data : null
   const membership = membershipResult.success ? membershipResult.data : null
   const profile = profileResult.data
+
+  const canConfirmDowngrade =
+    Boolean(requestedDowngrade) &&
+    Boolean(membership?.hasPersonalBilling) &&
+    Boolean(
+      membership &&
+        requestedDowngrade &&
+        membership.downgradePlanSlugs.includes(requestedDowngrade)
+    ) &&
+    !membership?.scheduledPlanId &&
+    !membership?.cancelAtPeriodEnd
 
   return (
     <div className="space-y-6">
@@ -129,6 +160,11 @@ export default async function DashboardAccountPage() {
                       <li key={capability}>{capability.replaceAll("_", " ")}</li>
                     ))}
                   </ul>
+                </div>
+              ) : null}
+              {canConfirmDowngrade && requestedDowngrade ? (
+                <div className="pt-3">
+                  <ScheduleDowngradeConfirm targetPlanSlug={requestedDowngrade} />
                 </div>
               ) : null}
               {membership.hasPersonalBilling ? (

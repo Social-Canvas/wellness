@@ -1,12 +1,22 @@
 import Link from "next/link"
 
 import { TrialLiveSessionCard } from "@/features/live-sessions/components/LiveSessionCards"
-import { listTrialOpenLiveSessions } from "@/features/live-sessions/services/live-sessions.service"
+import {
+  hasConfirmedPublicTrialRegistration,
+  listTrialOpenLiveSessions,
+} from "@/features/live-sessions/services/live-sessions.service"
+import { getCurrentUser } from "@/features/auth/services/auth.service"
+import {
+  buildLiveBreathworkOfferView,
+  type LiveBreathworkOfferState,
+} from "@/features/checkout/utils/live-breathwork-offer-state"
+import { isLiveMembershipAccess } from "@/features/checkout/utils/membership-plan-cta-state"
 import {
   LIVE_BREATHWORK_TRIAL_CATALOG_AMOUNT_CENTS,
   LIVE_BREATHWORK_TRIAL_CONFIRMATION_NEEDED,
   isLiveBreathworkTrialPriceApproved,
 } from "@/lib/constants/live-breathwork-trial"
+import { getEffectiveMembership } from "@/server/services/membership.service"
 
 export const metadata = {
   title: "Live Breathwork Trial",
@@ -14,9 +24,52 @@ export const metadata = {
     "One-time Live Breathwork trial for a selected upcoming Elevate session.",
 }
 
+function cardModeFromState(
+  state: LiveBreathworkOfferState
+): "reserve" | "member_included" | "already_registered" | "unavailable" {
+  if (state === "member_included") return "member_included"
+  if (state === "already_registered") return "already_registered"
+  if (state === "unavailable") return "unavailable"
+  return "reserve"
+}
+
 export default async function LiveBreathworkTrialPage() {
-  const result = await listTrialOpenLiveSessions()
+  const [sessionsResult, userResult] = await Promise.all([
+    listTrialOpenLiveSessions(),
+    getCurrentUser(),
+  ])
   const priceApproved = isLiveBreathworkTrialPriceApproved()
+
+  const userId = userResult.success ? userResult.data.id : null
+  const membershipResult = userId
+    ? await getEffectiveMembership(userId)
+    : null
+  const membership =
+    membershipResult && membershipResult.success ? membershipResult.data : null
+
+  const membershipAccessActive = membership
+    ? isLiveMembershipAccess(membership.status)
+    : false
+  const hasLiveCapability =
+    membership?.capabilities.includes("live_online_sessions") ?? false
+
+  const sessions = sessionsResult.success ? sessionsResult.data : []
+
+  const registrationFlags = userId
+    ? await Promise.all(
+        sessions.map(async (session) => {
+          const result = await hasConfirmedPublicTrialRegistration(
+            userId,
+            session.id
+          )
+          return [
+            session.id,
+            result.success ? result.data : false,
+          ] as const
+        })
+      )
+    : []
+  const registrationMap = new Map(registrationFlags)
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -41,9 +94,11 @@ export default async function LiveBreathworkTrialPage() {
       </p>
 
       <div className="mt-10 space-y-4">
-        {!result.success ? (
-          <p className="text-sm text-destructive">{result.error.message}</p>
-        ) : result.data.length === 0 ? (
+        {!sessionsResult.success ? (
+          <p className="text-sm text-destructive">
+            {sessionsResult.error.message}
+          </p>
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-ink-soft">
             No upcoming trial sessions are open right now.{" "}
             <Link href="/programs#memberships" className="underline">
@@ -52,9 +107,27 @@ export default async function LiveBreathworkTrialPage() {
             for ongoing weekly access.
           </p>
         ) : (
-          result.data.map((session) => (
-            <TrialLiveSessionCard key={session.id} session={session} />
-          ))
+          sessions.map((session) => {
+            const alreadyRegistered = registrationMap.get(session.id) ?? false
+            const view = buildLiveBreathworkOfferView({
+              isAuthenticated: Boolean(userId),
+              hasLiveOnlineSessionsCapability: hasLiveCapability,
+              membershipAccessActive,
+              alreadyRegisteredForSelectedSession: alreadyRegistered,
+              hasEligibleUpcomingSession: true,
+              registeredHref: `/dashboard/live-sessions/${session.id}/join?trial=1`,
+              reserveHref: "/live-breathwork",
+            })
+
+            return (
+              <TrialLiveSessionCard
+                key={session.id}
+                session={session}
+                mode={cardModeFromState(view.state)}
+                registeredHref={view.ctaHref}
+              />
+            )
+          })
         )}
       </div>
     </main>

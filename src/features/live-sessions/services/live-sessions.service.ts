@@ -138,6 +138,38 @@ export const listTrialOpenLiveSessions = cache(
   }
 )
 
+/**
+ * True when the user already has a confirmed/attended public-trial registration
+ * for the selected live class (blocks duplicate trial Checkout).
+ */
+export async function hasConfirmedPublicTrialRegistration(
+  userId: string,
+  liveClassId: string
+): Promise<ActionResult<boolean>> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("live_session_registrations")
+      .select("status")
+      .eq("user_id", userId)
+      .eq("live_class_id", liveClassId)
+      .eq("registration_type", "public_trial")
+      .maybeSingle()
+
+    if (error) {
+      return failure(
+        "provider_error",
+        "Unable to verify trial registration status."
+      )
+    }
+
+    const status = (data as { status?: string } | null)?.status
+    return success(status === "confirmed" || status === "attended")
+  } catch {
+    return failure("unknown_error", "Unable to verify trial registration status.")
+  }
+}
+
 export async function listLiveSessionsAdmin(): Promise<
   ActionResult<LiveSessionAdmin[]>
 > {

@@ -256,10 +256,20 @@ test("15. Individual membership cards remain unchanged", () => {
     [4700, 9900, 14900]
   )
   const page = readSrc("app/(public)/programs/page.tsx")
-  assert.match(page, /grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3/)
-  assert.match(page, /Join \{tier\.name\}/)
-  assert.match(page, /membershipCheckoutHref/)
-  assert.match(page, /Most popular/)
+  assert.match(page, /MembershipPricingCards/)
+  assert.match(page, /buildAllMembershipPlanCardViews/)
+  assert.match(page, /getEffectiveMembership/)
+  const cards = readSrc(
+    "features/checkout/components/membership-pricing-cards.tsx"
+  )
+  assert.match(cards, /grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3/)
+  assert.match(cards, /Most popular/)
+  assert.match(cards, /visuallyCurrent|Current complimentary plan|aria-current/)
+  const ctaState = readSrc(
+    "features/checkout/utils/membership-plan-cta-state.ts"
+  )
+  assert.match(ctaState, /Go to my membership/)
+  assert.match(ctaState, /Current plan/)
 })
 
 // Regression: membership section width and copy

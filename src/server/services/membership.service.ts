@@ -52,6 +52,7 @@ export type EffectiveMembership = {
   cancelAtPeriodEnd: boolean
   scheduledPlanId: string | null
   scheduledPlanName: string | null
+  scheduledPlanSlug: string | null
   capabilities: MembershipCapability[]
   hasCourseLibrary: boolean
   canAttendInPerson: boolean
@@ -230,6 +231,7 @@ export const getEffectiveMembership = cache(
       cancelAtPeriodEnd: false,
       scheduledPlanId: null,
       scheduledPlanName: null,
+      scheduledPlanSlug: null,
       capabilities: [],
       hasCourseLibrary: false,
       canAttendInPerson: false,
@@ -416,14 +418,19 @@ export const getEffectiveMembership = cache(
       const capabilities = [...capabilityUnion]
 
       let scheduledPlanName: string | null = null
+      let scheduledPlanSlug: string | null = null
       if (selected.scheduledPlanId) {
         const { data: scheduledPlan } = await supabase
           .from("plans")
-          .select("name")
+          .select("name, slug")
           .eq("id", selected.scheduledPlanId)
           .maybeSingle()
-        scheduledPlanName =
-          (scheduledPlan as { name?: string } | null)?.name ?? null
+        const scheduled = scheduledPlan as {
+          name?: string
+          slug?: string
+        } | null
+        scheduledPlanName = scheduled?.name ?? null
+        scheduledPlanSlug = scheduled?.slug ?? null
       }
 
       const rank = PLAN_RANK[selected.planSlug] ?? 1
@@ -446,6 +453,7 @@ export const getEffectiveMembership = cache(
         cancelAtPeriodEnd: selected.cancelAtPeriodEnd,
         scheduledPlanId: selected.scheduledPlanId,
         scheduledPlanName,
+        scheduledPlanSlug,
         capabilities,
         hasCourseLibrary: capabilities.includes("membership_course_library"),
         canAttendInPerson: capabilities.includes("in_person_sessions"),

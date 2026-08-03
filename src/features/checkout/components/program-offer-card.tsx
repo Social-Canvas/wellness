@@ -1,9 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 
-import { VideoPreviewModal } from "@/components/marketing/modals"
 import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
 import type { BrandImageAsset } from "@/lib/brand/images"
@@ -22,6 +20,9 @@ type ProgramOfferCardProps = {
   checkoutHref: string | null
   fallbackHref: string
   image: BrandImageAsset
+  ctaDisabled?: boolean
+  supportingText?: string | null
+  hidePrice?: boolean
 }
 
 export function ProgramOfferCard({
@@ -36,81 +37,73 @@ export function ProgramOfferCard({
   checkoutHref,
   fallbackHref,
   image,
+  ctaDisabled = false,
+  supportingText = null,
+  hidePrice = false,
 }: ProgramOfferCardProps) {
-  const [previewOpen, setPreviewOpen] = useState(false)
   const actionHref = checkoutHref ?? fallbackHref
 
   return (
-    <>
-      <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-sm">
-        <div className="relative aspect-video overflow-hidden">
-          <BrandImage
-            image={image}
-            containerClassName="absolute inset-0"
-            sizes="(max-width: 860px) 100vw, 50vw"
-          />
-          <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase backdrop-blur-sm">
-            {category}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPreviewOpen(true)}
-            className="absolute top-1/2 left-1/2 flex size-[42px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue transition-colors hover:bg-blue-deep"
-            aria-label={`Watch intro for ${title}`}
-          >
-            <span className="ml-0.5 border-y-8 border-l-[13px] border-y-transparent border-l-white" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewOpen(true)}
-            className="absolute right-3 bottom-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-3 py-1.5 text-xs font-bold text-ink-soft backdrop-blur-sm"
-          >
-            Watch intro
-          </button>
-        </div>
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface text-left shadow-sm">
+      <div className="relative aspect-video overflow-hidden">
+        <BrandImage
+          image={image}
+          containerClassName="absolute inset-0"
+          sizes="(max-width: 860px) 100vw, 50vw"
+        />
+        <span className="absolute top-3 left-3 rounded-[20px] bg-[rgba(255,255,255,0.9)] px-2.5 py-1.5 text-[11px] font-bold tracking-[0.06em] text-green-deep uppercase backdrop-blur-sm">
+          {category}
+        </span>
+      </div>
 
-        <div className="flex flex-1 flex-col p-5">
-          <h4 className="font-display text-lg font-medium text-ink">{title}</h4>
-          <p className="mt-1.5 mb-3.5 text-sm text-ink-soft">{description}</p>
+      <div className="flex flex-1 flex-col p-5">
+        <h4 className="font-display text-lg font-medium text-ink">{title}</h4>
+        <p className="mt-1.5 mb-3.5 text-sm text-ink-soft">{description}</p>
 
-          <div className="mt-auto flex items-center justify-between gap-3">
-            <span className="font-display text-lg font-semibold text-ink">
-              {formatProductPrice(priceCents, currency)}
-              {priceNote ? (
-                <small className="ml-1 font-body text-xs font-normal text-ink-soft">
-                  {priceNote}
-                </small>
-              ) : null}
-            </span>
+        <div className="mt-auto flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            {hidePrice ? (
+              <span className="font-display text-lg font-semibold text-ink">
+                {ctaDisabled ? ctaLabel : "Access active"}
+              </span>
+            ) : (
+              <span className="font-display text-lg font-semibold text-ink">
+                {formatProductPrice(priceCents, currency)}
+                {priceNote ? (
+                  <small className="ml-1 font-body text-xs font-normal text-ink-soft">
+                    {priceNote}
+                  </small>
+                ) : null}
+              </span>
+            )}
 
-            <div className="flex items-center gap-2">
+            {ctaDisabled ? (
               <button
                 type="button"
-                onClick={() => setPreviewOpen(true)}
+                disabled
+                aria-disabled="true"
+                title={supportingText ?? ctaLabel}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
-                  "hidden min-[520px]:inline-flex"
+                  "max-w-[min(100%,14rem)] cursor-not-allowed whitespace-normal text-center leading-snug opacity-60"
                 )}
               >
-                Preview
+                {ctaLabel}
               </button>
+            ) : (
               <Link
                 href={actionHref}
                 className={cn(buttonVariants({ variant: ctaVariant, size: "sm" }))}
               >
                 {ctaLabel}
               </Link>
-            </div>
+            )}
           </div>
+          {supportingText ? (
+            <p className="text-xs text-ink-soft">{supportingText}</p>
+          ) : null}
         </div>
-      </article>
-
-      <VideoPreviewModal
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        title={title}
-        image={image}
-      />
-    </>
+      </div>
+    </article>
   )
 }
