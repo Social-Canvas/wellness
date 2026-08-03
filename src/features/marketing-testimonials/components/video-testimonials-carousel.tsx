@@ -46,10 +46,12 @@ import {
   TESTIMONIAL_LAYOUT_TRANSITION_MS,
   TESTIMONIAL_SIDE_BLUR_PX,
   TESTIMONIAL_SIDE_OPACITY,
-  TESTIMONIAL_SIDE_SCALE,
   TESTIMONIAL_SIDE_Z,
   resolveTestimonialCarouselSlot,
+  resolveTestimonialNavDirection,
+  testimonialSlotTransform,
   type TestimonialCarouselSlot,
+  type TestimonialNavDirection,
 } from "../utils/carousel-layout"
 import {
   buildSlideAccessibleName,
@@ -82,7 +84,7 @@ function slotVisualStyle(
     return {
       zIndex: TESTIMONIAL_ACTIVE_Z,
       opacity: 1,
-      transform: "scale(1)",
+      transform: testimonialSlotTransform("active"),
       transition,
     }
   }
@@ -90,10 +92,19 @@ function slotVisualStyle(
   return {
     zIndex: TESTIMONIAL_SIDE_Z,
     opacity: TESTIMONIAL_SIDE_OPACITY.preferred,
-    transform: `translateX(-50%) translateY(-50%) scale(${TESTIMONIAL_SIDE_SCALE.preferred})`,
+    transform: testimonialSlotTransform(slot),
     filter: `blur(${TESTIMONIAL_SIDE_BLUR_PX}px)`,
     transition,
   }
+}
+
+/** Responsive horizontal offset from stage center (rem). Previous is negative. */
+function slotOffsetClass(slot: Exclude<TestimonialCarouselSlot, "hidden">): string {
+  if (slot === "active") return "[--slot-x:0rem]"
+  if (slot === "previous") {
+    return "[--slot-x:-14.75rem] md:[--slot-x:-15.25rem] lg:[--slot-x:-14.75rem]"
+  }
+  return "[--slot-x:14.75rem] md:[--slot-x:15.25rem] lg:[--slot-x:14.75rem]"
 }
 
 export function VideoTestimonialsCarousel({
@@ -107,6 +118,8 @@ export function VideoTestimonialsCarousel({
   const pointerStartX = useRef<number | null>(null)
 
   const [activeIndex, setActiveIndex] = useState(0)
+  const [navDirection, setNavDirection] =
+    useState<TestimonialNavDirection>("next")
   const [muted, setMuted] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
@@ -121,9 +134,16 @@ export function VideoTestimonialsCarousel({
   const canStream = Boolean(active?.muxPlaybackId)
 
   const goTo = useCallback(
-    (index: number, options?: { manual?: boolean }) => {
+    (
+      index: number,
+      options?: { manual?: boolean; direction?: TestimonialNavDirection }
+    ) => {
       if (total <= 0) return
       const next = ((index % total) + total) % total
+      const direction =
+        options?.direction ??
+        resolveTestimonialNavDirection(activeIndex, next, total)
+      setNavDirection(direction)
       setActiveIndex(next)
       setAutoplayBlocked(false)
       setPlaying(false)
@@ -131,19 +151,25 @@ export function VideoTestimonialsCarousel({
         setManualNavCooldownActive(true)
       }
     },
-    [total]
+    [activeIndex, total]
   )
 
   const goNext = useCallback(
     (manual = true) => {
-      goTo(nextTestimonialIndex(activeIndex, total), { manual })
+      goTo(nextTestimonialIndex(activeIndex, total), {
+        manual,
+        direction: "next",
+      })
     },
     [activeIndex, goTo, total]
   )
 
   const goPrevious = useCallback(
     (manual = true) => {
-      goTo(previousTestimonialIndex(activeIndex, total), { manual })
+      goTo(previousTestimonialIndex(activeIndex, total), {
+        manual,
+        direction: "previous",
+      })
     },
     [activeIndex, goTo, total]
   )
@@ -163,7 +189,10 @@ export function VideoTestimonialsCarousel({
     ) {
       return
     }
-    goTo(nextTestimonialIndex(activeIndex, total), { manual: false })
+    goTo(nextTestimonialIndex(activeIndex, total), {
+      manual: false,
+      direction: "next",
+    })
   })
 
   useEffect(() => {
@@ -355,10 +384,10 @@ export function VideoTestimonialsCarousel({
             </p>
 
             {/*
-              Fixed-center layered stage: the active card stays in normal flow at
-              horizontal center. Previous/next are absolutely positioned so they
-              tuck under the active edges (~60–90px desktop overlap). Stage width
-              is capped (max-w-5xl) so the stack stays compact at 1440px.
+              Fixed-center layered stage: all visible cards are absolutely
+              positioned from stage center. Horizontal offset lives in --slot-x
+              so transform interpolates next→active from the right (and the
+              reverse for previous). An invisible spacer preserves stage height.
             */}
             <div
               className="relative mx-auto w-full max-w-5xl overflow-x-clip px-1 sm:px-3"
@@ -372,7 +401,14 @@ export function VideoTestimonialsCarousel({
               <div
                 className="relative mx-auto flex w-full items-center justify-center"
                 data-testid="testimonial-carousel-track"
+                data-nav-direction={navDirection}
               >
+                {/* Flow spacer: matches active card size so absolute cards have height. */}
+                <div
+                  aria-hidden
+                  data-testid="testimonial-carousel-spacer"
+                  className="invisible pointer-events-none aspect-[9/16] w-[min(100%,20rem)] shrink-0 sm:w-[19rem] md:w-[20.5rem] lg:w-[22rem]"
+                />
                 {testimonials.map((item, index) => {
                   const slot = resolveTestimonialCarouselSlot(
                     index,
@@ -400,35 +436,30 @@ export function VideoTestimonialsCarousel({
                             : "testimonial-card-next"
                       }
                       className={cn(
-                        "overflow-hidden rounded-2xl border border-line bg-ink/5 shadow-sm",
+                        "absolute top-1/2 left-1/2 overflow-hidden rounded-2xl border border-line bg-ink/5 shadow-sm",
                         "aspect-[9/16]",
+                        slotOffsetClass(slot),
                         isActive &&
-                          cn(
-                            "relative shrink-0",
-                            // Active ~320–380px (20–22rem) across breakpoints.
-                            "w-[min(100%,20rem)] sm:w-[19rem] md:w-[20.5rem] lg:w-[22rem]"
-                          ),
+                          // Active ~320–380px (20–22rem) across breakpoints.
+                          "w-[min(100%,20rem)] sm:w-[19rem] md:w-[20.5rem] lg:w-[22rem]",
                         isSide &&
                           cn(
-                            "absolute top-1/2 hidden sm:block",
-                            // Side ~280–330px; left% + translateX(-50%) centers the card
+                            "hidden sm:block",
+                            // Side ~280–330px; --slot-x + translateX(-50%) centers
                             // so ~40–80px sits under the active edge.
                             "w-[15.5rem] md:w-[17.5rem] lg:w-[19rem]",
-                            // Offset from stage center ≈ activeHalf + sideHalf - overlap.
-                            // Visual overlap accounts for side scale(0.92).
-                            // sm/md (~40–70px): ±14.75rem / ±15.25rem
-                            // lg+ (~70–90px): ±14.75rem → ~80px visual tuck
-                            slot === "previous" &&
-                              "left-[calc(50%-14.75rem)] md:left-[calc(50%-15.25rem)] lg:left-[calc(50%-14.75rem)]",
-                            slot === "next" &&
-                              "left-[calc(50%+14.75rem)] md:left-[calc(50%+15.25rem)] lg:left-[calc(50%+14.75rem)]",
                             "cursor-pointer"
                           )
                       )}
                       style={slotVisualStyle(slot, reducedMotion)}
                       onClick={
                         isSide
-                          ? () => goTo(index, { manual: true })
+                          ? () =>
+                              goTo(index, {
+                                manual: true,
+                                direction:
+                                  slot === "next" ? "next" : "previous",
+                              })
                           : undefined
                       }
                       // Side previews are pointer-selectable but not tab-focusable

@@ -55,6 +55,9 @@ export const TESTIMONIAL_SIDE_BLUR_PX = 0.6
 
 export type TestimonialCarouselSlot = "previous" | "active" | "next" | "hidden"
 
+/** Last navigation intent — drives direction-correct enter/exit motion. */
+export type TestimonialNavDirection = "next" | "previous"
+
 /**
  * Maps a slide index to a visual slot relative to the fixed center.
  * Only previous / active / next are rendered in the layered stage.
@@ -75,6 +78,34 @@ export function resolveTestimonialCarouselSlot(
   if (index === previous) return "previous"
   if (index === next) return "next"
   return "hidden"
+}
+
+/**
+ * Resolve navigation direction from an index change.
+ * Forward (next) wins on ties so auto-rotate and equal wraps stay consistent.
+ */
+export function resolveTestimonialNavDirection(
+  fromIndex: number,
+  toIndex: number,
+  total: number
+): TestimonialNavDirection {
+  if (total <= 1 || fromIndex === toIndex) return "next"
+  const forwardSteps = (toIndex - fromIndex + total) % total
+  const backwardSteps = (fromIndex - toIndex + total) % total
+  return forwardSteps <= backwardSteps ? "next" : "previous"
+}
+
+/**
+ * Shared transform for every visible slot. All cards keep translate(-50%, -50%)
+ * so left/right offsets animate through `--slot-x` only — next→active moves in
+ * from the right; active→previous exits left (and the reverse for previous).
+ */
+export function testimonialSlotTransform(
+  slot: Exclude<TestimonialCarouselSlot, "hidden">
+): string {
+  const scale =
+    slot === "active" ? 1 : TESTIMONIAL_SIDE_SCALE.preferred
+  return `translateX(calc(-50% + var(--slot-x, 0rem))) translateY(-50%) scale(${scale})`
 }
 
 /**
@@ -115,12 +146,14 @@ export function sideCardVisualStyle(reducedMotion: boolean): {
   opacity: number
   scale: number
   filter: string | undefined
+  transform: string
   transition: string | undefined
 } {
   return {
     opacity: TESTIMONIAL_SIDE_OPACITY.preferred,
     scale: TESTIMONIAL_SIDE_SCALE.preferred,
     filter: `blur(${TESTIMONIAL_SIDE_BLUR_PX}px)`,
+    transform: testimonialSlotTransform("next"),
     transition: reducedMotion
       ? undefined
       : `transform ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out, opacity ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out, filter ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out`,
@@ -130,11 +163,13 @@ export function sideCardVisualStyle(reducedMotion: boolean): {
 export function activeCardVisualStyle(reducedMotion: boolean): {
   opacity: number
   scale: number
+  transform: string
   transition: string | undefined
 } {
   return {
     opacity: 1,
     scale: 1,
+    transform: testimonialSlotTransform("active"),
     transition: reducedMotion
       ? undefined
       : `transform ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out, opacity ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out`,

@@ -34,8 +34,10 @@ import {
   TESTIMONIAL_SIDE_Z,
   resolveOverlapForViewport,
   resolveTestimonialCarouselSlot,
+  resolveTestimonialNavDirection,
   sideCardCenterOffsetPx,
   sideCardVisualStyle,
+  testimonialSlotTransform,
 } from "../utils/carousel-layout.ts"
 import { inventoryTestimonialSources } from "../utils/media-inventory.ts"
 import {
@@ -472,7 +474,8 @@ test("24. Active testimonial remains visually centered", () => {
   )
   assert.match(carousel, /testimonial-card-active/)
   assert.match(carousel, /justify-center/)
-  assert.match(carousel, /left-\[calc\(50%/)
+  assert.match(carousel, /left-1\/2/)
+  assert.match(carousel, /\[--slot-x:0rem\]/)
   assert.doesNotMatch(carousel, /grid-cols-3/)
 })
 
@@ -505,8 +508,8 @@ test("25. Previous and next cards overlap the active card", () => {
   )
   assert.match(carousel, /testimonial-card-previous/)
   assert.match(carousel, /testimonial-card-next/)
-  assert.match(carousel, /left-\[calc\(50%-/)
-  assert.match(carousel, /left-\[calc\(50%\+/)
+  assert.match(carousel, /\[--slot-x:-14\.75rem\]/)
+  assert.match(carousel, /\[--slot-x:14\.75rem\]/)
 })
 
 test("26. Active card has the highest stacking order", () => {
@@ -659,4 +662,38 @@ test("35. Existing autoplay and mute behavior remains unchanged", () => {
   assert.match(carousel, /muted=\{muted\}/)
   assert.match(carousel, /loop=\{muted\}/)
   assert.match(carousel, /TESTIMONIAL_ROTATION_INTERVAL_MS/)
+})
+
+test("36. Slide transforms keep shared centering so next enters from the right", () => {
+  assert.equal(resolveTestimonialNavDirection(0, 1, 6), "next")
+  assert.equal(resolveTestimonialNavDirection(1, 0, 6), "previous")
+  assert.equal(resolveTestimonialNavDirection(0, 5, 6), "previous")
+  assert.equal(resolveTestimonialNavDirection(5, 0, 6), "next")
+
+  const active = testimonialSlotTransform("active")
+  const previous = testimonialSlotTransform("previous")
+  const next = testimonialSlotTransform("next")
+
+  // Shared -50% base — slot motion is only via --slot-x, not a disappearing translate.
+  assert.match(active, /translateX\(calc\(-50% \+ var\(--slot-x/)
+  assert.match(previous, /translateX\(calc\(-50% \+ var\(--slot-x/)
+  assert.match(next, /translateX\(calc\(-50% \+ var\(--slot-x/)
+  assert.match(active, /scale\(1\)/)
+  assert.match(next, new RegExp(`scale\\(${TESTIMONIAL_SIDE_SCALE.preferred}\\)`))
+  assert.doesNotMatch(active, /^scale\(1\)$/)
+
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /data-nav-direction=\{navDirection\}/)
+  assert.match(carousel, /direction:\s*"next"/)
+  assert.match(carousel, /direction:\s*"previous"/)
+  assert.match(carousel, /testimonialSlotTransform/)
+  assert.match(carousel, /\[--slot-x:-14\.75rem\]/)
+  assert.match(carousel, /\[--slot-x:14\.75rem\]/)
+  // Next is positive --slot-x (right); previous is negative (left).
+  assert.match(
+    carousel,
+    /slot === "previous"[\s\S]*--slot-x:-[\s\S]*slot === "next"|--slot-x:-14\.75rem[\s\S]*--slot-x:14\.75rem/
+  )
 })
