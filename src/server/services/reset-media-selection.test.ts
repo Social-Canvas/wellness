@@ -183,3 +183,74 @@ test("no flag selects the full 22-lesson set", () => {
   const selected = selectLessons(buildCanonicalLessons(), {})
   assert.equal(selected.length, 22)
 })
+
+const FINAL_FOUR_KEYS = [
+  "welcome",
+  "day5_evening",
+  "day6_evening",
+  "day7_evening",
+] as const
+
+// 12. Exact four-file allowlist for completing Reset media.
+test("final-four --only selects exactly welcome + Day 5–7 evening", () => {
+  const selected = selectLessons(buildCanonicalLessons(), {
+    only: FINAL_FOUR_KEYS.join(","),
+  })
+  assert.deepEqual(
+    selected.map((lesson: CanonicalLesson) => lesson.key),
+    [...FINAL_FOUR_KEYS]
+  )
+  assert.equal(selected.length, 4)
+})
+
+// 13. Intro/welcome maps only to Welcome; Day N maps only to that evening.
+test("final-four allowlist maps intro to Welcome and evenings by day only", () => {
+  const selected = selectLessons(buildCanonicalLessons(), {
+    only: FINAL_FOUR_KEYS.join(","),
+  })
+  const byKey = new Map(selected.map((lesson: CanonicalLesson) => [lesson.key, lesson]))
+
+  assert.equal(byKey.get("welcome")?.moduleSlug, "welcome")
+  assert.equal(byKey.get("welcome")?.lessonSlug, "welcome")
+  assert.equal(byKey.get("welcome")?.isWelcome, true)
+  assert.match(byKey.get("welcome")?.videoTitle ?? "", /Welcome/)
+
+  assert.equal(byKey.get("day5_evening")?.moduleSlug, "day-5")
+  assert.equal(byKey.get("day5_evening")?.lessonSlug, "evening")
+  assert.match(byKey.get("day5_evening")?.videoTitle ?? "", /Day 5 Evening/)
+
+  assert.equal(byKey.get("day6_evening")?.moduleSlug, "day-6")
+  assert.equal(byKey.get("day6_evening")?.lessonSlug, "evening")
+  assert.match(byKey.get("day6_evening")?.videoTitle ?? "", /Day 6 Evening/)
+
+  assert.equal(byKey.get("day7_evening")?.moduleSlug, "day-7")
+  assert.equal(byKey.get("day7_evening")?.lessonSlug, "evening")
+  assert.match(byKey.get("day7_evening")?.videoTitle ?? "", /Day 7 Evening/)
+})
+
+// 14. Final-four allowlist excludes Morning, Afternoon, and Day 1–4 Evening.
+test("final-four --only excludes morning, afternoon, and Day 1–4 evening", () => {
+  const selected = selectLessons(buildCanonicalLessons(), {
+    only: FINAL_FOUR_KEYS.join(","),
+  })
+  const selectedKeys = new Set(selected.map((lesson: CanonicalLesson) => lesson.key))
+
+  for (let day = 1; day <= 7; day += 1) {
+    assert.equal(selectedKeys.has(`day${day}_morning`), false)
+    assert.equal(selectedKeys.has(`day${day}_afternoon`), false)
+  }
+  for (let day = 1; day <= 4; day += 1) {
+    assert.equal(selectedKeys.has(`day${day}_evening`), false)
+  }
+})
+
+// 15. Canonical ordering for final four matches Welcome then Day 5–7 evening.
+test("final-four selection preserves canonical Reset evening completion order", () => {
+  const selected = selectLessons(buildCanonicalLessons(), {
+    only: "day7_evening,welcome,day5_evening,day6_evening",
+  })
+  assert.deepEqual(
+    selected.map((lesson: CanonicalLesson) => lesson.key),
+    ["welcome", "day5_evening", "day6_evening", "day7_evening"]
+  )
+})
