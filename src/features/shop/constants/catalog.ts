@@ -1,4 +1,5 @@
 import type { ProductType } from "@/features/shop/types"
+import { isPublicCatalogProduct } from "@/lib/constants/catalog-visibility"
 
 export const SHOP_CATALOG_PRODUCT_TYPES = [
   "ebook",
@@ -21,4 +22,17 @@ export function isProgramCatalogProductType(productType: ProductType): boolean {
 
 export function isPurchasableCatalogProductType(productType: ProductType): boolean {
   return isShopCatalogProductType(productType) || isProgramCatalogProductType(productType)
+}
+
+/** Public shop/program listings — published and not explicitly hidden. */
+export function isPublicListingProduct(product: {
+  slug: string
+  status: string
+  productType: ProductType
+}): boolean {
+  if (!isPublicCatalogProduct(product)) {
+    return false
+  }
+
+  return isPurchasableCatalogProductType(product.productType)
 }

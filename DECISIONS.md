@@ -241,3 +241,13 @@ Format:
 **Follow-up (2026-08-03):** Client confirmed publication permission ("I'm ok"). Six assets uploaded with public playback; config published with neutral "Member story" labels. Display names, roles, quotes, and captions still pending client metadata.
 
 **Status:** Accepted
+
+## 2026-08-03 — Hide Health Professional Session from public catalog
+
+**Decision:** Mark `health-professional-session` product as `draft` and set marketing `publiclyVisible: false`. Exclude it from live Stripe activation inventory (`hidden — no live Checkout — no live Price`). Do not delete the product/course/media/Stripe test Price, and do not create a live Price. Keep the course published so entitled purchasers retain library access.
+
+**Reason:** Session must not appear on Programs or enter live Checkout before go-live, while preserving catalog history and purchaser entitlements.
+
+**Alternatives considered:** Soft-delete/archive product; draft the course container (would break entitled library access via published-only content queries); create a new `publicly_visible` DB column.
+
+**Status:** Accepted

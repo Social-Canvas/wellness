@@ -133,7 +133,18 @@ export const RETREATS_CTA_FEATURES = [
   "In-person nervous system reset",
 ] as const
 
-export const ELEVATE_PROGRAM_OFFERS = [
+export type ElevateProgramOffer = {
+  slug: string
+  category: string
+  title: string
+  description: string
+  ctaLabel: string
+  ctaVariant: "default" | "outline"
+  /** When false, omitted from public Programs listings (record retained). */
+  publiclyVisible?: boolean
+}
+
+export const ELEVATE_PROGRAM_OFFERS: ElevateProgramOffer[] = [
   {
     slug: "7-day-reset",
     category: "Entry offer",
@@ -141,7 +152,7 @@ export const ELEVATE_PROGRAM_OFFERS = [
     description:
       "The first step into Elevate. A structured 7-day reset focused on nervous system safety, foundational breathwork, and practical tools to move out of survival mode.",
     ctaLabel: "Start Reset Plan",
-    ctaVariant: "default" as const,
+    ctaVariant: "default",
   },
   {
     slug: "autoimmune-masterclass",
@@ -150,7 +161,7 @@ export const ELEVATE_PROGRAM_OFFERS = [
     description:
       "Five recorded sessions within the Release phase — supporting emotional safety, stored stress in the body, and the mind-body connection behind chronic inflammation.",
     ctaLabel: "Explore masterclass",
-    ctaVariant: "outline" as const,
+    ctaVariant: "outline",
   },
   {
     slug: "health-professional-session",
@@ -159,7 +170,9 @@ export const ELEVATE_PROGRAM_OFFERS = [
     description:
       "Evidence-informed functional medicine education for practitioners — bridging pharmacology, nervous system science, and integrative healing.",
     ctaLabel: "Book session",
-    ctaVariant: "outline" as const,
+    ctaVariant: "outline",
+    // Hidden from public site before Stripe live activation; DB row retained as draft.
+    publiclyVisible: false,
   },
   {
     slug: "standalone-live-session",
@@ -168,7 +181,7 @@ export const ELEVATE_PROGRAM_OFFERS = [
     description:
       "A guided live session for real-time nervous system regulation — ideal between membership tiers or as a focused reset point in your journey.",
     ctaLabel: "Reserve your spot",
-    ctaVariant: "outline" as const,
+    ctaVariant: "outline",
   },
 ]
 

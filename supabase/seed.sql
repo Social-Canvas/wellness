@@ -558,7 +558,7 @@ values
     6500,
     'usd',
     'price_placeholder_health_professional_session',
-    'published'
+    'draft'
   ),
   (
     'standalone-live-session',

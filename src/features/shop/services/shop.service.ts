@@ -34,6 +34,7 @@ import {
   isPurchasableCatalogProductType,
   isShopCatalogProductType,
 } from "@/features/shop/constants/catalog"
+import { isPublicCatalogProduct } from "@/lib/constants/catalog-visibility"
 import type {
   ProductCheckoutResult,
   ProductDownloadUrlResult,
@@ -160,6 +161,10 @@ async function getPublishedProductBySlugInternal(
       return failure("not_found", "Product not found.")
     }
 
+    if (!isPublicCatalogProduct({ slug: data.slug, status: data.status })) {
+      return failure("not_found", "Product not found.")
+    }
+
     return success(data)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
@@ -233,7 +238,13 @@ export async function listPublishedProducts(): Promise<ActionResult<ShopProduct[
       return mapDatabaseError(error)
     }
 
-    return success((data ?? []).map(mapShopProduct))
+    return success(
+      (data ?? [])
+        .filter((product) =>
+          isPublicCatalogProduct({ slug: product.slug, status: product.status })
+        )
+        .map(mapShopProduct)
+    )
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
@@ -531,6 +542,10 @@ export async function createProductCheckoutSession(
     }
 
     if (!product) {
+      return failure("not_found", "Product not found.")
+    }
+
+    if (!isPublicCatalogProduct({ slug: product.slug, status: product.status })) {
       return failure("not_found", "Product not found.")
     }
 

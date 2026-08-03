@@ -22,6 +22,7 @@ import {
   VIP_COACHING_CTA_FEATURES,
   RETREATS_CTA_FEATURES,
 } from "@/lib/constants/elevate-brand"
+import { getPublicProgramOffers } from "@/lib/constants/catalog-visibility"
 import { getProgramOfferBrandImage, BRAND_IMAGES } from "@/lib/brand/images"
 import { buttonVariants } from "@/components/ui/button"
 import { listProgramCatalogProducts } from "@/features/shop/services/shop.service"
@@ -41,9 +42,9 @@ const PROGRAMS_NAV = [
   { label: "Retreats", href: "#retreats-private-events" },
 ] as const
 
-const PROGRAM_OFFERS_WITHOUT_RESET = ELEVATE_PROGRAM_OFFERS.filter(
-  (offer) => offer.slug !== RESET_PLAN.slug
-)
+const PROGRAM_OFFERS_WITHOUT_RESET = getPublicProgramOffers(
+  ELEVATE_PROGRAM_OFFERS
+).filter((offer) => offer.slug !== RESET_PLAN.slug)
 
 function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<string>): string | null {
   if (!publishedProgramSlugs.has(slug)) {
