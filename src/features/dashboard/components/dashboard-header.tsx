@@ -3,37 +3,37 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
-import { useState } from "react"
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+} from "react"
 
 import { BrandLogo } from "@/components/layout/brand-logo"
-import { Container } from "@/components/layout/container"
-import { NavbarSignOutButton } from "@/components/layout/navbar-sign-out-button"
-import { Badge, Button } from "@/components/ui"
+import { signOutAction } from "@/features/auth/actions/auth.actions"
+import type { UserRole } from "@/features/auth/types"
+import { DashboardMoreMenu } from "@/features/dashboard/components/dashboard-more-menu"
+import { DashboardUserMenu } from "@/features/dashboard/components/dashboard-user-menu"
 import {
-  DASHBOARD_NAV_ITEMS,
+  getEssentialNavItems,
+  getMobileNavItems,
+  getMoreNavItems,
+  getSecondaryNavItems,
+  getWideNavItems,
+  isNavItemActive,
+  resolveMembershipLabel,
   type DashboardNavItem,
 } from "@/features/dashboard/constants/navigation"
-import type { UserRole } from "@/features/auth/types"
 import { cn } from "@/lib/utils"
 
 type DashboardHeaderProps = {
-  displayName: string
+  fullName: string | null
   email: string
   role: UserRole
   planBadge: string | null
   isAdmin: boolean
-}
-
-function isNavItemActive(pathname: string, href: string): boolean {
-  if (href === "/dashboard") {
-    return pathname === "/dashboard"
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`)
-}
-
-function getVisibleNavItems(isAdmin: boolean): DashboardNavItem[] {
-  return DASHBOARD_NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin)
 }
 
 function DashboardNavLink({
@@ -55,8 +55,10 @@ function DashboardNavLink({
       onClick={onNavigate}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "font-body text-[14.5px] font-semibold transition-colors",
-        isActive ? "text-blue" : "text-ink-soft hover:text-blue",
+        "whitespace-nowrap font-body text-[14.5px] font-semibold transition-colors",
+        isActive
+          ? "text-blue underline decoration-blue/40 underline-offset-4"
+          : "text-ink-soft hover:text-blue",
         className
       )}
     >
@@ -66,39 +68,90 @@ function DashboardNavLink({
 }
 
 export function DashboardHeader({
-  displayName,
+  fullName,
   email,
   role,
   planBadge,
   isAdmin,
 }: DashboardHeaderProps) {
   const pathname = usePathname()
+  const mobilePanelId = useId()
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null)
+  const mobilePanelRef = useRef<HTMLDivElement>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const navItems = getVisibleNavItems(isAdmin)
+  const [isPending, startTransition] = useTransition()
 
-  const badgeLabel =
-    planBadge ?? (role === "super_admin" ? "Super admin" : role === "admin" ? "Admin" : "Member")
+  const essentialItems = getEssentialNavItems(isAdmin)
+  const wideItems = getWideNavItems(isAdmin)
+  const secondaryItems = getSecondaryNavItems(isAdmin)
+  const moreItems = getMoreNavItems(isAdmin)
+  const mobileItems = getMobileNavItems(isAdmin)
+  const membershipLabel = resolveMembershipLabel(planBadge, role)
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      return
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileOpen(false)
+        mobileTriggerRef.current?.focus()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    const firstFocusable = mobilePanelRef.current?.querySelector<HTMLElement>(
+      "a[href], button:not([disabled])"
+    )
+    firstFocusable?.focus()
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [mobileOpen])
 
   function closeMobileNav() {
     setMobileOpen(false)
+    queueMicrotask(() => {
+      mobileTriggerRef.current?.focus()
+    })
+  }
+
+  function handleMobileSignOut() {
+    closeMobileNav()
+    startTransition(async () => {
+      await signOutAction()
+    })
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-[rgba(246,250,249,0.96)] backdrop-blur-[10px]">
-      <Container>
-        <div className="flex h-[66px] items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button
+    <header
+      data-dashboard-header
+      className="sticky top-0 z-40 border-b border-line bg-[rgba(246,250,249,0.96)] backdrop-blur-[10px]"
+    >
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div
+          data-dashboard-header-row
+          className="flex h-[66px] flex-nowrap items-center gap-3 md:gap-4"
+        >
+          <div
+            data-dashboard-brand
+            className="flex min-w-0 flex-none items-center gap-2"
+          >
+            <button
+              ref={mobileTriggerRef}
               type="button"
-              variant="outline"
-              size="icon-sm"
-              className="min-[861px]:hidden"
-              onClick={() => setMobileOpen((open) => !open)}
+              className="inline-flex size-8 items-center justify-center rounded-full border-[1.5px] border-line bg-transparent text-ink transition-colors hover:border-ink md:hidden focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-controls={mobilePanelId}
+              aria-label={
+                mobileOpen ? "Close navigation menu" : "Open navigation menu"
+              }
+              onClick={() => setMobileOpen((open) => !open)}
             >
-              {mobileOpen ? <X /> : <Menu />}
-            </Button>
+              {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+            </button>
 
             <BrandLogo
               variant="horizontal"
@@ -106,49 +159,106 @@ export function DashboardHeader({
               href="/"
               hideWordmarkBelow="sm"
               priority
+              className="flex-none whitespace-nowrap"
             />
           </div>
 
           <nav
             aria-label="Dashboard"
-            className="hidden min-[861px]:flex items-center gap-[22px]"
+            data-dashboard-desktop-nav
+            className="hidden min-w-0 flex-1 items-center justify-center gap-x-5 md:flex lg:gap-x-6"
           >
-            {navItems.map((item) => (
-              <DashboardNavLink key={item.href} item={item} pathname={pathname} />
-            ))}
+            <div className="flex min-w-0 flex-nowrap items-center gap-x-5 lg:gap-x-6">
+              {essentialItems.map((item) => (
+                <DashboardNavLink
+                  key={item.href}
+                  item={item}
+                  pathname={pathname}
+                />
+              ))}
+
+              {wideItems.map((item) => (
+                <DashboardNavLink
+                  key={item.href}
+                  item={item}
+                  pathname={pathname}
+                  className="hidden xl:inline"
+                />
+              ))}
+
+              {secondaryItems.map((item) => (
+                <DashboardNavLink
+                  key={item.href}
+                  item={item}
+                  pathname={pathname}
+                  className="hidden xl:inline"
+                />
+              ))}
+
+              <DashboardMoreMenu
+                items={moreItems}
+                pathname={pathname}
+                className="xl:hidden"
+              />
+            </div>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2.5">
-            <div className="hidden text-right min-[861px]:block">
-              <p className="max-w-[180px] truncate text-sm font-semibold text-ink">
-                {displayName}
-              </p>
-              <p className="max-w-[180px] truncate text-xs text-ink-soft">{email}</p>
-            </div>
-            <Badge variant="plan">{badgeLabel}</Badge>
-            <NavbarSignOutButton />
-          </div>
+          <DashboardUserMenu
+            fullName={fullName}
+            email={email}
+            membershipLabel={membershipLabel}
+            isAdmin={isAdmin}
+            className="ml-auto hidden md:block"
+          />
         </div>
-      </Container>
+      </div>
 
       {mobileOpen ? (
-        <div className="border-t border-line bg-surface min-[861px]:hidden">
-          <Container className="py-4">
-            <div className="mb-4 min-[861px]:hidden">
-              <p className="text-sm font-semibold text-ink">{displayName}</p>
-              <p className="text-xs text-ink-soft">{email}</p>
+        <div
+          id={mobilePanelId}
+          ref={mobilePanelRef}
+          data-dashboard-mobile-nav
+          className="border-t border-line bg-surface md:hidden"
+        >
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6">
+            <div className="mb-4 border-b border-line pb-4">
+              <p
+                data-mobile-menu-email
+                className="break-words text-sm font-semibold text-ink"
+              >
+                {email}
+              </p>
+              <p
+                data-mobile-menu-membership
+                className="mt-1 text-xs font-semibold text-ink-soft"
+              >
+                {membershipLabel}
+              </p>
             </div>
-            <nav aria-label="Dashboard mobile" className="flex flex-col gap-3">
-              {navItems.map((item) => (
+
+            <nav aria-label="Dashboard mobile" className="flex flex-col gap-1">
+              {mobileItems.map((item) => (
                 <DashboardNavLink
                   key={item.href}
                   item={item}
                   pathname={pathname}
                   onNavigate={closeMobileNav}
+                  className="rounded-xl px-3 py-2.5 hover:bg-cream2"
                 />
               ))}
             </nav>
-          </Container>
+
+            <div className="mt-4 border-t border-line pt-4">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleMobileSignOut}
+                className="w-full rounded-xl border border-line px-3 py-2.5 text-left font-body text-sm font-semibold text-ink transition-colors hover:border-blue hover:text-blue disabled:opacity-60"
+              >
+                {isPending ? "Signing out…" : "Log out"}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </header>

@@ -21,7 +21,6 @@ export function DashboardShell({
   subscription,
   children,
 }: DashboardShellProps) {
-  const displayName = profile.fullName?.trim() || user.email
   const isAdmin = user.role === "admin" || user.role === "super_admin"
   const activeSubscription =
     subscription &&
@@ -34,7 +33,7 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen flex-col bg-cream">
       <DashboardHeader
-        displayName={displayName}
+        fullName={profile.fullName?.trim() || null}
         email={user.email}
         role={user.role}
         planBadge={activeSubscription?.planName ?? null}
