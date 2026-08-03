@@ -36,6 +36,10 @@ export type LifecycleEventType =
   | "organization_member_removed"
   | "capability_granted"
   | "capability_revoked"
+  | "live_trial_registered"
+  | "live_session_reminder"
+  | "live_session_completed_feedback"
+  | "live_trial_membership_cta"
 
 export type LifecycleEmailMapping = {
   eventType: LifecycleEventType
@@ -176,6 +180,47 @@ export const LIFECYCLE_EMAIL_MAPPINGS: Record<LifecycleEventType, LifecycleEmail
     skipReason: "capability_events_summarized_in_membership_emails",
     ctaPath: null,
     ctaMode: "none",
+  },
+  // Prepared outbox events — templates deferred until copy confirmed (Kit out of scope).
+  live_trial_registered: {
+    eventType: "live_trial_registered",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "live_trial_email_template_pending",
+    ctaPath: "/dashboard/live-sessions",
+    ctaMode: "dashboard",
+  },
+  live_session_reminder: {
+    eventType: "live_session_reminder",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "live_session_reminder_template_pending",
+    ctaPath: "/dashboard/live-sessions",
+    ctaMode: "dashboard",
+  },
+  live_session_completed_feedback: {
+    eventType: "live_session_completed_feedback",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "live_feedback_email_template_pending",
+    ctaPath: "/dashboard/live-sessions",
+    ctaMode: "dashboard",
+  },
+  live_trial_membership_cta: {
+    eventType: "live_trial_membership_cta",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "live_trial_cta_email_template_pending",
+    ctaPath: "/programs",
+    ctaMode: "programs",
   },
 }
 

@@ -179,7 +179,7 @@ export const ELEVATE_PROGRAM_OFFERS: ElevateProgramOffer[] = [
     category: "Live experience",
     title: "Live Breathwork Session",
     description:
-      "A guided live session for real-time nervous system regulation — ideal between membership tiers or as a focused reset point in your journey.",
+      "A one-time trial for one selected upcoming live session — the same Zoom session members attend. No membership, recordings, or future sessions included.",
     ctaLabel: "Reserve your spot",
     ctaVariant: "outline",
   },

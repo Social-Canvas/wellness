@@ -17,6 +17,11 @@ export type DashboardNavItem = {
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { label: "My Library", href: "/dashboard/library", group: "essential" },
   {
+    label: "Live Sessions",
+    href: "/dashboard/live-sessions",
+    group: "wide",
+  },
+  {
     label: "Recorded Sessions",
     href: "/dashboard/recorded-sessions",
     group: "wide",

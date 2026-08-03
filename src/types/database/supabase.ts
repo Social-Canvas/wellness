@@ -337,40 +337,58 @@ export type Database = {
       live_classes: {
         Row: {
           access_type: Database["public"]["Enums"]["live_class_access"]
-          calendly_url: string
+          allows_public_trial: boolean
+          calendly_url: string | null
+          capacity: number | null
+          completed_at: string | null
           created_at: string
           description: string | null
+          ends_at: string | null
           id: string
           plan_id: string | null
+          session_kind: Database["public"]["Enums"]["live_session_kind"]
           starts_at: string | null
           status: Database["public"]["Enums"]["publish_status"]
           title: string
+          trial_open: boolean
           updated_at: string
           zoom_join_url: string | null
         }
         Insert: {
           access_type?: Database["public"]["Enums"]["live_class_access"]
-          calendly_url: string
+          allows_public_trial?: boolean
+          calendly_url?: string | null
+          capacity?: number | null
+          completed_at?: string | null
           created_at?: string
           description?: string | null
+          ends_at?: string | null
           id?: string
           plan_id?: string | null
+          session_kind?: Database["public"]["Enums"]["live_session_kind"]
           starts_at?: string | null
           status?: Database["public"]["Enums"]["publish_status"]
           title: string
+          trial_open?: boolean
           updated_at?: string
           zoom_join_url?: string | null
         }
         Update: {
           access_type?: Database["public"]["Enums"]["live_class_access"]
-          calendly_url?: string
+          allows_public_trial?: boolean
+          calendly_url?: string | null
+          capacity?: number | null
+          completed_at?: string | null
           created_at?: string
           description?: string | null
+          ends_at?: string | null
           id?: string
           plan_id?: string | null
+          session_kind?: Database["public"]["Enums"]["live_session_kind"]
           starts_at?: string | null
           status?: Database["public"]["Enums"]["publish_status"]
           title?: string
+          trial_open?: boolean
           updated_at?: string
           zoom_join_url?: string | null
         }
@@ -383,6 +401,122 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      live_class_secrets: {
+        Row: {
+          created_at: string
+          live_class_id: string
+          updated_at: string
+          zoom_host_url: string | null
+          zoom_participant_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          live_class_id: string
+          updated_at?: string
+          zoom_host_url?: string | null
+          zoom_participant_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          live_class_id?: string
+          updated_at?: string
+          zoom_host_url?: string | null
+          zoom_participant_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_class_secrets_live_class_id_fkey"
+            columns: ["live_class_id"]
+            isOneToOne: true
+            referencedRelation: "live_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_session_registrations: {
+        Row: {
+          attended_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          feedback_submitted_at: string | null
+          id: string
+          live_class_id: string
+          order_id: string | null
+          product_id: string | null
+          registration_type: Database["public"]["Enums"]["live_registration_type"]
+          status: Database["public"]["Enums"]["live_registration_status"]
+          stripe_checkout_session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attended_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          feedback_submitted_at?: string | null
+          id?: string
+          live_class_id: string
+          order_id?: string | null
+          product_id?: string | null
+          registration_type: Database["public"]["Enums"]["live_registration_type"]
+          status?: Database["public"]["Enums"]["live_registration_status"]
+          stripe_checkout_session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attended_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          feedback_submitted_at?: string | null
+          id?: string
+          live_class_id?: string
+          order_id?: string | null
+          product_id?: string | null
+          registration_type?: Database["public"]["Enums"]["live_registration_type"]
+          status?: Database["public"]["Enums"]["live_registration_status"]
+          stripe_checkout_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      live_session_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          interested_in_membership: boolean | null
+          live_class_id: string
+          rating: number | null
+          registration_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          interested_in_membership?: boolean | null
+          live_class_id: string
+          rating?: number | null
+          registration_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          interested_in_membership?: boolean | null
+          live_class_id?: string
+          rating?: number | null
+          registration_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       modules: {
         Row: {
@@ -873,6 +1007,7 @@ export type Database = {
           duration_seconds: number | null
           focus: Database["public"]["Enums"]["recorded_session_focus"] | null
           id: string
+          live_class_id: string | null
           monthly_theme: string | null
           mux_asset_id: string | null
           mux_playback_id: string | null
@@ -895,6 +1030,7 @@ export type Database = {
           duration_seconds?: number | null
           focus?: Database["public"]["Enums"]["recorded_session_focus"] | null
           id?: string
+          live_class_id?: string | null
           monthly_theme?: string | null
           mux_asset_id?: string | null
           mux_playback_id?: string | null
@@ -917,6 +1053,7 @@ export type Database = {
           duration_seconds?: number | null
           focus?: Database["public"]["Enums"]["recorded_session_focus"] | null
           id?: string
+          live_class_id?: string | null
           monthly_theme?: string | null
           mux_asset_id?: string | null
           mux_playback_id?: string | null
@@ -1043,6 +1180,19 @@ export type Database = {
         | "authenticated"
         | "member_only"
         | "plan_specific"
+      live_session_kind: "membership_weekly" | "public_trial"
+      live_registration_type: "member" | "public_trial"
+      live_registration_status:
+        | "pending_payment"
+        | "confirmed"
+        | "cancelled"
+        | "attended"
+        | "expired"
+      organization_billing_tier:
+        | "small"
+        | "mid_size"
+        | "large"
+        | "enterprise"
       migration_status: "not_started" | "uploaded" | "verified" | "failed"
       order_status: "pending" | "paid" | "failed" | "refunded" | "disputed"
       product_type:

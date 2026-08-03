@@ -82,13 +82,13 @@ export const LIVE_STRIPE_ACTIVATION_INVENTORY = [
   },
   {
     slug: "standalone-live-session",
-    title: "Standalone Live Session",
+    title: "Live Breathwork Trial",
     kind: "product",
     status: "deferred",
     liveCheckout: false,
     livePrice: false,
     reportLine:
-      "Standalone Live Session — deferred — no live Checkout — no live Price",
+      "Live Breathwork Trial — deferred — no live Checkout — no live Price (catalog $55 pending app-config approval + sandbox E2E; Health Professional remains hidden; nonprofit/VIP/Retreats enquiry-only)",
   },
   {
     slug: HEALTH_PROFESSIONAL_SESSION_LIVE_SLUG,

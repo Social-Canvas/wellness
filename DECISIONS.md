@@ -251,3 +251,21 @@ Format:
 **Alternatives considered:** Soft-delete/archive product; draft the course container (would break entitled library access via published-only content queries); create a new `publicly_visible` DB column.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-03 — Align memberships + shared live sessions + Breathwork trial
+
+**Decision:**
+- Core/Gold/Platinum share `live_online_sessions` + `session_replays` (business alias: recorded_sessions). Gold/Platinum differ only by confirmed extras (`in_person_sessions`, `priority_support`). No duplicated live/recording content per plan.
+- Nonprofit org Small/Mid/Large/Enterprise = `organizations.billing_tier` + seats only. Sponsored member content = Core-equivalent (`plan-1` capabilities) via individual accounts.
+- Weekly Zoom sessions live in `live_classes` with Zoom URLs in `live_class_secrets` (service_role only). Participant links issued only after entitlement/trial registration checks.
+- Live Breathwork public offer = one-time trial for one selected upcoming session (`live_session_registrations`), fulfilled via webhook metadata `purchase_type=live_session_trial` + `live_class_id`. No Member status, no recordings, no future sessions.
+- Catalog trial amount remains $55; `LIVE_BREATHWORK_TRIAL_PRICE_APPROVED_IN_APP_CONFIG=false` until client confirms. No new live Stripe Prices/objects until sandbox E2E.
+- Post-session feedback + membership CTA; lifecycle outbox events prepared (`live_trial_*`) without Kit marketing.
+
+**Reason:** Matches final business model while extending existing capability, recorded-sessions, complimentary, and entitlement patterns.
+
+**Alternatives considered:** Rename `session_replays` capability; duplicate recordings per tier; map nonprofit seat tiers to Gold/Platinum; store Zoom URLs on public `live_classes` rows.
+
+**Status:** Accepted

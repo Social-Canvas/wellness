@@ -49,15 +49,21 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
  * Request-scoped memoization of active plan IDs. Course outlines call
  * canAccessLesson per lesson; without this each check re-queries subscriptions.
  * React cache() is per-request only — never shared across users.
+ *
+ * Includes nonprofit-sponsored organization plan IDs so sponsored Core-equivalent
+ * members receive the same course-library access as personal Core subscribers.
  */
 const getActivePlanIdsForUser = cache(
   async (userId: string): Promise<ActionResult<string[]>> => {
     try {
       const supabase = createAdminClient()
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select("plan_id, status, current_period_end, cancel_at_period_end")
-        .eq("user_id", userId)
+      const [{ data, error }, { getEffectiveMembership }] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("plan_id, status, current_period_end, cancel_at_period_end")
+          .eq("user_id", userId),
+        import("@/server/services/membership.service"),
+      ])
 
       if (error) {
         return mapDatabaseError(error)
@@ -66,6 +72,18 @@ const getActivePlanIdsForUser = cache(
       const planIds = (data ?? [])
         .filter((subscription) => isActiveSubscription(subscription))
         .map((subscription) => subscription.plan_id)
+
+      const membership = await getEffectiveMembership(userId)
+      if (
+        membership.success &&
+        membership.data.effectivePlanId &&
+        (membership.data.status === "active" ||
+          membership.data.status === "trialing" ||
+          membership.data.status === "cancel_at_period_end" ||
+          membership.data.status === "past_due")
+      ) {
+        planIds.push(membership.data.effectivePlanId)
+      }
 
       return success([...new Set(planIds)])
     } catch {
@@ -495,9 +513,9 @@ export async function canDownloadProduct(
 
 /**
  * Shared membership recorded-sessions library access.
- * Uses existing `session_replays` capability (Core/Gold/Platinum + sponsored +
- * complimentary via effective membership). Does not grant access from Reset or
- * ebook product purchases alone.
+ * Uses existing `session_replays` capability (business alias: recorded_sessions)
+ * for Core/Gold/Platinum + sponsored + complimentary via effective membership.
+ * Does not grant access from Reset, ebook, or Live Breathwork trial purchases.
  */
 export const canAccessRecordedSessions = cache(
   async (userId: string): Promise<ActionResult<boolean>> => {
@@ -510,7 +528,30 @@ export const canAccessRecordedSessions = cache(
     const { userHasCapability } = await import(
       "@/server/services/membership.service"
     )
+    const { RECORDED_SESSIONS_CAPABILITY } = await import(
+      "@/server/services/membership-capabilities"
+    )
 
-    return userHasCapability(parsedUserId.data, "session_replays")
+    return userHasCapability(parsedUserId.data, RECORDED_SESSIONS_CAPABILITY)
+  }
+)
+
+/**
+ * Weekly live online Zoom sessions — shared schedule for all tiers with
+ * live_online_sessions. Trial purchasers do not use this path.
+ */
+export const canAccessLiveOnlineSessions = cache(
+  async (userId: string): Promise<ActionResult<boolean>> => {
+    const parsedUserId = userIdSchema.safeParse(userId)
+
+    if (!parsedUserId.success) {
+      return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    const { userHasCapability } = await import(
+      "@/server/services/membership.service"
+    )
+
+    return userHasCapability(parsedUserId.data, "live_online_sessions")
   }
 )

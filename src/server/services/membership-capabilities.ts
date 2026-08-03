@@ -1,3 +1,16 @@
+/**
+ * Deployed capability keys (plan_capabilities / capabilities table).
+ *
+ * Shared content model:
+ * - Core/Gold/Platinum all include live_online_sessions + session_replays
+ *   (business alias for recordings: "recorded_sessions"). Same live schedule
+ *   and same recorded_sessions archive — no per-plan content duplication.
+ * - Gold/Platinum differ only by confirmed extras (e.g. in_person_sessions).
+ * - Nonprofit-sponsored seats use Core-equivalent capabilities via plan-1;
+ *   org Small/Mid/Large/Enterprise are billing/seat bands only.
+ *
+ * Do not rename session_replays in the DB — it is the deployed recording key.
+ */
 export const MEMBERSHIP_CAPABILITIES = [
   "membership_course_library",
   "live_online_sessions",
@@ -9,6 +22,10 @@ export const MEMBERSHIP_CAPABILITIES = [
 ] as const
 
 export type MembershipCapability = (typeof MEMBERSHIP_CAPABILITIES)[number]
+
+/** Business-language alias for the deployed `session_replays` capability. */
+export const RECORDED_SESSIONS_CAPABILITY: MembershipCapability =
+  "session_replays"
 
 export const DEFAULT_CAPABILITIES_BY_PLAN_SLUG: Record<
   string,

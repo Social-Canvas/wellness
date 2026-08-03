@@ -47,6 +47,10 @@ const PROGRAM_OFFERS_WITHOUT_RESET = getPublicProgramOffers(
 ).filter((offer) => offer.slug !== RESET_PLAN.slug)
 
 function programCheckoutHref(slug: string, publishedProgramSlugs: ReadonlySet<string>): string | null {
+  if (slug === "standalone-live-session") {
+    return "/live-breathwork"
+  }
+
   if (!publishedProgramSlugs.has(slug)) {
     return null
   }

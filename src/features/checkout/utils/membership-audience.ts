@@ -128,13 +128,18 @@ export const NONPROFIT_CUSTOM_PRICING_LABEL = "Custom pricing" as const
 export const NONPROFIT_MEMBERSHIP_BENEFITS = [
   "Individual member accounts",
   "Elevate course library",
-  "Weekly live reset sessions",
+  "Weekly live online sessions (Core-equivalent)",
+  "Shared session recordings archive",
   "Breathwork and guided practices",
-  "Integration Journal",
   "Organization administrator dashboard",
   "Seat invitations and member management",
-  "Session replays when available",
 ] as const
+
+/**
+ * Nonprofit Small/Mid/Large/Enterprise control seats and billing only.
+ * Sponsored content access is always Core-equivalent (plan-1 capabilities).
+ */
+export const NONPROFIT_BILLING_TIER_NOT_CONTENT_TIER = true as const
 
 export const NONPROFIT_SUPPORTING_NOTE =
   "Every participant receives an individual account, while the nonprofit administrator manages invitations and available seats."

@@ -139,6 +139,7 @@ test("medium-width layout uses More/collapsed navigation", () => {
   const moreItems = getMoreNavItems(false).map((item) => item.href)
   assert.ok(moreItems.includes("/programs"))
   assert.ok(moreItems.includes("/shop"))
+  assert.ok(moreItems.includes("/dashboard/live-sessions"))
   assert.ok(moreItems.includes("/dashboard/recorded-sessions"))
 })
 
@@ -146,6 +147,7 @@ test("mobile menu contains all destinations", () => {
   const mobile = getMobileNavItems(true).map((item) => item.label)
   for (const label of [
     "My Library",
+    "Live Sessions",
     "Recorded Sessions",
     "Downloads",
     "Programs",
@@ -257,7 +259,10 @@ test("no authorization or membership logic changes in header helpers", () => {
   assert.match(shell, /subscription\.status === "active"/)
 
   const wide = getWideNavItems(false).map((item) => item.href)
-  assert.deepEqual(wide, ["/dashboard/recorded-sessions"])
+  assert.deepEqual(wide, [
+    "/dashboard/live-sessions",
+    "/dashboard/recorded-sessions",
+  ])
 
   const userLinks = getUserMenuLinks(false).map((item) => item.href)
   assert.ok(userLinks.includes("/dashboard"))

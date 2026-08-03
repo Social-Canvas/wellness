@@ -884,6 +884,44 @@ export async function syncOrderFromStripeCheckoutSession(
       return itemsResult
     }
 
+    // Live Breathwork one-time trial: confirm session registration from trusted
+    // checkout metadata (server-written). Does not grant membership or recordings.
+    if (status === "paid") {
+      const purchaseType = session.metadata?.purchase_type
+      const liveClassId = session.metadata?.live_class_id
+      if (
+        purchaseType === "live_session_trial" &&
+        liveClassId &&
+        typeof liveClassId === "string"
+      ) {
+        try {
+          const { fulfillLiveTrialFromPaidOrder } = await import(
+            "@/features/live-sessions/services/live-trial-checkout.service"
+          )
+          const trialResult = await fulfillLiveTrialFromPaidOrder({
+            userId: parsedUserId.data,
+            productId: product.id,
+            liveClassId,
+            orderId,
+            stripeCheckoutSessionId: session.id,
+          })
+          if (!trialResult.success) {
+            logger.error("Live trial registration fulfillment failed.", {
+              orderId,
+              checkoutSessionId: session.id,
+              code: trialResult.error.code,
+            })
+          }
+        } catch (error) {
+          logger.error("Live trial registration fulfillment threw.", {
+            orderId,
+            checkoutSessionId: session.id,
+            error: safeErrorMessage(error),
+          })
+        }
+      }
+    }
+
     if (shouldSendPurchaseEmails) {
       const profileResult = await getProfileByUserId(parsedUserId.data)
 

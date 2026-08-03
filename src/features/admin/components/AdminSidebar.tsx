@@ -8,6 +8,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Plans", href: "/admin/plans" },
   { label: "Courses", href: "/admin/courses" },
   { label: "Videos", href: "/admin/videos" },
+  { label: "Live Sessions", href: "/admin/live-sessions" },
   { label: "Recorded Sessions", href: "/admin/recorded-sessions" },
   { label: "Products", href: "/admin/products" },
   { label: "Members", href: "/admin/members" },

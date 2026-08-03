@@ -59,7 +59,7 @@ test("1. Shared benefits render once", () => {
     1
   )
   assert.match(panel, /NONPROFIT_SUPPORTING_NOTE/)
-  assert.equal(NONPROFIT_MEMBERSHIP_BENEFITS.length, 8)
+  assert.equal(NONPROFIT_MEMBERSHIP_BENEFITS.length, 7)
 })
 
 // 2. Each shared benefit appears exactly once in the nonprofit panel
@@ -67,12 +67,11 @@ test("2. Each shared benefit appears exactly once in the nonprofit panel", () =>
   assert.deepEqual([...NONPROFIT_MEMBERSHIP_BENEFITS], [
     "Individual member accounts",
     "Elevate course library",
-    "Weekly live reset sessions",
+    "Weekly live online sessions (Core-equivalent)",
+    "Shared session recordings archive",
     "Breathwork and guided practices",
-    "Integration Journal",
     "Organization administrator dashboard",
     "Seat invitations and member management",
-    "Session replays when available",
   ])
   const unique = new Set(NONPROFIT_MEMBERSHIP_BENEFITS)
   assert.equal(unique.size, NONPROFIT_MEMBERSHIP_BENEFITS.length)
