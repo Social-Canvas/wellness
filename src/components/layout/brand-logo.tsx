@@ -3,35 +3,42 @@ import Image from "next/image"
 import Link from "next/link"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import {
   BRAND_LOGO_HOME_LABEL,
   BRAND_LOGO_MARK,
   getBrandLogoImageAlt,
+  getBrandLogoLockup,
+  type BrandLogoLockupTone,
   type BrandLogoVariant,
 } from "@/lib/brand/logo"
 import { cn } from "@/lib/utils"
 
-const brandLogoVariants = cva(
-  "inline-flex min-w-0 shrink-0 items-center gap-2.5",
-  {
-    variants: {
-      appearance: {
-        default: "text-ink [&_[data-brand-accent]]:text-blue",
-        footer: "text-[#C2D2D0] [&_[data-brand-accent]]:text-[#9FD0C9]",
-        inverse: "text-cream [&_[data-brand-accent]]:text-blue-soft",
-      },
+const brandLogoVariants = cva("inline-flex min-w-0 shrink-0 items-center", {
+  variants: {
+    appearance: {
+      /** Dark-text lockup — light backgrounds (navbar, headers). */
+      default: "",
+      /** White-text lockup — dark footer surfaces. */
+      footer: "",
+      /** White-text lockup — dark / inverse surfaces. */
+      inverse: "",
     },
-    defaultVariants: {
-      appearance: "default",
-    },
-  }
-)
+  },
+  defaultVariants: {
+    appearance: "default",
+  },
+})
 
 const MARK_SIZES = {
   sm: 32,
   md: 36,
   lg: 48,
+} as const
+
+const LOCKUP_SIZES = {
+  sm: 28,
+  md: 36,
+  lg: 44,
 } as const
 
 type BrandLogoSize = keyof typeof MARK_SIZES
@@ -44,11 +51,19 @@ type BrandLogoProps = Omit<React.ComponentProps<"div">, "children"> &
     href?: string
     priority?: boolean
     /**
-     * Hide the wordmark below this breakpoint (icon-only on narrow viewports).
+     * Show the square mark below this breakpoint; full lockup at/above it.
      * Only applies to the horizontal variant.
      */
     hideWordmarkBelow?: "sm" | "md"
   }
+
+function appearanceToTone(
+  appearance: BrandLogoProps["appearance"]
+): BrandLogoLockupTone {
+  return appearance === "footer" || appearance === "inverse"
+    ? "white-text"
+    : "dark-text"
+}
 
 function markDimensions(size: BrandLogoSize): { width: number; height: number } {
   const height = MARK_SIZES[size]
@@ -56,31 +71,41 @@ function markDimensions(size: BrandLogoSize): { width: number; height: number } 
   return { width, height }
 }
 
-function BrandWordmark({
+function lockupDimensions(size: BrandLogoSize): {
+  width: number
+  height: number
+} {
+  const lockup = getBrandLogoLockup("dark-text")
+  const height = LOCKUP_SIZES[size]
+  const width = Math.round(height * (lockup.width / lockup.height))
+  return { width, height }
+}
+
+function BrandLogoImage({
+  src,
+  alt,
+  width,
+  height,
+  priority,
   className,
-  decorative,
 }: {
+  src: string
+  alt: string
+  width: number
+  height: number
+  priority?: boolean
   className?: string
-  /** Hide from AT when a parent link already names the brand. */
-  decorative?: boolean
 }) {
   return (
-    <span
-      aria-hidden={decorative ? true : undefined}
-      className={cn("font-display font-semibold tracking-tight", className)}
-    >
-      {/* Single-line where space allows; two-line on narrow widths */}
-      <span className="hidden whitespace-nowrap min-[420px]:inline">
-        <span data-brand-accent>{ELEVATE_BRAND.shortName}</span>
-        <span> Health Solutions</span>
-      </span>
-      <span className="inline leading-[1.15] min-[420px]:hidden">
-        <span data-brand-accent className="block">
-          {ELEVATE_BRAND.shortName}
-        </span>
-        <span className="block text-[0.82em] font-semibold">Health Solutions</span>
-      </span>
-    </span>
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={cn("shrink-0 object-contain", className)}
+      style={{ width, height }}
+      priority={priority}
+    />
   )
 }
 
@@ -94,51 +119,64 @@ function BrandLogo({
   hideWordmarkBelow,
   ...props
 }: BrandLogoProps) {
-  const { width, height } = markDimensions(size)
   const linked = Boolean(href)
-  // Linked lockups use the link's aria-label once; mark stays decorative.
+  // Linked lockups use the link's aria-label once; images stay decorative.
   const imageAlt = linked ? "" : getBrandLogoImageAlt(variant)
-  const showWordmark = variant === "horizontal"
+  const tone = appearanceToTone(appearance)
+  const lockup = getBrandLogoLockup(tone)
+  const markSize = markDimensions(size)
+  const lockupSize = lockupDimensions(size)
 
-  const wordmarkVisibility =
-    hideWordmarkBelow === "sm"
-      ? "max-sm:hidden"
-      : hideWordmarkBelow === "md"
-        ? "max-md:hidden"
+  const markVisibility =
+    variant === "horizontal" && hideWordmarkBelow === "sm"
+      ? "sm:hidden"
+      : variant === "horizontal" && hideWordmarkBelow === "md"
+        ? "md:hidden"
         : undefined
 
-  const lockup = (
+  const lockupVisibility =
+    variant === "horizontal" && hideWordmarkBelow === "sm"
+      ? "hidden sm:block"
+      : variant === "horizontal" && hideWordmarkBelow === "md"
+        ? "hidden md:block"
+        : undefined
+
+  const showMark = variant === "icon" || Boolean(hideWordmarkBelow)
+  const showLockup = variant === "horizontal"
+
+  const content = (
     <div
       data-slot="brand-logo"
       data-variant={variant}
+      data-tone={tone}
       className={cn(brandLogoVariants({ appearance }), className)}
       {...props}
     >
-      <Image
-        src={BRAND_LOGO_MARK.src}
-        alt={imageAlt}
-        width={width}
-        height={height}
-        className="shrink-0"
-        style={{ width, height }}
-        priority={priority}
-      />
-      {showWordmark ? (
-        <BrandWordmark
-          decorative={linked}
-          className={cn(
-            size === "sm" && "text-base",
-            size === "md" && "text-lg",
-            size === "lg" && "text-xl",
-            wordmarkVisibility
-          )}
+      {showMark ? (
+        <BrandLogoImage
+          src={BRAND_LOGO_MARK.src}
+          alt={imageAlt}
+          width={markSize.width}
+          height={markSize.height}
+          priority={priority}
+          className={markVisibility}
+        />
+      ) : null}
+      {showLockup ? (
+        <BrandLogoImage
+          src={lockup.src}
+          alt={imageAlt}
+          width={lockupSize.width}
+          height={lockupSize.height}
+          priority={priority}
+          className={lockupVisibility}
         />
       ) : null}
     </div>
   )
 
   if (!href) {
-    return lockup
+    return content
   }
 
   return (
@@ -147,7 +185,7 @@ function BrandLogo({
       aria-label={BRAND_LOGO_HOME_LABEL}
       className="inline-flex min-w-0 transition-opacity hover:opacity-90"
     >
-      {lockup}
+      {content}
     </Link>
   )
 }

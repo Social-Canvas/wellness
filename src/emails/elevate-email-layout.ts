@@ -45,7 +45,7 @@ function renderBrandHeader(): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="vertical-align:middle;padding-right:12px;">
-                      <img src="${markUrl}" width="40" height="36" alt="" style="display:block;border:0;width:40px;height:auto;" />
+                      <img src="${markUrl}" width="36" height="39" alt="" style="display:block;border:0;width:36px;height:auto;" />
                     </td>
                     <td style="vertical-align:middle;">
                       ${textBlock}
