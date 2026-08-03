@@ -181,6 +181,47 @@ test("11. Complimentary member does not see personal billing controls", () => {
   assert.match(downgrade.statusNote ?? "", /administrators/i)
 })
 
+test("complimentary Core member sees Current complimentary plan, not Join", () => {
+  const facts = personalFacts({
+    source: "complimentary",
+    hasPersonalBilling: false,
+    effectiveTierSlug: "plan-1",
+    status: "active",
+  })
+  const views = buildAllMembershipPlanCardViews(facts)
+  const core = views.find((view) => view.planSlug === "plan-1")
+  assert.ok(core)
+  assert.equal(core.kind, "current")
+  assert.equal(core.badge, "Current complimentary plan")
+  assert.equal(core.sourceLabel, "Current complimentary plan")
+  assert.equal(core.ctaLabel, "Go to my membership")
+  assert.equal(core.visuallyCurrent, true)
+  assert.equal(core.allowsCheckout, false)
+  assert.notEqual(core.ctaLabel, "Join Elevate Core")
+
+  const gold = views.find((view) => view.planSlug === "plan-2")
+  assert.equal(gold?.kind, "upgrade")
+  assert.equal(gold?.ctaLabel, "Upgrade to Gold")
+})
+
+test("programs page resolves membership via profile id, not auth session id", () => {
+  const programs = readSrc("app/(public)/programs/page.tsx")
+  assert.match(programs, /getCurrentProfile/)
+  assert.match(programs, /getEffectiveMembership\(userId\)/)
+  assert.doesNotMatch(programs, /getCurrentUser/)
+})
+
+test("membership queries disambiguate plans!plan_id after scheduled_plan_id", () => {
+  const membership = readSrc("server/services/membership.service.ts")
+  assert.match(membership, /plans!plan_id/)
+  assert.doesNotMatch(
+    membership,
+    /access_source, plans \( id, name, slug \)/
+  )
+  const billing = readSrc("features/billing/services/billing.service.ts")
+  assert.match(billing, /plans!plan_id/)
+})
+
 // 12–15. Preview controls removed from Build on your membership
 test("12-15. Preview buttons, Watch intro, and preview videos absent from program offers", () => {
   const card = readSrc("features/checkout/components/program-offer-card.tsx")

@@ -5,7 +5,7 @@ import {
   hasConfirmedPublicTrialRegistration,
   listTrialOpenLiveSessions,
 } from "@/features/live-sessions/services/live-sessions.service"
-import { getCurrentUser } from "@/features/auth/services/auth.service"
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import {
   buildLiveBreathworkOfferView,
   type LiveBreathworkOfferState,
@@ -34,13 +34,14 @@ function cardModeFromState(
 }
 
 export default async function LiveBreathworkTrialPage() {
-  const [sessionsResult, userResult] = await Promise.all([
+  const [sessionsResult, profileResult] = await Promise.all([
     listTrialOpenLiveSessions(),
-    getCurrentUser(),
+    getCurrentProfile(),
   ])
   const priceApproved = isLiveBreathworkTrialPriceApproved()
 
-  const userId = userResult.success ? userResult.data.id : null
+  // subscriptions.user_id / registrations.user_id are profiles.id
+  const userId = profileResult.success ? profileResult.data.id : null
   const membershipResult = userId
     ? await getEffectiveMembership(userId)
     : null

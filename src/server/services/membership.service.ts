@@ -246,18 +246,20 @@ export const getEffectiveMembership = cache(
     try {
       const supabase = membershipDb()
 
+      // Disambiguate plan embeds: subscriptions/organizations also have
+      // scheduled_plan_id → plans, which makes bare `plans (...)` fail in PostgREST.
       const [{ data: subscriptions }, { data: sponsored }] = await Promise.all([
         supabase
           .from("subscriptions")
           .select(
-            "id, plan_id, status, current_period_start, current_period_end, cancel_at_period_end, stripe_subscription_id, scheduled_plan_id, access_source, plans ( id, name, slug )"
+            "id, plan_id, status, current_period_start, current_period_end, cancel_at_period_end, stripe_subscription_id, scheduled_plan_id, access_source, plans!plan_id ( id, name, slug )"
           )
           .eq("user_id", parsed.data)
           .order("created_at", { ascending: false }),
         supabase
           .from("organization_members")
           .select(
-            "id, status, assigned_plan_id, organization_id, organizations ( id, name, status, plan_id, plans ( id, name, slug ) )"
+            "id, status, assigned_plan_id, organization_id, organizations ( id, name, status, plan_id, plans!plan_id ( id, name, slug ) )"
           )
           .eq("user_id", parsed.data)
           .eq("status", "active"),

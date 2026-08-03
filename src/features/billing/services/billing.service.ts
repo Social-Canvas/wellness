@@ -487,7 +487,7 @@ export const getCurrentSubscription = cache(
         .select(
           `
         *,
-        plans ( id, name, slug )
+        plans!plan_id ( id, name, slug )
       `
         )
         .eq("user_id", parsedUserId.data)

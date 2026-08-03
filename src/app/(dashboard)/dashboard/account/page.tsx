@@ -174,6 +174,11 @@ export default async function DashboardAccountPage({
                   Billing is managed by your nonprofit sponsor. Contact your
                   administrator for seat or plan changes.
                 </p>
+              ) : membership.source === "complimentary" ? (
+                <p className="pt-1 text-xs">
+                  Complimentary access — plan changes are managed by
+                  administrators.
+                </p>
               ) : null}
             </>
           ) : subscription ? (
