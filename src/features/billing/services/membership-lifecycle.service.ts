@@ -45,7 +45,7 @@ export async function schedulePersonalPlanChange(input: {
   const { data: subscription, error } = await supabase
     .from("subscriptions")
     .select(
-      "id, plan_id, status, cancel_at_period_end, current_period_end, stripe_subscription_id, plans ( slug )"
+      "id, plan_id, status, cancel_at_period_end, current_period_end, stripe_subscription_id, plans!plan_id ( slug )"
     )
     .eq("user_id", userId.data)
     .in("status", ["active", "trialing", "past_due"])

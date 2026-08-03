@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import { test } from "node:test"
 
 import {
@@ -130,6 +131,16 @@ test("no shared organization login model", () => {
 test("complimentary access remains an independent source label", () => {
   const sources = ["personal_stripe", "nonprofit_sponsored", "complimentary", "none"]
   assert.ok(sources.includes("complimentary"))
+})
+
+test("getEffectiveMembership disambiguates plan embeds for complimentary resolution", () => {
+  const source = readFileSync(
+    new URL("./membership.service.ts", import.meta.url),
+    "utf8"
+  )
+  assert.match(source, /plans!plan_id \( id, name, slug \)/)
+  assert.match(source, /COMP_PREVIEW_MARKER_PREFIX/)
+  assert.match(source, /source: isComp \? "complimentary"/)
 })
 
 test("past-due emits payment failed lifecycle type", () => {

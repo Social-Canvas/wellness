@@ -8,7 +8,7 @@ import {
   ProgramOfferCard,
   ResetPlanOfferBand,
 } from "@/features/checkout/components"
-import { getCurrentUser } from "@/features/auth/services/auth.service"
+import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
 import {
   MEMBERSHIP_SECTION_COPY,
@@ -92,13 +92,14 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   const params = await searchParams
   const initialAudience = parseMembershipAudienceParam(params.membership)
 
-  const [productsResult, userResult, trialSessionsResult] = await Promise.all([
+  const [productsResult, profileResult, trialSessionsResult] = await Promise.all([
     listProgramCatalogProducts(),
-    getCurrentUser(),
+    getCurrentProfile(),
     listTrialOpenLiveSessions(),
   ])
 
-  const userId = userResult.success ? userResult.data.id : null
+  // subscriptions.user_id is profiles.id — never auth.users id
+  const userId = profileResult.success ? profileResult.data.id : null
   const membershipResult = userId
     ? await getEffectiveMembership(userId)
     : null

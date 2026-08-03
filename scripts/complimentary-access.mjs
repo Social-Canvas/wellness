@@ -285,6 +285,7 @@ async function commandGrant({ client, projectRef, email, planSlug, dryRun }) {
     current_period_start: now.toISOString(),
     current_period_end: periodEnd.toISOString(),
     cancel_at_period_end: false,
+    access_source: "complimentary",
   }
 
   const existing = await findCompSubscriptions(client, profile.id)
