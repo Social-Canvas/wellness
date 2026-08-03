@@ -21,6 +21,22 @@ import {
   shouldPlayActiveTestimonial,
   TESTIMONIAL_ROTATION_INTERVAL_MS,
 } from "../utils/carousel-behavior.ts"
+import {
+  TESTIMONIAL_ACTIVE_WIDTH_DESKTOP,
+  TESTIMONIAL_ACTIVE_Z,
+  TESTIMONIAL_LAYOUT_TRANSITION_MS,
+  TESTIMONIAL_OVERLAP_DESKTOP,
+  TESTIMONIAL_OVERLAP_TABLET,
+  TESTIMONIAL_SIDE_BLUR_PX,
+  TESTIMONIAL_SIDE_OPACITY,
+  TESTIMONIAL_SIDE_SCALE,
+  TESTIMONIAL_SIDE_WIDTH_DESKTOP,
+  TESTIMONIAL_SIDE_Z,
+  resolveOverlapForViewport,
+  resolveTestimonialCarouselSlot,
+  sideCardCenterOffsetPx,
+  sideCardVisualStyle,
+} from "../utils/carousel-layout.ts"
 import { inventoryTestimonialSources } from "../utils/media-inventory.ts"
 import {
   buildMuxPosterUrl,
@@ -398,6 +414,8 @@ test("21. Mobile layout does not overflow", () => {
   assert.match(carousel, /overflow-x-clip/)
   assert.match(carousel, /aspect-\[9\/16\]/)
   assert.match(carousel, /w-\[min\(100%,20rem\)\]/)
+  assert.match(carousel, /max-w-5xl/)
+  assert.match(carousel, /hidden sm:block/)
 })
 
 // 22. Homepage remains performant
@@ -421,6 +439,7 @@ test("23. No membership, Stripe, database-auth or email behavior changes", () =>
     "src/features/marketing-testimonials/components/video-testimonials-section.tsx",
     "src/features/marketing-testimonials/data/testimonials.ts",
     "src/features/marketing-testimonials/utils/carousel-behavior.ts",
+    "src/features/marketing-testimonials/utils/carousel-layout.ts",
     "src/app/(public)/page.tsx",
     "scripts/upload-homepage-testimonials.mjs",
   ]
@@ -439,4 +458,205 @@ test("23. No membership, Stripe, database-auth or email behavior changes", () =>
     VIDEO_TESTIMONIALS_SECTION.title,
     "Real experiences. Meaningful change."
   )
+})
+
+// --- Layout overlap / centering (user section 10) ---
+
+test("24. Active testimonial remains visually centered", () => {
+  assert.equal(resolveTestimonialCarouselSlot(2, 2, 6), "active")
+  assert.equal(resolveTestimonialCarouselSlot(1, 2, 6), "previous")
+  assert.equal(resolveTestimonialCarouselSlot(3, 2, 6), "next")
+  assert.equal(resolveTestimonialCarouselSlot(0, 2, 6), "hidden")
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /testimonial-card-active/)
+  assert.match(carousel, /justify-center/)
+  assert.match(carousel, /left-\[calc\(50%/)
+  assert.doesNotMatch(carousel, /grid-cols-3/)
+})
+
+test("25. Previous and next cards overlap the active card", () => {
+  assert.ok(TESTIMONIAL_OVERLAP_DESKTOP.preferred >= 60)
+  assert.ok(TESTIMONIAL_OVERLAP_DESKTOP.preferred <= 90)
+  assert.ok(TESTIMONIAL_OVERLAP_TABLET.preferred >= 40)
+  assert.ok(TESTIMONIAL_OVERLAP_TABLET.preferred <= 70)
+  assert.ok(TESTIMONIAL_ACTIVE_WIDTH_DESKTOP.preferred >= 320)
+  assert.ok(TESTIMONIAL_ACTIVE_WIDTH_DESKTOP.preferred <= 380)
+  assert.ok(TESTIMONIAL_SIDE_WIDTH_DESKTOP.preferred >= 280)
+  assert.ok(TESTIMONIAL_SIDE_WIDTH_DESKTOP.preferred <= 330)
+
+  const offset = sideCardCenterOffsetPx({
+    activeWidthPx: TESTIMONIAL_ACTIVE_WIDTH_DESKTOP.preferred,
+    sideWidthPx: TESTIMONIAL_SIDE_WIDTH_DESKTOP.preferred,
+    overlapPx: TESTIMONIAL_OVERLAP_DESKTOP.preferred,
+    side: "previous",
+  })
+  assert.ok(offset < 0)
+  // Side card center must sit inside the active half + side half span.
+  assert.ok(
+    Math.abs(offset) <
+      TESTIMONIAL_ACTIVE_WIDTH_DESKTOP.preferred / 2 +
+        TESTIMONIAL_SIDE_WIDTH_DESKTOP.preferred / 2
+  )
+
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /testimonial-card-previous/)
+  assert.match(carousel, /testimonial-card-next/)
+  assert.match(carousel, /left-\[calc\(50%-/)
+  assert.match(carousel, /left-\[calc\(50%\+/)
+})
+
+test("26. Active card has the highest stacking order", () => {
+  assert.ok(TESTIMONIAL_ACTIVE_Z > TESTIMONIAL_SIDE_Z)
+  assert.equal(TESTIMONIAL_ACTIVE_Z, 30)
+  assert.equal(TESTIMONIAL_SIDE_Z, 10)
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /TESTIMONIAL_ACTIVE_Z/)
+  assert.match(carousel, /TESTIMONIAL_SIDE_Z/)
+  assert.match(carousel, /TESTIMONIAL_CONTROLS_Z/)
+})
+
+test("27. Inactive cards remain paused (layout)", () => {
+  assert.equal(
+    shouldPlayActiveTestimonial({
+      isActive: false,
+      sectionVisible: true,
+      pageVisible: true,
+      autoplayBlocked: false,
+    }),
+    false
+  )
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.equal((carousel.match(/<MuxPlayer/g) ?? []).length, 1)
+  assert.match(carousel, /isActive && item\.muxPlaybackId/)
+})
+
+test("28. Side cards use poster imagery", () => {
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /resolveTestimonialPoster/)
+  assert.match(carousel, /loading=\{isActive \? "eager" : "lazy"\}/)
+  // Side slots never mount MuxPlayer — only the active branch does.
+  assert.match(carousel, /isActive && item\.muxPlaybackId/)
+})
+
+test("29. Active video controls remain clickable", () => {
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /TESTIMONIAL_CONTROLS_Z/)
+  assert.match(carousel, /pointer-events-auto/)
+  assert.match(carousel, /toggleMute/)
+  assert.match(carousel, /togglePlayPause/)
+})
+
+test("30. Clicking a side preview selects it", () => {
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /isSide[\s\S]*goTo\(index,\s*\{\s*manual:\s*true/)
+  assert.match(carousel, /Show testimonial \$\{index \+ 1\}/)
+  assert.match(carousel, /tabIndex=\{-1\}/)
+})
+
+test("31. Carousel transition preserves the center position", () => {
+  assert.ok(TESTIMONIAL_LAYOUT_TRANSITION_MS >= 300)
+  assert.ok(TESTIMONIAL_LAYOUT_TRANSITION_MS <= 450)
+  // Slot mapping stays centered on activeIndex regardless of which index is active.
+  for (let active = 0; active < 6; active += 1) {
+    assert.equal(resolveTestimonialCarouselSlot(active, active, 6), "active")
+  }
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /TESTIMONIAL_LAYOUT_TRANSITION_MS/)
+  assert.match(carousel, /justify-center/)
+})
+
+test("32. Mobile does not overflow horizontally (layout tokens)", () => {
+  assert.equal(resolveOverlapForViewport(375), 28)
+  assert.equal(resolveOverlapForViewport(768), 40)
+  assert.equal(resolveOverlapForViewport(1024), TESTIMONIAL_OVERLAP_TABLET.preferred)
+  assert.equal(resolveOverlapForViewport(1280), TESTIMONIAL_OVERLAP_DESKTOP.preferred)
+  assert.equal(resolveOverlapForViewport(1440), TESTIMONIAL_OVERLAP_DESKTOP.preferred)
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /overflow-x-clip/)
+  assert.match(carousel, /Section[\s\S]*overflow-x-clip/)
+})
+
+test("33. Reduced-motion disables or simplifies animated transitions", () => {
+  const animated = sideCardVisualStyle(false)
+  const reduced = sideCardVisualStyle(true)
+  assert.ok(animated.transition)
+  assert.equal(reduced.transition, undefined)
+  assert.ok(TESTIMONIAL_SIDE_BLUR_PX <= 1)
+  assert.ok(TESTIMONIAL_SIDE_OPACITY.preferred >= 0.45)
+  assert.ok(TESTIMONIAL_SIDE_OPACITY.preferred <= 0.65)
+  assert.ok(TESTIMONIAL_SIDE_SCALE.preferred >= 0.88)
+  assert.ok(TESTIMONIAL_SIDE_SCALE.preferred <= 0.94)
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /prefers-reduced-motion:\s*reduce/)
+  assert.match(carousel, /reducedMotion/)
+})
+
+test("34. Pagination remains centered beneath the active card", () => {
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /data-testid="testimonial-carousel-pagination"/)
+  assert.match(
+    carousel,
+    /testimonial-carousel-pagination[\s\S]*justify-center/
+  )
+  assert.match(carousel, /aria-label="Testimonial slides"/)
+})
+
+test("35. Existing autoplay and mute behavior remains unchanged", () => {
+  assert.ok(TESTIMONIAL_ROTATION_INTERVAL_MS >= 8000)
+  assert.ok(TESTIMONIAL_ROTATION_INTERVAL_MS <= 10000)
+  assert.equal(
+    shouldAutoRotateTestimonials({
+      sectionVisible: true,
+      pageVisible: true,
+      muted: true,
+      hovering: false,
+      focused: false,
+      manualNavCooldownActive: false,
+      reducedMotion: false,
+      modalOpen: false,
+    }),
+    true
+  )
+  assert.equal(
+    shouldAutoRotateTestimonials({
+      sectionVisible: true,
+      pageVisible: true,
+      muted: false,
+      hovering: false,
+      focused: false,
+      manualNavCooldownActive: false,
+      reducedMotion: false,
+      modalOpen: false,
+    }),
+    false
+  )
+  const carousel = read(
+    "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
+  )
+  assert.match(carousel, /useState\(true\)/)
+  assert.match(carousel, /muted=\{muted\}/)
+  assert.match(carousel, /loop=\{muted\}/)
+  assert.match(carousel, /TESTIMONIAL_ROTATION_INTERVAL_MS/)
 })

@@ -16,6 +16,7 @@ import {
   useId,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react"
 
@@ -40,6 +41,17 @@ import {
   TESTIMONIAL_ROTATION_INTERVAL_MS,
 } from "../utils/carousel-behavior"
 import {
+  TESTIMONIAL_ACTIVE_Z,
+  TESTIMONIAL_CONTROLS_Z,
+  TESTIMONIAL_LAYOUT_TRANSITION_MS,
+  TESTIMONIAL_SIDE_BLUR_PX,
+  TESTIMONIAL_SIDE_OPACITY,
+  TESTIMONIAL_SIDE_SCALE,
+  TESTIMONIAL_SIDE_Z,
+  resolveTestimonialCarouselSlot,
+  type TestimonialCarouselSlot,
+} from "../utils/carousel-layout"
+import {
   buildSlideAccessibleName,
   resolveTestimonialDisplayName,
   resolveTestimonialPoster,
@@ -54,6 +66,34 @@ type VideoTestimonialsCarouselProps = {
 type MuxMediaElement = HTMLElement & {
   play?: () => Promise<void>
   pause?: () => void
+}
+
+function slotVisualStyle(
+  slot: TestimonialCarouselSlot,
+  reducedMotion: boolean
+): CSSProperties | undefined {
+  if (slot === "hidden") return undefined
+
+  const transition = reducedMotion
+    ? undefined
+    : `transform ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out, opacity ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out, filter ${TESTIMONIAL_LAYOUT_TRANSITION_MS}ms ease-out`
+
+  if (slot === "active") {
+    return {
+      zIndex: TESTIMONIAL_ACTIVE_Z,
+      opacity: 1,
+      transform: "scale(1)",
+      transition,
+    }
+  }
+
+  return {
+    zIndex: TESTIMONIAL_SIDE_Z,
+    opacity: TESTIMONIAL_SIDE_OPACITY.preferred,
+    transform: `translateX(-50%) translateY(-50%) scale(${TESTIMONIAL_SIDE_SCALE.preferred})`,
+    filter: `blur(${TESTIMONIAL_SIDE_BLUR_PX}px)`,
+    transition,
+  }
 }
 
 export function VideoTestimonialsCarousel({
@@ -297,7 +337,7 @@ export function VideoTestimonialsCarousel({
           }
         }}
       >
-        <Container className="max-w-7xl">
+        <Container className="max-w-6xl">
           <SectionHeader
             align="center"
             eyebrow={VIDEO_TESTIMONIALS_SECTION.eyebrow}
@@ -314,45 +354,91 @@ export function VideoTestimonialsCarousel({
               )}
             </p>
 
+            {/*
+              Fixed-center layered stage: the active card stays in normal flow at
+              horizontal center. Previous/next are absolutely positioned so they
+              tuck under the active edges (~60–90px desktop overlap). Stage width
+              is capped (max-w-5xl) so the stack stays compact at 1440px.
+            */}
             <div
-              className="relative mx-auto flex items-center justify-center overflow-x-clip px-2 sm:px-10"
+              className="relative mx-auto w-full max-w-5xl overflow-x-clip px-1 sm:px-3"
+              data-testid="testimonial-carousel-stage"
               onPointerDown={onPointerDown}
               onPointerUp={onPointerUp}
               onPointerCancel={() => {
                 pointerStartX.current = null
               }}
             >
-              <div className="flex w-full max-w-[72rem] items-center justify-center gap-3 sm:gap-5">
+              <div
+                className="relative mx-auto flex w-full items-center justify-center"
+                data-testid="testimonial-carousel-track"
+              >
                 {testimonials.map((item, index) => {
-                  const offset = index - activeIndex
-                  const isActive = index === activeIndex
-                  const isNear = Math.abs(offset) === 1
+                  const slot = resolveTestimonialCarouselSlot(
+                    index,
+                    activeIndex,
+                    total
+                  )
+                  const isActive = slot === "active"
+                  const isSide = slot === "previous" || slot === "next"
                   const poster = resolvePosterUrl(resolveTestimonialPoster(item))
-                  const far = Math.abs(offset) > 1
+
+                  if (slot === "hidden") {
+                    return null
+                  }
 
                   return (
                     <article
                       key={item.id}
                       aria-hidden={!isActive}
+                      data-carousel-slot={slot}
+                      data-testid={
+                        isActive
+                          ? "testimonial-card-active"
+                          : slot === "previous"
+                            ? "testimonial-card-previous"
+                            : "testimonial-card-next"
+                      }
                       className={cn(
-                        "relative shrink-0 overflow-hidden rounded-2xl border border-line bg-ink/5 shadow-sm transition-[transform,opacity] duration-500 ease-out",
-                        "aspect-[9/16] w-[min(100%,20rem)] sm:w-[18rem] md:w-[20rem] lg:w-[22rem]",
-                        isActive && "z-20 scale-100 opacity-100",
-                        isNear &&
-                          "z-10 hidden scale-90 opacity-50 sm:block sm:w-[14rem] md:w-[15rem]",
-                        far && "pointer-events-none absolute opacity-0",
-                        !isActive && !isNear && "hidden"
+                        "overflow-hidden rounded-2xl border border-line bg-ink/5 shadow-sm",
+                        "aspect-[9/16]",
+                        isActive &&
+                          cn(
+                            "relative shrink-0",
+                            // Active ~320–380px (20–22rem) across breakpoints.
+                            "w-[min(100%,20rem)] sm:w-[19rem] md:w-[20.5rem] lg:w-[22rem]"
+                          ),
+                        isSide &&
+                          cn(
+                            "absolute top-1/2 hidden sm:block",
+                            // Side ~280–330px; left% + translateX(-50%) centers the card
+                            // so ~40–80px sits under the active edge.
+                            "w-[15.5rem] md:w-[17.5rem] lg:w-[19rem]",
+                            // Offset from stage center ≈ activeHalf + sideHalf - overlap.
+                            // Visual overlap accounts for side scale(0.92).
+                            // sm/md (~40–70px): ±14.75rem / ±15.25rem
+                            // lg+ (~70–90px): ±14.75rem → ~80px visual tuck
+                            slot === "previous" &&
+                              "left-[calc(50%-14.75rem)] md:left-[calc(50%-15.25rem)] lg:left-[calc(50%-14.75rem)]",
+                            slot === "next" &&
+                              "left-[calc(50%+14.75rem)] md:left-[calc(50%+15.25rem)] lg:left-[calc(50%+14.75rem)]",
+                            "cursor-pointer"
+                          )
                       )}
-                      style={
-                        reducedMotion
-                          ? undefined
-                          : {
-                              transform: isActive
-                                ? "scale(1)"
-                                : isNear
-                                  ? `scale(0.9) translateX(${offset * 4}%)`
-                                  : undefined,
-                            }
+                      style={slotVisualStyle(slot, reducedMotion)}
+                      onClick={
+                        isSide
+                          ? () => goTo(index, { manual: true })
+                          : undefined
+                      }
+                      // Side previews are pointer-selectable but not tab-focusable
+                      // so they never compete with active mute/play controls.
+                      tabIndex={-1}
+                      role={isSide ? "button" : undefined}
+                      aria-label={
+                        isSide
+                          ? `Show testimonial ${index + 1}`
+                          : undefined
                       }
                     >
                       {isActive && item.muxPlaybackId ? (
@@ -410,7 +496,10 @@ export function VideoTestimonialsCarousel({
                       )}
 
                       {isActive ? (
-                        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-between p-3">
+                        <div
+                          className="pointer-events-none absolute inset-0 flex flex-col justify-between p-3"
+                          style={{ zIndex: TESTIMONIAL_CONTROLS_Z }}
+                        >
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
@@ -478,7 +567,10 @@ export function VideoTestimonialsCarousel({
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-4">
+            <div
+              className="mt-6 flex items-center justify-center gap-4"
+              data-testid="testimonial-carousel-pagination"
+            >
               <button
                 type="button"
                 className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-ink transition hover:bg-cream2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
@@ -489,7 +581,7 @@ export function VideoTestimonialsCarousel({
               </button>
 
               <div
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2"
                 role="tablist"
                 aria-label="Testimonial slides"
               >
