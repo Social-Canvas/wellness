@@ -866,6 +866,75 @@ export type Database = {
           },
         ]
       }
+      recorded_sessions: {
+        Row: {
+          created_at: string
+          display_order: number
+          duration_seconds: number | null
+          focus: Database["public"]["Enums"]["recorded_session_focus"] | null
+          id: string
+          monthly_theme: string | null
+          mux_asset_id: string | null
+          mux_playback_id: string | null
+          presenter: string | null
+          processing_status: Database["public"]["Enums"]["video_status"]
+          publication_status: Database["public"]["Enums"]["publish_status"]
+          published_at: string | null
+          recorded_at: string | null
+          short_description: string | null
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          week_number: number | null
+          weekly_topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          duration_seconds?: number | null
+          focus?: Database["public"]["Enums"]["recorded_session_focus"] | null
+          id?: string
+          monthly_theme?: string | null
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          presenter?: string | null
+          processing_status?: Database["public"]["Enums"]["video_status"]
+          publication_status?: Database["public"]["Enums"]["publish_status"]
+          published_at?: string | null
+          recorded_at?: string | null
+          short_description?: string | null
+          slug: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          week_number?: number | null
+          weekly_topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          duration_seconds?: number | null
+          focus?: Database["public"]["Enums"]["recorded_session_focus"] | null
+          id?: string
+          monthly_theme?: string | null
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          presenter?: string | null
+          processing_status?: Database["public"]["Enums"]["video_status"]
+          publication_status?: Database["public"]["Enums"]["publish_status"]
+          published_at?: string | null
+          recorded_at?: string | null
+          short_description?: string | null
+          slug?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          week_number?: number | null
+          weekly_topic?: string | null
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           created_at: string
@@ -983,6 +1052,11 @@ export type Database = {
         | "masterclass"
         | "session"
       publish_status: "draft" | "published" | "archived"
+      recorded_session_focus:
+        | "awareness"
+        | "release"
+        | "embodiment"
+        | "integration"
       subscription_status:
         | "active"
         | "trialing"
@@ -1158,6 +1232,12 @@ export const Constants = {
         "session",
       ],
       publish_status: ["draft", "published", "archived"],
+      recorded_session_focus: [
+        "awareness",
+        "release",
+        "embodiment",
+        "integration",
+      ],
       subscription_status: [
         "active",
         "trialing",

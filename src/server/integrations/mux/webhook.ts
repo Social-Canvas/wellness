@@ -3,6 +3,7 @@ import "server-only"
 import { syncVideoAsset } from "@/server/integrations/mux/upload"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getMuxClient } from "@/server/integrations/mux/client"
+import { syncRecordedSessionMuxAsset } from "@/features/recorded-sessions/services/recorded-sessions.service"
 import type { Database } from "@/types/database/supabase"
 
 type WebhookEventStatus = Database["public"]["Enums"]["webhook_event_status"]
@@ -108,10 +109,52 @@ async function processMuxEvent(event: { type: string; data: { object: unknown } 
     return
   }
 
-  const syncResult = await syncVideoAsset(assetId)
+  const videoSyncResult = await syncVideoAsset(assetId)
+  // Video sync may legitimately miss when the asset belongs only to recorded_sessions.
+  if (!videoSyncResult.success && videoSyncResult.error.code !== "not_found") {
+    throw new Error(videoSyncResult.error.message)
+  }
 
-  if (!syncResult.success) {
-    throw new Error(syncResult.error.message)
+  try {
+    const mux = getMuxClient()
+    const asset = await mux.video.assets.retrieve(assetId)
+    const playbackIds = asset.playback_ids ?? []
+    const signed = playbackIds.find((playback) => playback.policy === "signed")
+    const playbackId = signed?.id ?? playbackIds[0]?.id ?? null
+    const status =
+      asset.status === "ready"
+        ? "ready"
+        : asset.status === "errored"
+          ? "failed"
+          : "processing"
+    const durationSeconds =
+      typeof asset.duration === "number" ? Math.round(asset.duration) : null
+    const thumbnailUrl = playbackId
+      ? `https://image.mux.com/${playbackId}/thumbnail.jpg`
+      : null
+
+    const sessionSync = await syncRecordedSessionMuxAsset({
+      muxAssetId: assetId,
+      muxPlaybackId: playbackId,
+      status,
+      durationSeconds,
+      thumbnailUrl,
+    })
+
+    if (!sessionSync.success) {
+      throw new Error(sessionSync.error.message)
+    }
+
+    if (!videoSyncResult.success && !sessionSync.data) {
+      throw new Error(videoSyncResult.error.message)
+    }
+  } catch (error) {
+    if (!videoSyncResult.success) {
+      throw error instanceof Error
+        ? error
+        : new Error(videoSyncResult.error.message)
+    }
+    // Video synced; recorded-session sync is best-effort additive.
   }
 }
 

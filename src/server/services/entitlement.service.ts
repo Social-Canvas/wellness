@@ -492,3 +492,25 @@ export async function canDownloadProduct(
 
   return hasPurchasedProduct(parsedUserId.data, parsedProductId.data)
 }
+
+/**
+ * Shared membership recorded-sessions library access.
+ * Uses existing `session_replays` capability (Core/Gold/Platinum + sponsored +
+ * complimentary via effective membership). Does not grant access from Reset or
+ * ebook product purchases alone.
+ */
+export const canAccessRecordedSessions = cache(
+  async (userId: string): Promise<ActionResult<boolean>> => {
+    const parsedUserId = userIdSchema.safeParse(userId)
+
+    if (!parsedUserId.success) {
+      return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    const { userHasCapability } = await import(
+      "@/server/services/membership.service"
+    )
+
+    return userHasCapability(parsedUserId.data, "session_replays")
+  }
+)

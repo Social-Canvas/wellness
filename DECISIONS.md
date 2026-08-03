@@ -215,3 +215,15 @@ Format:
 **Alternatives considered:** Separate `email_deliveries` table; direct-only sends without outbox; SendGrid; marketing campaign tooling.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-03 — Membership recorded sessions as dedicated archive
+
+**Decision:** Model ongoing Elevate membership recordings as `recorded_sessions` (not a finite course). Authorize via existing shared capability `session_replays` on effective membership (Core/Gold/Platinum, nonprofit-sponsored, complimentary). Do not grant access from Reset-only or ebook-only purchases. Link existing Mux assets idempotently; never re-upload when assets already exist.
+
+**Reason:** Weekly archive is indefinite; course/module/lesson structure implies completion gates and finite outlines. `session_replays` already maps to all membership tiers without duplicate plan mappings or a new retail product.
+
+**Alternatives considered:** Reuse `membership_course_library` course rows; add a new `recorded_sessions` capability; duplicate libraries per tier; create a Breathwork retail product.
+
+**Status:** Accepted
