@@ -6,6 +6,7 @@ export type Certificate = {
   issuedAt: string
   verificationToken: string
   pdfStoragePath: string | null
+  recipientName: string | null
 }
 
 export type CertificateWithCourse = Certificate & {

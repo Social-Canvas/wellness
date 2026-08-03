@@ -89,11 +89,19 @@ export default async function DashboardAccountPage({
         <CardHeader>
           <CardTitle className="font-display text-lg font-medium">Profile</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-ink-soft">
-          <p>
-            <span className="font-semibold text-ink">Name:</span>{" "}
-            {profile.fullName ?? "Not set"}
-          </p>
+        <CardContent className="space-y-4 text-sm text-ink-soft">
+          <div>
+            <p>
+              <span className="font-semibold text-ink">Certificate name</span>
+            </p>
+            <p className="mt-1 text-base font-medium text-ink">
+              {profile.certificateName ?? "Not confirmed"}
+            </p>
+            <p className="mt-1 text-xs">
+              This name is locked because it is used on your certificates. Contact
+              support if a correction is required.
+            </p>
+          </div>
           <p>
             <span className="font-semibold text-ink">Email:</span> {profile.email}
           </p>

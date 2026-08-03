@@ -12,12 +12,14 @@ import {
 } from "@/components/ui"
 import type { MemberListItem } from "@/features/members/types"
 
+import { CertificateNameCorrectForm } from "./certificate-name-correct-form"
 import { MemberRoleBadge } from "./member-role-badge"
 import { MemberRoleSelect } from "./member-role-select"
 
 type MembersTableProps = {
   members: MemberListItem[]
   canManageRoles: boolean
+  canCorrectCertificateNames: boolean
   currentProfileId: string
 }
 
@@ -36,6 +38,7 @@ function formatMemberName(member: MemberListItem): string {
 export function MembersTable({
   members,
   canManageRoles,
+  canCorrectCertificateNames,
   currentProfileId,
 }: MembersTableProps) {
   if (members.length === 0) {
@@ -56,6 +59,7 @@ export function MembersTable({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Certificate name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Joined</TableHead>
@@ -66,6 +70,18 @@ export function MembersTable({
               <TableRow key={member.id}>
                 <TableCell className="font-medium text-ink">
                   {formatMemberName(member)}
+                </TableCell>
+                <TableCell>
+                  {canCorrectCertificateNames ? (
+                    <CertificateNameCorrectForm
+                      profileId={member.id}
+                      currentCertificateName={member.certificateName}
+                    />
+                  ) : (
+                    <span className="text-sm text-ink-soft">
+                      {member.certificateName?.trim() || "Not set"}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="text-ink-soft">{member.email}</TableCell>
                 <TableCell>

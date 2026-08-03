@@ -13,7 +13,13 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
 
 type MemberProfileRow = Pick<
   ProfileRow,
-  "id" | "full_name" | "email" | "role" | "created_at"
+  | "id"
+  | "full_name"
+  | "email"
+  | "role"
+  | "created_at"
+  | "certificate_name"
+  | "certificate_name_locked_at"
 >
 
 const ADMIN_ROLES = new Set<UserRole>(["admin", "super_admin"])
@@ -41,6 +47,8 @@ function mapMember(row: MemberProfileRow): MemberListItem {
     email: row.email,
     role: row.role,
     createdAt: row.created_at,
+    certificateName: row.certificate_name,
+    certificateNameLockedAt: row.certificate_name_locked_at,
   }
 }
 
@@ -83,7 +91,7 @@ export async function listMembers(): Promise<ActionResult<MemberListItem[]>> {
     const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, created_at")
+      .select("id, full_name, email, role, created_at, certificate_name, certificate_name_locked_at")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -129,7 +137,7 @@ export async function updateMemberRole(
     const supabase = createAdminClient()
     const { data: existingProfile, error: fetchError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, created_at")
+      .select("id, full_name, email, role, created_at, certificate_name, certificate_name_locked_at")
       .eq("id", parsed.data.profileId)
       .maybeSingle()
 
@@ -155,7 +163,7 @@ export async function updateMemberRole(
       .from("profiles")
       .update({ role: parsed.data.role })
       .eq("id", parsed.data.profileId)
-      .select("id, full_name, email, role, created_at")
+      .select("id, full_name, email, role, created_at, certificate_name, certificate_name_locked_at")
       .single()
 
     if (updateError) {

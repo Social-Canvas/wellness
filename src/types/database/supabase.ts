@@ -22,6 +22,7 @@ export type Database = {
           id: string
           issued_at: string
           pdf_storage_path: string | null
+          recipient_name: string | null
           updated_at: string
           user_id: string
           verification_token: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           issued_at?: string
           pdf_storage_path?: string | null
+          recipient_name?: string | null
           updated_at?: string
           user_id: string
           verification_token: string
@@ -44,6 +46,7 @@ export type Database = {
           id?: string
           issued_at?: string
           pdf_storage_path?: string | null
+          recipient_name?: string | null
           updated_at?: string
           user_id?: string
           verification_token?: string
@@ -59,6 +62,64 @@ export type Database = {
           {
             foreignKeyName: "certificates_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificate_name_audit: {
+        Row: {
+          action: Database["public"]["Enums"]["certificate_name_set_source"]
+          certificate_id: string | null
+          corrected_by: string
+          created_at: string
+          id: string
+          new_name: string
+          previous_name: string | null
+          profile_id: string
+          reason: string
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["certificate_name_set_source"]
+          certificate_id?: string | null
+          corrected_by: string
+          created_at?: string
+          id?: string
+          new_name: string
+          previous_name?: string | null
+          profile_id: string
+          reason: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["certificate_name_set_source"]
+          certificate_id?: string | null
+          corrected_by?: string
+          created_at?: string
+          id?: string
+          new_name?: string
+          previous_name?: string | null
+          profile_id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_name_audit_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_name_audit_corrected_by_fkey"
+            columns: ["corrected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_name_audit_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -838,6 +899,11 @@ export type Database = {
         Row: {
           auth_user_id: string
           avatar_url: string | null
+          certificate_name: string | null
+          certificate_name_corrected_at: string | null
+          certificate_name_corrected_by: string | null
+          certificate_name_locked_at: string | null
+          certificate_name_set_source: Database["public"]["Enums"]["certificate_name_set_source"] | null
           created_at: string
           email: string
           full_name: string | null
@@ -850,6 +916,11 @@ export type Database = {
         Insert: {
           auth_user_id: string
           avatar_url?: string | null
+          certificate_name?: string | null
+          certificate_name_corrected_at?: string | null
+          certificate_name_corrected_by?: string | null
+          certificate_name_locked_at?: string | null
+          certificate_name_set_source?: Database["public"]["Enums"]["certificate_name_set_source"] | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -862,6 +933,11 @@ export type Database = {
         Update: {
           auth_user_id?: string
           avatar_url?: string | null
+          certificate_name?: string | null
+          certificate_name_corrected_at?: string | null
+          certificate_name_corrected_by?: string | null
+          certificate_name_locked_at?: string | null
+          certificate_name_set_source?: Database["public"]["Enums"]["certificate_name_set_source"] | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -871,7 +947,15 @@ export type Database = {
           stripe_customer_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_certificate_name_corrected_by_fkey"
+            columns: ["certificate_name_corrected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -1161,10 +1245,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_correct_certificate_name: {
+        Args: {
+          p_admin_profile_id: string
+          p_new_name: string
+          p_profile_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      set_certificate_name_once: {
+        Args: {
+          p_name: string
+          p_source?: Database["public"]["Enums"]["certificate_name_set_source"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
       billing_interval: "monthly" | "yearly"
+      certificate_name_set_source: "signup" | "onboarding" | "admin_correction"
       content_type: "course" | "module" | "lesson" | "video"
       ghl_sync_status: "pending" | "synced" | "failed"
       integration_job_status: "pending" | "processing" | "completed" | "failed"
@@ -1355,6 +1455,7 @@ export const Constants = {
   public: {
     Enums: {
       billing_interval: ["monthly", "yearly"],
+      certificate_name_set_source: ["signup", "onboarding", "admin_correction"],
       content_type: ["course", "module", "lesson", "video"],
       ghl_sync_status: ["pending", "synced", "failed"],
       integration_job_status: ["pending", "processing", "completed", "failed"],

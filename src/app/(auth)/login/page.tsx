@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { LoginForm } from "@/features/auth/components/LoginForm"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import { isCertificateNameLocked } from "@/features/auth/utils/certificate-name"
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -21,6 +22,11 @@ export default async function LoginPage({
     next && next.startsWith("/") && !next.startsWith("//") ? next : undefined
 
   if (profileResult.success) {
+    if (!isCertificateNameLocked(profileResult.data)) {
+      redirect(
+        `/certificate-name?next=${encodeURIComponent(redirectTo ?? "/dashboard")}`
+      )
+    }
     redirect(redirectTo ?? "/dashboard")
   }
 

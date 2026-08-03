@@ -2,15 +2,18 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
 import { signUpAction } from "@/features/auth/actions/auth.actions"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
+import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
 
 export function SignupForm() {
   const router = useRouter()
+  const helpId = useId()
+  const confirmHelpId = useId()
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
 
@@ -20,16 +23,38 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      fullName: "",
+      certificateName: "",
+      confirmCertificateName: undefined as unknown as true,
     },
   })
 
   const {
     register,
     handleSubmit,
-    reset,
+    setFocus,
     formState: { errors, isSubmitting },
   } = form
+
+  useEffect(() => {
+    if (errors.certificateName) {
+      setFocus("certificateName")
+    } else if (errors.confirmCertificateName) {
+      setFocus("confirmCertificateName")
+    } else if (errors.email) {
+      setFocus("email")
+    } else if (errors.password) {
+      setFocus("password")
+    } else if (errors.confirmPassword) {
+      setFocus("confirmPassword")
+    }
+  }, [
+    errors.certificateName,
+    errors.confirmCertificateName,
+    errors.email,
+    errors.password,
+    errors.confirmPassword,
+    setFocus,
+  ])
 
   async function onSubmit(values: SignupInput) {
     setFormError(null)
@@ -46,7 +71,7 @@ export function SignupForm() {
       setFormSuccess(
         `Check your email to confirm your account at ${result.data.email}.`
       )
-      reset()
+      // Preserve certificate name values after recoverable confirmation-needed state.
       return
     }
 
@@ -82,17 +107,48 @@ export function SignupForm() {
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="signup-full-name">Full name</Label>
+            <Label htmlFor="signup-certificate-name">
+              {CERTIFICATE_NAME_COPY.signupLabel}
+            </Label>
             <Input
-              id="signup-full-name"
+              id="signup-certificate-name"
               type="text"
               autoComplete="name"
-              aria-invalid={Boolean(errors.fullName)}
+              aria-invalid={Boolean(errors.certificateName)}
+              aria-describedby={helpId}
               disabled={isSubmitting}
-              {...register("fullName")}
+              {...register("certificateName")}
             />
-            {errors.fullName ? (
-              <p className="text-sm text-destructive">{errors.fullName.message}</p>
+            <p id={helpId} className="text-sm text-ink-soft">
+              {CERTIFICATE_NAME_COPY.signupHelp}
+            </p>
+            {errors.certificateName ? (
+              <p role="alert" className="text-sm text-destructive">
+                {errors.certificateName.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="signup-confirm-certificate-name"
+              className="flex items-start gap-3 text-sm text-ink"
+            >
+              <input
+                id="signup-confirm-certificate-name"
+                type="checkbox"
+                className="mt-1 size-4 shrink-0 accent-[var(--color-blue)]"
+                aria-invalid={Boolean(errors.confirmCertificateName)}
+                aria-describedby={confirmHelpId}
+                disabled={isSubmitting}
+                {...register("confirmCertificateName")}
+              />
+              <span id={confirmHelpId}>{CERTIFICATE_NAME_COPY.signupConfirm}</span>
+            </label>
+            {errors.confirmCertificateName ? (
+              <p role="alert" className="text-sm text-destructive">
+                {errors.confirmCertificateName.message}
+              </p>
             ) : null}
           </div>
 
@@ -107,7 +163,9 @@ export function SignupForm() {
               {...register("email")}
             />
             {errors.email ? (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p role="alert" className="text-sm text-destructive">
+                {errors.email.message}
+              </p>
             ) : null}
           </div>
 
@@ -122,7 +180,9 @@ export function SignupForm() {
               {...register("password")}
             />
             {errors.password ? (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p role="alert" className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             ) : null}
           </div>
 
@@ -137,7 +197,7 @@ export function SignupForm() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword ? (
-              <p className="text-sm text-destructive">
+              <p role="alert" className="text-sm text-destructive">
                 {errors.confirmPassword.message}
               </p>
             ) : null}

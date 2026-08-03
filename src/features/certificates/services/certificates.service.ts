@@ -69,6 +69,7 @@ function mapCertificate(row: CertificateRow): Certificate {
     issuedAt: row.issued_at,
     verificationToken: row.verification_token,
     pdfStoragePath: row.pdf_storage_path,
+    recipientName: row.recipient_name,
   }
 }
 
@@ -94,14 +95,22 @@ function generateVerificationToken(): string {
   return randomBytes(32).toString("hex")
 }
 
-async function getProfileForEmail(
+async function getProfileForCertificateIssuance(
   userId: string
-): Promise<ActionResult<{ email: string; fullName: string | null }>> {
+): Promise<
+  ActionResult<{
+    email: string
+    fullName: string | null
+    certificateName: string
+  }>
+> {
   try {
     const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("profiles")
-      .select("email, full_name")
+      .select(
+        "email, full_name, certificate_name, certificate_name_locked_at"
+      )
       .eq("id", userId)
       .maybeSingle()
 
@@ -113,7 +122,18 @@ async function getProfileForEmail(
       return failure("not_found", "Profile not found.")
     }
 
-    return success({ email: data.email, fullName: data.full_name })
+    if (!data.certificate_name || !data.certificate_name_locked_at) {
+      return failure(
+        "certificate_name_required",
+        "Confirm your certificate name before requesting a certificate."
+      )
+    }
+
+    return success({
+      email: data.email,
+      fullName: data.full_name,
+      certificateName: data.certificate_name,
+    })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
@@ -296,6 +316,12 @@ export async function issueCertificate(
     return success(existingResult.data)
   }
 
+  const profileResult = await getProfileForCertificateIssuance(parsedUserId.data)
+
+  if (!profileResult.success) {
+    return profileResult
+  }
+
   try {
     const supabase = createAdminClient()
     const { data, error } = await supabase
@@ -305,6 +331,7 @@ export async function issueCertificate(
         course_id: parsedInput.data.courseId,
         certificate_number: generateCertificateNumber(),
         verification_token: generateVerificationToken(),
+        recipient_name: profileResult.data.certificateName,
       })
       .select("*, courses ( id, title, slug )")
       .single()
@@ -333,21 +360,12 @@ export async function issueCertificate(
     const issuedCertificate = mapCertificateWithCourse(data as CertificateWithCourseRow)
 
     try {
-      const profileResult = await getProfileForEmail(parsedUserId.data)
-
-      if (profileResult.success) {
-        await sendCertificateEarnedEmail({
-          to: profileResult.data.email,
-          fullName: profileResult.data.fullName,
-          courseTitle: issuedCertificate.course.title,
-          certificateToken: issuedCertificate.verificationToken,
-        })
-      } else {
-        logger.warn("Could not load profile for certificate earned email.", {
-          userId: parsedUserId.data,
-          certificateId: issuedCertificate.id,
-        })
-      }
+      await sendCertificateEarnedEmail({
+        to: profileResult.data.email,
+        fullName: profileResult.data.fullName,
+        courseTitle: issuedCertificate.course.title,
+        certificateToken: issuedCertificate.verificationToken,
+      })
     } catch (emailError) {
       logger.error("Certificate earned email failed without blocking issuance.", {
         userId: parsedUserId.data,
@@ -379,8 +397,8 @@ export async function verifyCertificate(
         `
         certificate_number,
         issued_at,
-        courses ( title ),
-        profiles ( full_name, email )
+        recipient_name,
+        courses ( title )
       `
       )
       .eq("verification_token", parsedInput.data.token)
@@ -395,11 +413,16 @@ export async function verifyCertificate(
     }
 
     const courseTitle = data.courses?.title ?? "Course"
-    const recipientName =
-      data.profiles?.full_name?.trim() ||
-      data.profiles?.email?.split("@")[0] ||
-      "Member"
+    const recipientName = data.recipient_name?.trim() ?? null
 
+    if (!recipientName) {
+      return failure(
+        "not_found",
+        "This certificate is pending recipient review and cannot be verified yet."
+      )
+    }
+
+    // Never fall back to email, placeholders, or profile mutations after issuance.
     return success({
       certificateNumber: data.certificate_number,
       courseTitle,

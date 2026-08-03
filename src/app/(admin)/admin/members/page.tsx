@@ -23,6 +23,9 @@ export default async function AdminMembersPage() {
   }
 
   const canManageRoles = actorResult.success && actorResult.data.role === "super_admin"
+  const canCorrectCertificateNames =
+    actorResult.success &&
+    (actorResult.data.role === "admin" || actorResult.data.role === "super_admin")
 
   return (
     <div className="space-y-6">
@@ -30,14 +33,17 @@ export default async function AdminMembersPage() {
         <h2 className="font-display text-[28px] font-medium text-ink">Members</h2>
         <p className="mt-1 text-sm text-ink-soft">
           {canManageRoles
-            ? "View member accounts and update roles. Super admins cannot change their own role."
-            : "View member accounts. Only super admins can change roles."}
+            ? "View member accounts, update roles, and apply audited certificate-name corrections. Super admins cannot change their own role."
+            : canCorrectCertificateNames
+              ? "View member accounts and apply audited certificate-name corrections. Only super admins can change roles."
+              : "View member accounts. Only super admins can change roles."}
         </p>
       </div>
 
       <MembersTable
         members={membersResult.data}
         canManageRoles={canManageRoles}
+        canCorrectCertificateNames={canCorrectCertificateNames}
         currentProfileId={actorResult.success ? actorResult.data.id : ""}
       />
     </div>

@@ -269,3 +269,13 @@ Format:
 **Alternatives considered:** Rename `session_replays` capability; duplicate recordings per tier; map nonprofit seat tiers to Gold/Platinum; store Zoom URLs on public `live_classes` rows.
 
 **Status:** Accepted
+
+## 2026-08-03 — Locked certificate names
+
+**Decision:** Canonical `profiles.certificate_name` with lock timestamp/source; atomic `set_certificate_name_once` RPC; issuance snapshots `certificates.recipient_name`; admin corrections audited in `certificate_name_audit` without silently rewriting issued snapshots; first-login gate at `/certificate-name`.
+
+**Reason:** Certificates must print an exact, user-confirmed legal/preferred name. Email-derived or mutable Auth metadata names are unacceptable. Snapshots preserve historical accuracy after rare audited corrections.
+
+**Alternatives considered:** Reuse `full_name` as the certificate field; store only in Auth `user_metadata`; allow self-service edits; rewrite issued certificates on profile correction.
+
+**Status:** Accepted

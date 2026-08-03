@@ -15,7 +15,13 @@ function isProtectedPath(pathname: string) {
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: (() => {
+        const requestHeaders = new Headers(request.headers)
+        requestHeaders.set("x-pathname", request.nextUrl.pathname)
+        return requestHeaders
+      })(),
+    },
   })
 
   const supabase = createServerClient<Database>(
@@ -31,8 +37,13 @@ export async function updateSession(request: NextRequest) {
             request.cookies.set(name, value)
           })
 
+          const requestHeaders = new Headers(request.headers)
+          requestHeaders.set("x-pathname", request.nextUrl.pathname)
+
           supabaseResponse = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeaders,
+            },
           })
 
           cookiesToSet.forEach(({ name, value, options }) => {
@@ -50,6 +61,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && isProtectedPath(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
+    url.searchParams.set("next", request.nextUrl.pathname)
     const redirectResponse = NextResponse.redirect(url)
 
     supabaseResponse.cookies.getAll().forEach((cookie) => {

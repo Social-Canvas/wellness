@@ -1,13 +1,18 @@
 import { z } from "zod"
 
-import { emailField, fullNameField, passwordField } from "./fields"
+import {
+  certificateNameConfirmField,
+  certificateNameField,
+} from "./certificate-name"
+import { emailField, passwordField } from "./fields"
 
 export const signupSchema = z
   .object({
     email: emailField,
     password: passwordField,
     confirmPassword: z.string().min(1, "Confirm your password"),
-    fullName: fullNameField,
+    certificateName: certificateNameField,
+    confirmCertificateName: certificateNameConfirmField,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

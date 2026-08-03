@@ -35,6 +35,10 @@ export interface ProfileView {
   avatarUrl: string | null
   role: UserRole
   stripeCustomerId: string | null
+  certificateName: string | null
+  certificateNameLockedAt: string | null
+  certificateNameSetSource: Profile["certificate_name_set_source"]
+  certificateNameCorrectedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -78,6 +82,10 @@ function mapProfile(row: Profile): ProfileView {
     avatarUrl: row.avatar_url,
     role: row.role,
     stripeCustomerId: row.stripe_customer_id,
+    certificateName: row.certificate_name,
+    certificateNameLockedAt: row.certificate_name_locked_at,
+    certificateNameSetSource: row.certificate_name_set_source,
+    certificateNameCorrectedAt: row.certificate_name_corrected_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -320,7 +328,14 @@ function buildAuthSessionUser(
 
 async function getAuthenticatedAuthUser(
   supabase: ServerSupabaseClient
-): Promise<ActionResult<{ id: string; email: string; fullName: string | null }>> {
+): Promise<
+  ActionResult<{
+    id: string
+    email: string
+    fullName: string | null
+    pendingCertificateName: string | null
+  }>
+> {
   const {
     data: { user },
     error,
@@ -330,12 +345,16 @@ async function getAuthenticatedAuthUser(
     return failure("authentication_required", "You must be signed in.")
   }
 
-  const metadata = user.user_metadata as { full_name?: string | null } | undefined
+  const metadata = user.user_metadata as
+    | { full_name?: string | null; certificate_name?: string | null }
+    | undefined
 
   return success({
     id: user.id,
     email: user.email,
     fullName: metadata?.full_name ?? null,
+    // Only explicit signup certificate_name — never derive from email or generic full_name.
+    pendingCertificateName: metadata?.certificate_name ?? null,
   })
 }
 
@@ -356,7 +375,10 @@ export async function signUp(
       options: {
         emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
         data: {
-          full_name: parsed.data.fullName,
+          // Temporary transport only — locked into profiles via set_certificate_name_once.
+          // Never read as the live certificate source after profile lock.
+          full_name: parsed.data.certificateName,
+          certificate_name: parsed.data.certificateName,
         },
       },
     })
@@ -382,17 +404,43 @@ export async function signUp(
       supabase,
       data.user.id,
       parsed.data.email,
-      { fullName: parsed.data.fullName, allowRepair: true }
+      { fullName: parsed.data.certificateName, allowRepair: true }
     )
 
     if (!profileResult.success) {
       return profileResult
     }
 
+    const { setCertificateNameOnce } = await import(
+      "@/features/auth/services/certificate-name.service"
+    )
+    const lockResult = await setCertificateNameOnce({
+      certificateName: parsed.data.certificateName,
+      confirmSpelling: true,
+      source: "signup",
+    })
+
+    if (!lockResult.success && lockResult.error.code !== "already_locked") {
+      logger.error("[auth] Failed to lock certificate name at signup", {
+        code: lockResult.error.code,
+        message: lockResult.error.message,
+      })
+      return failure(
+        "provider_error",
+        "Account created, but we could not lock your certificate name. Please confirm it on your next sign-in."
+      )
+    }
+
+    const refreshedProfile = await fetchProfileByAuthUserId(supabase, data.user.id)
+    const profile =
+      refreshedProfile.status === "found"
+        ? refreshedProfile.profile
+        : profileResult.data
+
     return success({
       requiresEmailConfirmation: false,
       email: parsed.data.email,
-      profile: mapProfile(profileResult.data),
+      profile: mapProfile(profile),
     })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
@@ -552,10 +600,38 @@ const getCachedAuthContext = cache(
         return profileResult
       }
 
+      let profile = profileResult.data
+
+      // Email-confirm / invite path: lock certificate name from signup metadata once.
+      // Never continue reading Auth metadata as the certificate source after lock.
+      if (
+        !profile.certificate_name_locked_at &&
+        authUserResult.data.pendingCertificateName
+      ) {
+        const { setCertificateNameOnce } = await import(
+          "@/features/auth/services/certificate-name.service"
+        )
+        const lockResult = await setCertificateNameOnce({
+          certificateName: authUserResult.data.pendingCertificateName,
+          confirmSpelling: true,
+          source: "signup",
+        })
+
+        if (lockResult.success) {
+          const refreshed = await fetchProfileByAuthUserId(
+            supabase,
+            authUserResult.data.id
+          )
+          if (refreshed.status === "found") {
+            profile = refreshed.profile
+          }
+        }
+      }
+
       return success({
         authUserId: authUserResult.data.id,
         email: authUserResult.data.email,
-        profile: profileResult.data,
+        profile,
       })
     } catch {
       return failure("unknown_error", "Something went wrong. Please try again.")

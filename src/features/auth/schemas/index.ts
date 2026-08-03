@@ -7,6 +7,16 @@ export {
   passwordField,
   phoneField,
 } from "./fields"
+export {
+  adminCorrectCertificateNameSchema,
+  adminReissueCertificateSchema,
+  certificateNameConfirmField,
+  certificateNameField,
+  setCertificateNameOnceSchema,
+  type AdminCorrectCertificateNameInput,
+  type AdminReissueCertificateInput,
+  type SetCertificateNameOnceInput,
+} from "./certificate-name"
 export { forgotPasswordSchema, type ForgotPasswordInput } from "./forgot-password"
 export { loginSchema, type LoginInput } from "./login"
 export { resetPasswordSchema, type ResetPasswordInput } from "./reset-password"

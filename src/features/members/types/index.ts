@@ -6,4 +6,6 @@ export type MemberListItem = {
   email: string
   role: UserRole
   createdAt: string
+  certificateName: string | null
+  certificateNameLockedAt: string | null
 }

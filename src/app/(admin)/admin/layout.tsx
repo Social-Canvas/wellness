@@ -1,11 +1,13 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import {
   getCurrentProfile,
   getCurrentUser,
 } from "@/features/auth/services/auth.service"
+import { requireLockedCertificateName } from "@/features/auth/utils/require-locked-certificate-name"
 import { AdminShell } from "@/features/admin/components"
 
 export const metadata: Metadata = {
@@ -46,6 +48,10 @@ export default async function AdminLayout({
       </div>
     )
   }
+
+  const headerList = await headers()
+  const pathname = headerList.get("x-pathname") ?? "/admin"
+  requireLockedCertificateName(profileResult.data, pathname)
 
   if (
     userResult.data.role !== "admin" &&

@@ -1,11 +1,13 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import {
   getCurrentProfile,
   getCurrentUser,
 } from "@/features/auth/services/auth.service"
+import { requireLockedCertificateName } from "@/features/auth/utils/require-locked-certificate-name"
 import { getCurrentSubscription } from "@/features/billing/services/billing.service"
 import { DashboardShell } from "@/features/dashboard/components"
 
@@ -49,6 +51,10 @@ export default async function DashboardLayout({
       </div>
     )
   }
+
+  const headerList = await headers()
+  const pathname = headerList.get("x-pathname") ?? "/dashboard"
+  requireLockedCertificateName(profileResult.data, pathname)
 
   const subscriptionResult = await getCurrentSubscription(profileResult.data.id)
   const subscription = subscriptionResult.success ? subscriptionResult.data : null
