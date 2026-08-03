@@ -227,3 +227,15 @@ Format:
 **Alternatives considered:** Reuse `membership_course_library` course rows; add a new `recorded_sessions` capability; duplicate libraries per tier; create a Breathwork retail product.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-03 — Homepage video testimonials use public Mux + config
+
+**Decision:** Host six portrait homepage testimonials on Mux with **public** playback IDs and a focused TypeScript config (`src/features/marketing-testimonials`), not the membership `videos` table / signed playback path. Upload via `scripts/upload-homepage-testimonials.mjs` with an explicit publication-permission flag. Keep source MP4s out of Git.
+
+**Reason:** Marketing stories are not entitlement-gated. Reusing signed membership upload/webhook flows would conflate public homepage media with paid library assets and invite accidental locking. Config is enough for launch while display names, captions, and consent remain client-owned; admin DB management can follow later.
+
+**Alternatives considered:** Store rows in `videos` with signed playback + anonymous tokens; add a testimonials CMS table now; third-party carousel library; commit MP4s to `public/`.
+
+**Status:** Accepted

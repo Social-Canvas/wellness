@@ -6,13 +6,13 @@ import {
   HeroSection,
   OfferCardsSection,
   StepsGrid,
-  TestimonialGrid,
   type HeroAction,
 } from "@/components/marketing"
 import { Container, Section } from "@/components/layout"
 import { buttonVariants } from "@/components/ui/button"
 import { ResetPlanOfferBand } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import { VideoTestimonialsSection } from "@/features/marketing-testimonials"
 import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
@@ -90,19 +90,6 @@ const MEMBERSHIP_CARDS = ELEVATE_MEMBERSHIPS.map((tier, index) => ({
   image: MEMBERSHIP_IMAGES[index] ?? BRAND_IMAGES.meditationSession,
 }))
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "I went from exhausted and overwhelmed to having energy and emotional stability I had not felt in years. The nervous system work changed everything.",
-    cite: "Elevate Gold member · burnout recovery",
-  },
-  {
-    quote:
-      "The Reset Plan was the doorway. The membership gave me the structure to keep healing instead of starting over every few months.",
-    cite: "Reset Plan graduate · ongoing membership",
-  },
-]
-
 const FAQ_ITEMS = [
   {
     question: "Is this medical care?",
@@ -164,11 +151,7 @@ export default function HomePage() {
         footerCta={{ label: "View all programs & sessions", href: "/programs" }}
       />
 
-      <TestimonialGrid
-        eyebrow="Client experience"
-        title="Calm, clarity, and lasting change"
-        testimonials={TESTIMONIALS}
-      />
+      <VideoTestimonialsSection />
 
       <FaqAccordion eyebrow="Questions, answered" title="Before you begin" items={FAQ_ITEMS} />
 

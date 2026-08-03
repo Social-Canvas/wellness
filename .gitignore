@@ -48,3 +48,5 @@ docs/7-day-elevated-reset-media-migration-status.json
 
 # local operator / private working files
 /private/
+src/features/marketing-testimonials/data/mux-upload-manifest.json
+.tmp-screenshots/
