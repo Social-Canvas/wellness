@@ -238,4 +238,6 @@ Format:
 
 **Alternatives considered:** Store rows in `videos` with signed playback + anonymous tokens; add a testimonials CMS table now; third-party carousel library; commit MP4s to `public/`.
 
+**Follow-up (2026-08-03):** Client confirmed publication permission ("I'm ok"). Six assets uploaded with public playback; config published with neutral "Member story" labels. Display names, roles, quotes, and captions still pending client metadata.
+
 **Status:** Accepted

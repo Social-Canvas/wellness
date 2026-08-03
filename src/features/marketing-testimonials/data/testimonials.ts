@@ -3,9 +3,9 @@ import type { HomepageVideoTestimonial } from "../types"
 /**
  * Launch configuration for six homepage portrait testimonials.
  *
- * Client-approved display names, roles, quotes, captions, and publication
- * consent are still pending. Neutral draft labels only — do not invent
- * identities. Mux playback IDs stay null until permission-confirmed upload.
+ * Client confirmed publication permission ("I'm ok"). Display names, roles,
+ * quotes, and captions remain pending — neutral labels only (no invented
+ * identities). Mux public playback IDs from permission-confirmed upload.
  */
 export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = [
   {
@@ -13,11 +13,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "SZ02Z8sqxbhHc6VKgNOImAv7dxpWC9bQfnJtC5ha4XP00",
+    posterUrl:
+      "https://image.mux.com/SZ02Z8sqxbhHc6VKgNOImAv7dxpWC9bQfnJtC5ha4XP00/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 1,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 1, portrait video testimonial",
   },
   {
@@ -25,11 +26,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "Ex02idFGUAYgWJJKqiQX7YU541AqMb8F9udfCPeT8RxM",
+    posterUrl:
+      "https://image.mux.com/Ex02idFGUAYgWJJKqiQX7YU541AqMb8F9udfCPeT8RxM/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 2,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 2, portrait video testimonial",
   },
   {
@@ -37,11 +39,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "CJSrmzp8BXukf1Nz9eVYit9WnXgu21YFZ4oinuKsZXk",
+    posterUrl:
+      "https://image.mux.com/CJSrmzp8BXukf1Nz9eVYit9WnXgu21YFZ4oinuKsZXk/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 3,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 3, portrait video testimonial",
   },
   {
@@ -49,11 +52,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "o75GYB2TregwxQoGxx3GhlYTQNmBbQqvF71gAqXZFIs",
+    posterUrl:
+      "https://image.mux.com/o75GYB2TregwxQoGxx3GhlYTQNmBbQqvF71gAqXZFIs/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 4,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 4, portrait video testimonial",
   },
   {
@@ -61,11 +65,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "rzaCzhZaj628bYqfQgYGv602y302mFhJQP4wNFIc01eWkk",
+    posterUrl:
+      "https://image.mux.com/rzaCzhZaj628bYqfQgYGv602y302mFhJQP4wNFIc01eWkk/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 5,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 5, portrait video testimonial",
   },
   {
@@ -73,11 +78,12 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     displayName: null,
     roleContext: null,
     quote: null,
-    muxPlaybackId: null,
-    posterUrl: null,
+    muxPlaybackId: "Tf00iquxyKyVx01wx2wqRl7EuGWnOILTQXzEzByn012VL4",
+    posterUrl:
+      "https://image.mux.com/Tf00iquxyKyVx01wx2wqRl7EuGWnOILTQXzEzByn012VL4/thumbnail.jpg?width=540&height=960&fit_mode=smartcrop&time=1",
     captionsUrl: null,
     sortOrder: 6,
-    publicationStatus: "draft",
+    publicationStatus: "published",
     accessibleLabel: "Member story 6, portrait video testimonial",
   },
 ] as const
