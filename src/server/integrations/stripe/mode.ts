@@ -67,24 +67,48 @@ export function isConfiguredStripePriceId(priceId: string): boolean {
   return priceId.length > "price_".length
 }
 
-export function assertCheckoutUsesTestModeKeys(params: {
+/**
+ * Checkout / Stripe-mutating flows require a matched key pair:
+ * - test secret + test publishable (sandbox / Preview)
+ * - live secret + live publishable (Production after live activation)
+ * Mixed or unrecognized keys are rejected so test and live resources stay separated.
+ */
+export function assertCheckoutUsesMatchedModeKeys(params: {
   secretKey: string
   publishableKey: string
 }): { ok: true } | { ok: false; message: string } {
-  if (!isStripeTestSecretKey(params.secretKey)) {
+  const secretIsTest = isStripeTestSecretKey(params.secretKey)
+  const secretIsLive = isStripeLiveSecretKey(params.secretKey)
+  const publishableIsTest = isStripeTestPublishableKey(params.publishableKey)
+  const publishableIsLive = isStripeLivePublishableKey(params.publishableKey)
+
+  if (secretIsTest && publishableIsTest) {
+    return { ok: true }
+  }
+
+  if (secretIsLive && publishableIsLive) {
+    return { ok: true }
+  }
+
+  if (!secretIsTest && !secretIsLive) {
     return {
       ok: false,
       message:
-        "Stripe secret key must be a test-mode key (sk_test_ / rk_test_ / rkcs_test_) until live mode is enabled.",
+        "Stripe secret key must be a test-mode (sk_test_ / rk_test_ / rkcs_test_) or live-mode (sk_live_ / rk_live_) key.",
     }
   }
 
-  if (!isStripeTestPublishableKey(params.publishableKey)) {
+  if (!publishableIsTest && !publishableIsLive) {
     return {
       ok: false,
-      message: "Stripe publishable key must be a test-mode key (pk_test_).",
+      message:
+        "Stripe publishable key must be a test-mode (pk_test_) or live-mode (pk_live_) key.",
     }
   }
 
-  return { ok: true }
+  return {
+    ok: false,
+    message:
+      "Stripe secret and publishable keys must both be test-mode or both be live-mode.",
+  }
 }

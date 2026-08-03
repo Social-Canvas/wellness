@@ -20,7 +20,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
 import {
-  assertCheckoutUsesTestModeKeys,
+  assertCheckoutUsesMatchedModeKeys,
   isConfiguredStripePriceId,
 } from "@/server/integrations/stripe/mode"
 import {
@@ -278,7 +278,7 @@ export async function createCheckoutSession(
     return planPriceResult
   }
 
-  const modeCheck = assertCheckoutUsesTestModeKeys({
+  const modeCheck = assertCheckoutUsesMatchedModeKeys({
     secretKey: env.STRIPE_SECRET_KEY,
     publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   })
@@ -290,7 +290,7 @@ export async function createCheckoutSession(
   if (!isConfiguredStripePriceId(planPriceResult.data.stripe_price_id)) {
     return failure(
       "provider_error",
-      "This plan is not configured with a Stripe test Price ID yet."
+      "This plan is not configured with a Stripe Price ID yet."
     )
   }
 

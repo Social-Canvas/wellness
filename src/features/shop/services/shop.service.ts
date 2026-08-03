@@ -25,7 +25,7 @@ import {
 } from "@/features/shop/schemas"
 import { env } from "@/lib/config"
 import {
-  assertCheckoutUsesTestModeKeys,
+  assertCheckoutUsesMatchedModeKeys,
   isConfiguredStripePriceId,
 } from "@/server/integrations/stripe/mode"
 import {
@@ -629,7 +629,7 @@ export async function createProductCheckoutSession(
       )
     }
 
-    const modeCheck = assertCheckoutUsesTestModeKeys({
+    const modeCheck = assertCheckoutUsesMatchedModeKeys({
       secretKey: env.STRIPE_SECRET_KEY,
       publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     })
@@ -641,7 +641,7 @@ export async function createProductCheckoutSession(
     if (!isConfiguredStripePriceId(product.stripe_price_id)) {
       return failure(
         "provider_error",
-        "This product is not configured with a Stripe test Price ID yet."
+        "This product is not configured with a Stripe Price ID yet."
       )
     }
 

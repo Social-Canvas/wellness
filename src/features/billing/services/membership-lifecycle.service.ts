@@ -6,7 +6,7 @@ import type { ActionResult } from "@/features/auth/services/auth.service"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getStripeClient } from "@/server/integrations/stripe/client"
-import { assertCheckoutUsesTestModeKeys } from "@/server/integrations/stripe/mode"
+import { assertCheckoutUsesMatchedModeKeys } from "@/server/integrations/stripe/mode"
 import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 
@@ -68,7 +68,7 @@ export async function schedulePersonalPlanChange(input: {
     (subscription.plans as { slug?: string } | null)?.slug ?? "plan-1"
 
   if (input.mode === "cancel") {
-    const modeCheck = assertCheckoutUsesTestModeKeys({
+    const modeCheck = assertCheckoutUsesMatchedModeKeys({
       secretKey: env.STRIPE_SECRET_KEY,
       publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     })

@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import { test } from "node:test"
 
 import {
-  assertCheckoutUsesTestModeKeys,
+  assertCheckoutUsesMatchedModeKeys,
   getStripeLivemodeMismatch,
   isConfiguredStripePriceId,
   isStripeLiveSecretKey,
@@ -26,7 +26,7 @@ test("live webhook events are rejected when app uses test secret key", () => {
   assert.equal(getStripeLivemodeMismatch(false, "mk_invalid"), "invalid_secret_key")
 })
 
-test("checkout refuses non-test keys and placeholder prices", () => {
+test("checkout accepts matched test or live key pairs and rejects mixes", () => {
   assert.equal(isStripeTestSecretKey("sk_test_abc"), true)
   assert.equal(isStripeTestSecretKey("rk_test_abc"), true)
   assert.equal(isStripeTestSecretKey("rkcs_test_abc"), true)
@@ -38,23 +38,41 @@ test("checkout refuses non-test keys and placeholder prices", () => {
     "live_event_in_test_mode"
   )
 
-  const ok = assertCheckoutUsesTestModeKeys({
+  const testOk = assertCheckoutUsesMatchedModeKeys({
     secretKey: "sk_test_abc",
     publishableKey: "pk_test_abc",
   })
-  assert.equal(ok.ok, true)
+  assert.equal(testOk.ok, true)
 
-  const sandboxOk = assertCheckoutUsesTestModeKeys({
+  const sandboxOk = assertCheckoutUsesMatchedModeKeys({
     secretKey: "rkcs_test_abc",
     publishableKey: "pk_test_abc",
   })
   assert.equal(sandboxOk.ok, true)
 
-  const bad = assertCheckoutUsesTestModeKeys({
+  const liveOk = assertCheckoutUsesMatchedModeKeys({
+    secretKey: "sk_live_abc",
+    publishableKey: "pk_live_abc",
+  })
+  assert.equal(liveOk.ok, true)
+
+  const mixed = assertCheckoutUsesMatchedModeKeys({
     secretKey: "sk_live_abc",
     publishableKey: "pk_test_abc",
   })
-  assert.equal(bad.ok, false)
+  assert.equal(mixed.ok, false)
+
+  const mixedReverse = assertCheckoutUsesMatchedModeKeys({
+    secretKey: "sk_test_abc",
+    publishableKey: "pk_live_abc",
+  })
+  assert.equal(mixedReverse.ok, false)
+
+  const badSecret = assertCheckoutUsesMatchedModeKeys({
+    secretKey: "mk_invalid",
+    publishableKey: "pk_test_abc",
+  })
+  assert.equal(badSecret.ok, false)
 
   assert.equal(isConfiguredStripePriceId("price_1ABC"), true)
   assert.equal(isConfiguredStripePriceId("price_placeholder_7_day_reset"), false)
