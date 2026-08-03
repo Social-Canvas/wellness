@@ -50,3 +50,4 @@ docs/7-day-elevated-reset-media-migration-status.json
 /private/
 src/features/marketing-testimonials/data/mux-upload-manifest.json
 .tmp-screenshots/
+/tmp/

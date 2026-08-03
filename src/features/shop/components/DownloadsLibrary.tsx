@@ -3,6 +3,7 @@ import { Badge, Card, CardContent } from "@/components/ui"
 import { DownloadProductButton } from "@/features/shop/components/DownloadProductButton"
 import type { PurchasedDownloadItem } from "@/features/shop/types"
 import { formatProductType } from "@/features/shop/utils/format-product"
+import { resolveDownloadSourceLabel } from "@/features/shop/utils/free-claim"
 import { ELEVATE_SHOP_COPY } from "@/lib/constants/elevate-brand"
 import { resolveProductCoverImage } from "@/lib/brand/images"
 
@@ -10,7 +11,7 @@ interface DownloadsLibraryProps {
   items: PurchasedDownloadItem[]
 }
 
-function formatPurchaseDate(value: string | null): string | null {
+function formatAcquiredDate(value: string | null): string | null {
   if (!value) {
     return null
   }
@@ -40,6 +41,16 @@ function formatFileSize(sizeBytes: number | null): string | null {
   return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`
 }
 
+function downloadButtonLabel(item: PurchasedDownloadItem): string {
+  if (item.source === "free_claim") {
+    return "Download journal"
+  }
+  if (item.productType === "ebook") {
+    return "Download ebook"
+  }
+  return "Download"
+}
+
 export function DownloadsLibrary({ items }: DownloadsLibraryProps) {
   if (items.length === 0) {
     return (
@@ -47,7 +58,7 @@ export function DownloadsLibrary({ items }: DownloadsLibraryProps) {
         <div className="px-6 py-10 text-center">
           <p className="font-display text-lg font-medium text-ink">No downloads yet</p>
           <p className="mt-2 text-sm text-ink-soft">
-            Purchased ebooks and digital downloads will appear here.
+            Purchased ebooks and free Elevate resources will appear here.
           </p>
         </div>
       </div>
@@ -66,7 +77,10 @@ export function DownloadsLibrary({ items }: DownloadsLibraryProps) {
           item.productSlug,
           item.coverImageUrl
         )
-        const purchasedLabel = formatPurchaseDate(item.purchasedAt)
+        const acquiredLabel = formatAcquiredDate(item.purchasedAt)
+        const sourceLabel = resolveDownloadSourceLabel(
+          item.source === "purchase" ? "paid_order" : item.source
+        )
 
         return (
           <Card key={item.productId} className="overflow-hidden shadow-sm">
@@ -79,13 +93,13 @@ export function DownloadsLibrary({ items }: DownloadsLibraryProps) {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{formatProductType(item.productType)}</Badge>
-                  <Badge variant="plan">Purchased</Badge>
+                  <Badge variant="plan">{sourceLabel}</Badge>
                 </div>
                 <div>
                   <h2 className="font-display text-2xl font-medium text-ink">{title}</h2>
-                  {purchasedLabel ? (
+                  {acquiredLabel ? (
                     <p className="mt-1 text-sm text-ink-soft">
-                      Purchased {purchasedLabel}
+                      Added {acquiredLabel}
                     </p>
                   ) : null}
                 </div>
@@ -103,7 +117,7 @@ export function DownloadsLibrary({ items }: DownloadsLibraryProps) {
                           productId={item.productId}
                           fileId={file.id}
                           fileName={file.fileName}
-                          label="Download ebook"
+                          label={downloadButtonLabel(item)}
                         />
                       </div>
                     ))}

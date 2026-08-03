@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 import { createClient } from "@/lib/supabase/server"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 
@@ -13,11 +14,7 @@ export const runtime = "nodejs"
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
-  const nextRaw = requestUrl.searchParams.get("next")
-  const next =
-    nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//")
-      ? nextRaw
-      : "/dashboard"
+  const next = resolveSafeAuthReturnPath(requestUrl.searchParams.get("next"))
 
   if (!code) {
     return NextResponse.redirect(

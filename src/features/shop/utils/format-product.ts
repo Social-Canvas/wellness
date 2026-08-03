@@ -1,4 +1,8 @@
 export function formatProductPrice(amountCents: number, currency: string): string {
+  if (amountCents === 0) {
+    return "Free"
+  }
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),

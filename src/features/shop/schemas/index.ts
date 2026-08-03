@@ -1,4 +1,8 @@
 export {
+  claimFreeDigitalProductSchema,
+  type ClaimFreeDigitalProductInput,
+} from "./claim"
+export {
   createProductCheckoutSchema,
   type CreateProductCheckoutInput,
 } from "./checkout"

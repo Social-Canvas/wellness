@@ -181,7 +181,7 @@ describe("Health Professional Session public hide", () => {
     // Product insert uses draft; course stays published for entitled access.
     assert.match(
       seed,
-      /'health-professional-session',\s*'Health Professional Session',\s*'A two-hour recorded session for health professionals.',\s*'session',\s*6500,\s*'usd',\s*'price_placeholder_health_professional_session',\s*'draft'/
+      /'health-professional-session',\s*'Health Professional Session',\s*'A two-hour recorded session for health professionals.',\s*'session',\s*'paid',\s*6500,\s*'usd',\s*'price_placeholder_health_professional_session',\s*'draft'/
     )
 
     const migration = readRepo(

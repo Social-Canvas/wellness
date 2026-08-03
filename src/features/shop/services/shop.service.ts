@@ -16,10 +16,18 @@ import {
 import { shouldRefuseCheckoutForExistingResetAccess } from "@/features/checkout/utils/reset-plan-offer-state"
 import {
   PRODUCT_DOWNLOAD_URL_EXPIRES_SECONDS,
+  EBOOK_DOWNLOADS_PATH,
 } from "@/features/shop/utils/ebook-delivery"
 import {
+  mayCreateStripeCheckoutForProduct,
+  resolveCanonicalPurchaseMode,
+  type ProductPurchaseMode,
+} from "@/features/shop/utils/free-claim"
+import {
+  claimFreeDigitalProductSchema,
   createProductCheckoutSchema,
   generateProductDownloadUrlSchema,
+  type ClaimFreeDigitalProductInput,
   type CreateProductCheckoutInput,
   type GenerateProductDownloadUrlInput,
 } from "@/features/shop/schemas"
@@ -36,6 +44,7 @@ import {
 } from "@/features/shop/constants/catalog"
 import { isPublicCatalogProduct } from "@/lib/constants/catalog-visibility"
 import type {
+  FreeClaimResult,
   ProductCheckoutResult,
   ProductDownloadUrlResult,
   PurchasedDownloadItem,
@@ -112,6 +121,7 @@ function mapShopProduct(product: ProductRow): ShopProduct {
     title: product.title,
     description: product.description,
     productType: product.product_type,
+    purchaseMode: product.purchase_mode,
     priceAmount: product.price_amount,
     currency: product.currency,
     coverImageUrl: product.cover_image_url,
@@ -300,6 +310,18 @@ export async function listPurchasedDownloads(
 
   try {
     const supabase = createAdminClient()
+    const itemsByProductId = new Map<string, PurchasedDownloadItem>()
+
+    const { data: entitlements, error: entitlementsError } = await supabase
+      .from("product_entitlements")
+      .select("product_id, source, created_at")
+      .eq("user_id", parsedUserId.data)
+      .order("created_at", { ascending: false })
+
+    if (entitlementsError) {
+      return mapDatabaseError(entitlementsError)
+    }
+
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("id, created_at")
@@ -311,27 +333,38 @@ export async function listPurchasedDownloads(
       return mapDatabaseError(ordersError)
     }
 
-    if (!orders?.length) {
-      return success([])
-    }
+    const orderProductIds = new Map<string, string | null>()
 
-    const orderIds = orders.map((order) => order.id)
-    const purchasedAtByOrderId = new Map(
-      orders.map((order) => [order.id, order.created_at] as const)
-    )
+    if (orders?.length) {
+      const orderIds = orders.map((order) => order.id)
+      const purchasedAtByOrderId = new Map(
+        orders.map((order) => [order.id, order.created_at] as const)
+      )
 
-    const { data: items, error: itemsError } = await supabase
-      .from("order_items")
-      .select("order_id, product_id")
-      .in("order_id", orderIds)
+      const { data: items, error: itemsError } = await supabase
+        .from("order_items")
+        .select("order_id, product_id")
+        .in("order_id", orderIds)
 
-    if (itemsError) {
-      return mapDatabaseError(itemsError)
+      if (itemsError) {
+        return mapDatabaseError(itemsError)
+      }
+
+      for (const item of items ?? []) {
+        const purchasedAt = purchasedAtByOrderId.get(item.order_id) ?? null
+        const current = orderProductIds.get(item.product_id)
+        if (!current || (purchasedAt && purchasedAt < current)) {
+          orderProductIds.set(item.product_id, purchasedAt)
+        }
+      }
     }
 
     const productIds = [
-      ...new Set((items ?? []).map((item) => item.product_id).filter(Boolean)),
-    ] as string[]
+      ...new Set([
+        ...(entitlements ?? []).map((row) => row.product_id),
+        ...orderProductIds.keys(),
+      ]),
+    ]
 
     if (productIds.length === 0) {
       return success([])
@@ -341,7 +374,6 @@ export async function listPurchasedDownloads(
       .from("products")
       .select("*")
       .in("id", productIds)
-      .eq("status", "published")
 
     if (productsError) {
       return mapDatabaseError(productsError)
@@ -389,26 +421,52 @@ export async function listPurchasedDownloads(
       filesByProductId.set(file.product_id, list)
     }
 
-    const earliestPurchaseByProduct = new Map<string, string | null>()
-    for (const item of items ?? []) {
-      const purchasedAt = purchasedAtByOrderId.get(item.order_id) ?? null
-      const current = earliestPurchaseByProduct.get(item.product_id)
-      if (!current || (purchasedAt && purchasedAt < current)) {
-        earliestPurchaseByProduct.set(item.product_id, purchasedAt)
-      }
-    }
+    const entitlementByProductId = new Map(
+      (entitlements ?? []).map((row) => [row.product_id, row] as const)
+    )
 
-    return success(
-      catalogProducts.map((product) => ({
+    for (const product of catalogProducts) {
+      const entitlement = entitlementByProductId.get(product.id)
+      const paidAt = orderProductIds.get(product.id) ?? null
+
+      let source: PurchasedDownloadItem["source"] = "purchase"
+      let acquiredAt: string | null = paidAt
+
+      if (entitlement?.source === "free_claim") {
+        source = "free_claim"
+        acquiredAt = entitlement.created_at
+      } else if (entitlement?.source === "included") {
+        source = "included"
+        acquiredAt = entitlement.created_at
+      } else if (entitlement?.source === "purchase") {
+        source = "purchase"
+        acquiredAt = entitlement.created_at ?? paidAt
+      } else if (paidAt) {
+        source = "purchase"
+        acquiredAt = paidAt
+      } else {
+        continue
+      }
+
+      itemsByProductId.set(product.id, {
         productId: product.id,
         productSlug: product.slug,
         productTitle: product.title,
         productType: product.product_type,
         coverImageUrl: product.cover_image_url,
-        purchasedAt: earliestPurchaseByProduct.get(product.id) ?? null,
+        purchasedAt: acquiredAt,
+        source,
         files: filesByProductId.get(product.id) ?? [],
-      }))
-    )
+      })
+    }
+
+    const sorted = [...itemsByProductId.values()].sort((a, b) => {
+      const aTime = a.purchasedAt ?? ""
+      const bTime = b.purchasedAt ?? ""
+      return bTime.localeCompare(aTime)
+    })
+
+    return success(sorted)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
   }
@@ -605,6 +663,19 @@ export async function createProductCheckoutSession(
       }
 
       return failure("already_purchased", "You already own this product.")
+    }
+
+    const purchaseMode = resolveCanonicalPurchaseMode({
+      serverPurchaseMode: product.purchase_mode as ProductPurchaseMode,
+    })
+
+    if (!mayCreateStripeCheckoutForProduct({ purchaseMode })) {
+      return failure(
+        "validation_error",
+        purchaseMode === "free_claim"
+          ? "This product is free. Claim it from the product page."
+          : "This product is not available for checkout."
+      )
     }
 
     if (!product.stripe_price_id) {
@@ -960,6 +1031,119 @@ export async function syncOrderFromStripeCheckoutSession(
     return success({ orderId })
   } catch {
     return failure("provider_error", "Unable to sync order from Stripe.")
+  }
+}
+
+export async function claimFreeDigitalProduct(
+  userId: string,
+  input: ClaimFreeDigitalProductInput
+): Promise<ActionResult<FreeClaimResult>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
+  const parsedInput = claimFreeDigitalProductSchema.safeParse(input)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
+
+  if (!parsedInput.success) {
+    return validationFailure(firstValidationMessage(parsedInput.error))
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data: product, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", parsedInput.data.productSlug)
+      .maybeSingle()
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    if (!product) {
+      return failure("not_found", "Product not found.")
+    }
+
+    if (!isPublicCatalogProduct({ slug: product.slug, status: product.status })) {
+      return failure("not_found", "Product not found.")
+    }
+
+    if (!isShopCatalogProductType(product.product_type)) {
+      return failure("not_found", "Product not found.")
+    }
+
+    const purchaseMode = resolveCanonicalPurchaseMode({
+      serverPurchaseMode: product.purchase_mode as ProductPurchaseMode,
+    })
+
+    if (purchaseMode !== "free_claim") {
+      return failure(
+        "validation_error",
+        "This product cannot be claimed for free."
+      )
+    }
+
+    if (product.status !== "published") {
+      return failure("not_found", "Product not found.")
+    }
+
+    const existingAccess = await canDownloadProduct(
+      parsedUserId.data,
+      product.id
+    )
+
+    if (!existingAccess.success) {
+      return existingAccess
+    }
+
+    if (existingAccess.data) {
+      return success({
+        productId: product.id,
+        productSlug: product.slug,
+        alreadyOwned: true,
+        destination: EBOOK_DOWNLOADS_PATH,
+      })
+    }
+
+    const { error: insertError } = await supabase.from("product_entitlements").insert({
+      user_id: parsedUserId.data,
+      product_id: product.id,
+      source: "free_claim",
+    })
+
+    if (insertError) {
+      // Concurrent claim: unique(user_id, product_id) — treat as idempotent success.
+      if (insertError.code === "23505") {
+        return success({
+          productId: product.id,
+          productSlug: product.slug,
+          alreadyOwned: true,
+          destination: EBOOK_DOWNLOADS_PATH,
+        })
+      }
+
+      return mapDatabaseError(insertError)
+    }
+
+    logger.info("Free digital product claimed.", {
+      userId: parsedUserId.data,
+      productId: product.id,
+      productSlug: product.slug,
+      source: "free_claim",
+    })
+
+    // No purchase receipt / marketing email for free claims.
+    // Optional resource-access email only if an approved template exists (none yet).
+
+    return success({
+      productId: product.id,
+      productSlug: product.slug,
+      alreadyOwned: false,
+      destination: EBOOK_DOWNLOADS_PATH,
+    })
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
   }
 }
 

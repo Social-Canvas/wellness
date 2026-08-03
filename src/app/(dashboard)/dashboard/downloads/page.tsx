@@ -8,8 +8,8 @@ import { listPurchasedDownloads } from "@/features/shop/services/shop.service"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
-  title: "My Downloads",
-  description: "Download ebooks and digital products you have purchased.",
+  title: "Downloads",
+  description: "Access your purchased ebooks and free Elevate resources.",
 }
 
 export default async function DashboardDownloadsPage() {
@@ -29,15 +29,15 @@ export default async function DashboardDownloadsPage() {
             Downloads
           </p>
           <h1 className="mt-3 font-display text-[28px] font-medium text-ink">
-            My downloads
+            Downloads
           </h1>
           <p className="mt-2 max-w-xl text-sm text-ink-soft">
-            Secure downloads for ebooks and digital products you own. Links expire
+            Access your purchased ebooks and free Elevate resources. Links expire
             quickly and are generated only after your access is verified.
           </p>
         </div>
         <BrandImage
-          image={BRAND_IMAGES.productCookbook}
+          image={BRAND_IMAGES.lifestyleJournal}
           containerClassName="aspect-[16/11] w-full min-h-[180px]"
           sizes="(max-width: 860px) 100vw, 40vw"
         />

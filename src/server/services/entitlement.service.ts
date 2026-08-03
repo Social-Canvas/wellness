@@ -206,11 +206,43 @@ async function getLessonContentChain(
   }
 }
 
+async function hasProductEntitlementRecord(
+  userId: string,
+  productId: string
+): Promise<ActionResult<boolean>> {
+  try {
+    const supabase = createAdminClient()
+    const { count, error } = await supabase
+      .from("product_entitlements")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("product_id", productId)
+
+    if (error) {
+      return mapDatabaseError(error)
+    }
+
+    return success((count ?? 0) > 0)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
 async function hasPurchasedProduct(
   userId: string,
   productId: string
 ): Promise<ActionResult<boolean>> {
   try {
+    const entitlementResult = await hasProductEntitlementRecord(userId, productId)
+
+    if (!entitlementResult.success) {
+      return entitlementResult
+    }
+
+    if (entitlementResult.data) {
+      return success(true)
+    }
+
     const supabase = createAdminClient()
     const { data: orders, error: ordersError } = await supabase
       .from("orders")

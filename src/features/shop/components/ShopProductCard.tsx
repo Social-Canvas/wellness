@@ -5,6 +5,7 @@ import { BrandImage } from "@/components/media"
 import type { ShopProduct } from "@/features/shop/types"
 import { formatProductPrice, formatProductType } from "@/features/shop/utils/format-product"
 import { resolveShopCatalogCta } from "@/features/shop/utils/ebook-delivery"
+import { resolveFreeClaimCta } from "@/features/shop/utils/free-claim"
 import { ELEVATE_SHOP_COPY } from "@/lib/constants/elevate-brand"
 import { resolveProductCoverImage } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
@@ -26,12 +27,25 @@ export function ShopProductCard({
   const description = brandedCopy?.description ?? product.description
   const title = brandedCopy?.title ?? product.title
   const isPurchased = Boolean(product.isPurchased)
-  const cta = resolveShopCatalogCta({
+  const isFreeClaim = product.purchaseMode === "free_claim"
+  const paidCta = resolveShopCatalogCta({
     productType: product.productType,
     isAuthenticated,
     isPurchased,
     productSlug: product.slug,
   })
+  const freeCta = resolveFreeClaimCta({
+    isAuthenticated,
+    isClaimed: isPurchased,
+    purchaseMode: product.purchaseMode,
+    productSlug: product.slug,
+  })
+  const cta = isFreeClaim ? freeCta : paidCta
+  const href = isPurchased
+    ? cta.href
+    : isFreeClaim && freeCta.action === "login"
+      ? freeCta.href
+      : `/shop/${product.slug}`
 
   return (
     <Card className={cn("overflow-hidden shadow-sm", className)}>
@@ -54,10 +68,14 @@ export function ShopProductCard({
           </div>
           {cta.showPrice ? (
             <Badge variant="plan">
-              {formatProductPrice(product.priceAmount, product.currency)}
+              {isFreeClaim
+                ? "Free"
+                : formatProductPrice(product.priceAmount, product.currency)}
             </Badge>
           ) : (
-            <Badge variant="plan">Purchased</Badge>
+            <Badge variant="plan">
+              {isFreeClaim ? "Added to your downloads" : "Purchased"}
+            </Badge>
           )}
         </div>
         {description ? (
@@ -66,7 +84,7 @@ export function ShopProductCard({
           </p>
         ) : null}
         <Link
-          href={isPurchased ? cta.href : `/shop/${product.slug}`}
+          href={href}
           className={cn(buttonVariants({ variant: isPurchased ? "outline" : "default", size: "sm" }))}
         >
           {cta.primaryLabel}

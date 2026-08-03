@@ -10,7 +10,11 @@ import { signUpAction } from "@/features/auth/actions/auth.actions"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
 import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
 
-export function SignupForm() {
+interface SignupFormProps {
+  redirectTo?: string
+}
+
+export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
   const router = useRouter()
   const helpId = useId()
   const confirmHelpId = useId()
@@ -75,7 +79,7 @@ export function SignupForm() {
       return
     }
 
-    router.push("/dashboard")
+    router.push(redirectTo)
   }
 
   return (

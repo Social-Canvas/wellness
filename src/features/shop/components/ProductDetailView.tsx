@@ -1,12 +1,21 @@
+import Link from "next/link"
+
 import { Badge, Card, CardContent } from "@/components/ui"
 import { BrandImage } from "@/components/media"
 import { ProductPreviewActions } from "@/features/shop/components/ProductPreviewActions"
 import type { ShopProductDetail } from "@/features/shop/types"
 import { formatProductPrice, formatProductType } from "@/features/shop/utils/format-product"
+import {
+  INTEGRATION_JOURNAL_TAGLINE,
+  resolveFreeClaimCta,
+} from "@/features/shop/utils/free-claim"
 import { ELEVATE_SHOP_COPY } from "@/lib/constants/elevate-brand"
 import { getProgramOfferBrandImage, resolveProductCoverImage } from "@/lib/brand/images"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 import { BuyProductButton } from "./BuyProductButton"
+import { ClaimFreeProductButton } from "./ClaimFreeProductButton"
 import { DownloadProductButton } from "./DownloadProductButton"
 
 interface ProductDetailViewProps {
@@ -37,6 +46,13 @@ export function ProductDetailView({
   const brandedCopy = ELEVATE_SHOP_COPY.products[product.slug as keyof typeof ELEVATE_SHOP_COPY.products]
   const title = brandedCopy?.title ?? product.title
   const description = brandedCopy?.description ?? product.description
+  const isFreeClaim = product.purchaseMode === "free_claim"
+  const freeCta = resolveFreeClaimCta({
+    isAuthenticated,
+    isClaimed: product.isPurchased,
+    purchaseMode: product.purchaseMode,
+    productSlug: product.slug,
+  })
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -55,11 +71,22 @@ export function ProductDetailView({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{formatProductType(product.productType)}</Badge>
-            {product.isPurchased ? <Badge variant="plan">Purchased</Badge> : null}
+            {isFreeClaim && product.isPurchased ? (
+              <Badge variant="plan">Added to your downloads</Badge>
+            ) : null}
+            {!isFreeClaim && product.isPurchased ? (
+              <Badge variant="plan">Purchased</Badge>
+            ) : null}
+            {isFreeClaim && !product.isPurchased ? (
+              <Badge variant="plan">Free</Badge>
+            ) : null}
           </div>
           <h1 className="font-display text-4xl font-medium tracking-tight text-ink">
             {title}
           </h1>
+          {isFreeClaim ? (
+            <p className="text-base font-medium text-blue">{INTEGRATION_JOURNAL_TAGLINE}</p>
+          ) : null}
           {description ? (
             <p className="max-w-2xl text-base leading-relaxed text-ink-soft">
               {description}
@@ -76,7 +103,9 @@ export function ProductDetailView({
                 Price
               </p>
               <p className="mt-1 font-display text-3xl font-medium text-ink">
-                {formatProductPrice(product.priceAmount, product.currency)}
+                {isFreeClaim
+                  ? "Free"
+                  : formatProductPrice(product.priceAmount, product.currency)}
               </p>
             </div>
           ) : null}
@@ -84,7 +113,9 @@ export function ProductDetailView({
           {product.isPurchased ? (
             <div className="space-y-3">
               <p className="text-sm text-ink-soft">
-                Your purchase is ready. Download your ebook below.
+                {isFreeClaim
+                  ? "Your free journal is ready. Download it below or open Downloads."
+                  : "Your purchase is ready. Download your ebook below."}
               </p>
               {product.files.length > 0 ? (
                 product.files.map((file) => (
@@ -93,7 +124,7 @@ export function ProductDetailView({
                       productId={product.id}
                       fileId={file.id}
                       fileName={file.fileName}
-                      label="Download ebook"
+                      label={isFreeClaim ? "Download journal" : "Download ebook"}
                     />
                     {formatFileSize(file.sizeBytes) ? (
                       <p className="text-xs text-ink-soft">
@@ -107,7 +138,27 @@ export function ProductDetailView({
                   Download files are being prepared for this product.
                 </p>
               )}
+              <Link
+                href={freeCta.href}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                View in Downloads
+              </Link>
             </div>
+          ) : isFreeClaim ? (
+            freeCta.action === "login" ? (
+              <Link
+                href={freeCta.href}
+                className={cn(buttonVariants({ variant: "default" }))}
+              >
+                {freeCta.primaryLabel}
+              </Link>
+            ) : (
+              <ClaimFreeProductButton
+                productSlug={product.slug}
+                label={freeCta.primaryLabel}
+              />
+            )
           ) : (
             <BuyProductButton
               productSlug={product.slug}

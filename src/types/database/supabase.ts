@@ -795,6 +795,48 @@ export type Database = {
         }
         Relationships: []
       }
+      product_entitlements: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          source: Database["public"]["Enums"]["product_entitlement_source"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          source: Database["public"]["Enums"]["product_entitlement_source"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          source?: Database["public"]["Enums"]["product_entitlement_source"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_entitlements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_files: {
         Row: {
           created_at: string
@@ -849,6 +891,7 @@ export type Database = {
           id: string
           price_amount: number
           product_type: Database["public"]["Enums"]["product_type"]
+          purchase_mode: Database["public"]["Enums"]["product_purchase_mode"]
           slug: string
           status: Database["public"]["Enums"]["publish_status"]
           stripe_price_id: string | null
@@ -864,6 +907,7 @@ export type Database = {
           id?: string
           price_amount: number
           product_type: Database["public"]["Enums"]["product_type"]
+          purchase_mode?: Database["public"]["Enums"]["product_purchase_mode"]
           slug: string
           status?: Database["public"]["Enums"]["publish_status"]
           stripe_price_id?: string | null
@@ -879,6 +923,7 @@ export type Database = {
           id?: string
           price_amount?: number
           product_type?: Database["public"]["Enums"]["product_type"]
+          purchase_mode?: Database["public"]["Enums"]["product_purchase_mode"]
           slug?: string
           status?: Database["public"]["Enums"]["publish_status"]
           stripe_price_id?: string | null
@@ -1295,6 +1340,8 @@ export type Database = {
         | "enterprise"
       migration_status: "not_started" | "uploaded" | "verified" | "failed"
       order_status: "pending" | "paid" | "failed" | "refunded" | "disputed"
+      product_entitlement_source: "free_claim" | "purchase" | "included"
+      product_purchase_mode: "paid" | "free_claim" | "enquiry"
       product_type:
         | "ebook"
         | "digital_download"
@@ -1475,6 +1522,8 @@ export const Constants = {
       ],
       migration_status: ["not_started", "uploaded", "verified", "failed"],
       order_status: ["pending", "paid", "failed", "refunded", "disputed"],
+      product_entitlement_source: ["free_claim", "purchase", "included"],
+      product_purchase_mode: ["paid", "free_claim", "enquiry"],
       product_type: [
         "ebook",
         "digital_download",

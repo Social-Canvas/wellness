@@ -279,3 +279,15 @@ Format:
 **Alternatives considered:** Reuse `full_name` as the certificate field; store only in Auth `user_metadata`; allow self-service edits; rewrite issued certificates on profile correction.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-03 — Free Integration Journal via product entitlements
+
+**Decision:** Add `products.purchase_mode` (`paid` | `free_claim` | `enquiry`) and a `product_entitlements` table (`unique(user_id, product_id)`, source `free_claim` | `purchase` | `included`). The Elevate Integration Journal is a published Shop `digital_download` with `free_claim` — claimed via `claimFreeDigitalProduct`, never Stripe Checkout or paid orders. `/dashboard/downloads` unions paid `orders`/`order_items` with free entitlements. Private PDF stays in `product-files` at `digital-products/elevate-integration-journal/…`.
+
+**Reason:** Reuses the existing protected download pipeline while keeping free claims out of Stripe/order payment records. Explicit purchase mode avoids inferring free status from `price_amount = 0`.
+
+**Alternatives considered:** Zero-price Stripe Checkout sessions; marking free claims as paid orders; a separate downloads system; nonprofit-seat-only journal access.
+
+**Status:** Accepted

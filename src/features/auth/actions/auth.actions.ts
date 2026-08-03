@@ -22,6 +22,7 @@ import {
   type SignInResult,
   type SignUpResult,
 } from "@/features/auth/services/auth.service"
+import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 
 export async function signUpAction(
   input: SignupInput
@@ -47,10 +48,7 @@ export async function signInAction(
 
   revalidatePath("/", "layout")
 
-  const safeRedirect =
-    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
-      ? redirectTo
-      : "/dashboard"
+  const safeRedirect = resolveSafeAuthReturnPath(redirectTo)
 
   redirect(safeRedirect)
 }

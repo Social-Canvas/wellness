@@ -202,5 +202,10 @@ export const ELEVATE_SHOP_COPY = {
       description:
         "A Root Cause Care recipe guide for nourishing meals that support inflammation, gut health, and sustained energy — without overwhelm.",
     },
+    "elevate-integration-journal": {
+      title: "The Elevate Integration Journal",
+      description:
+        "A guided digital journal for reflection, nervous-system awareness and integration throughout your Elevate journey.",
+    },
   },
 } as const

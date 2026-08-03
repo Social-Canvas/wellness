@@ -524,6 +524,7 @@ insert into public.products (
   title,
   description,
   product_type,
+  purchase_mode,
   price_amount,
   currency,
   stripe_price_id,
@@ -535,6 +536,7 @@ values
     '7-Day Reset',
     'Holistic wellness grocery list, manifestation breathwork, stress and inflammation quiz, and community access.',
     'masterclass',
+    'paid',
     4700,
     'usd',
     'price_placeholder_7_day_reset',
@@ -545,6 +547,7 @@ values
     'Autoimmune Masterclass',
     'Five recorded sessions with workbook support and a completion certificate.',
     'masterclass',
+    'paid',
     4700,
     'usd',
     'price_placeholder_autoimmune_masterclass',
@@ -555,6 +558,7 @@ values
     'Health Professional Session',
     'A two-hour recorded session for health professionals.',
     'session',
+    'paid',
     6500,
     'usd',
     'price_placeholder_health_professional_session',
@@ -565,6 +569,7 @@ values
     'Standalone Live Session',
     'A one-off virtual live session (25–30 participants max).',
     'session',
+    'paid',
     5500,
     'usd',
     'price_placeholder_standalone_live_session',
@@ -575,6 +580,7 @@ values
     'Clean Living Recipes',
     'A Root Cause Care recipe guide for nourishing meals that support inflammation, gut health, and sustained energy.',
     'ebook',
+    'paid',
     2499,
     'usd',
     'price_placeholder_ebook_1',
@@ -585,16 +591,29 @@ values
     'Ebook 2',
     'Second digital ebook — price to be confirmed.',
     'ebook',
+    'enquiry',
     0,
     'usd',
     null,
     'draft'
   ),
   (
+    'elevate-integration-journal',
+    'The Elevate Integration Journal',
+    'A guided digital journal for reflection, nervous-system awareness and integration throughout your Elevate journey.',
+    'digital_download',
+    'free_claim',
+    0,
+    'usd',
+    null,
+    'published'
+  ),
+  (
     'vip-package',
     'VIP Package',
     'Custom high-touch transformation program. Apply to enquire — pricing is customized.',
     'bundle',
+    'enquiry',
     0,
     'usd',
     null,
@@ -605,12 +624,30 @@ values
     'Retreats & Private Events',
     'Weekend retreats and private events. Enquire for upcoming dates and pricing.',
     'bundle',
+    'enquiry',
     0,
     'usd',
     null,
     'published'
   )
 on conflict (slug) do nothing;
+
+update public.products
+set purchase_mode = 'free_claim',
+    product_type = 'digital_download',
+    price_amount = 0,
+    stripe_price_id = null,
+    status = 'published',
+    title = 'The Elevate Integration Journal',
+    description = 'A guided digital journal for reflection, nervous-system awareness and integration throughout your Elevate journey.'
+where slug = 'elevate-integration-journal';
+
+update public.products
+set purchase_mode = 'enquiry'
+where price_amount = 0
+  and stripe_price_id is null
+  and slug <> 'elevate-integration-journal'
+  and purchase_mode = 'paid';
 
 insert into public.product_files (
   product_id,
@@ -634,6 +671,31 @@ where p.slug = 'ebook-1'
     from public.product_files as pf
     where pf.product_id = p.id
       and pf.storage_path = 'clean-living-recipes/v1/clean-living-recipes.pdf'
+  );
+
+insert into public.product_files (
+  product_id,
+  storage_bucket,
+  storage_path,
+  file_name,
+  mime_type,
+  size_bytes
+)
+select
+  p.id,
+  'product-files',
+  'digital-products/elevate-integration-journal/Elevate-Integration-Journal.pdf',
+  'Elevate-Integration-Journal.pdf',
+  'application/pdf',
+  502740
+from public.products as p
+where p.slug = 'elevate-integration-journal'
+  and not exists (
+    select 1
+    from public.product_files as pf
+    where pf.product_id = p.id
+      and pf.storage_path =
+        'digital-products/elevate-integration-journal/Elevate-Integration-Journal.pdf'
   );
 
 update public.products as p

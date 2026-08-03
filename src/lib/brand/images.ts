@@ -108,6 +108,7 @@ const PROGRAM_OFFER_IMAGES: Record<string, BrandImageKey> = {
 
 const SHOP_PRODUCT_IMAGES: Record<string, BrandImageKey> = {
   "ebook-1": "productCookbook",
+  "elevate-integration-journal": "lifestyleJournal",
 }
 
 const BLOG_ARTICLE_IMAGES: Record<string, BrandImageKey> = {
