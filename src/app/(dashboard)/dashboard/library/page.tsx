@@ -8,11 +8,13 @@ import {
   LibraryPageHeader,
 } from "@/features/content/components"
 import { listAccessibleCourses } from "@/features/content/services/content.service"
+import { resolveLibraryCourseCardProgress } from "@/features/content/utils/library-course-card-progress"
 import { MembershipLibraryCard } from "@/features/dashboard/components/membership-library-card"
 import {
   buildMembershipLibraryCardView,
   filterMemberLibraryCourses,
 } from "@/features/dashboard/utils/library-membership"
+import { getLibraryCourseProgressSnapshots } from "@/features/progress/services/progress.service"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { getEffectiveMembership } from "@/server/services/membership.service"
 
@@ -54,6 +56,14 @@ export default async function LibraryPage() {
   const membershipCard = membershipResult.success
     ? buildMembershipLibraryCardView(membershipResult.data)
     : null
+
+  const progressSnapshotsResult = await getLibraryCourseProgressSnapshots(
+    profileResult.data.id,
+    courses.map((course) => course.id)
+  )
+  const progressSnapshots = progressSnapshotsResult.success
+    ? progressSnapshotsResult.data
+    : {}
 
   const hasItems = courses.length > 0 || Boolean(membershipCard)
 
@@ -98,9 +108,24 @@ export default async function LibraryPage() {
         className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
         data-member-library-grid
       >
-        {courses.map((course) => (
-          <LibraryCourseCard key={course.id} course={course} />
-        ))}
+        {courses.map((course) => {
+          const snapshot = progressSnapshots[course.id]
+          const progress = resolveLibraryCourseCardProgress({
+            courseId: course.id,
+            canOpen: true,
+            isAvailable: true,
+            completedLessons: snapshot?.completedLessons ?? 0,
+            totalLessons: snapshot?.totalLessons ?? 0,
+          })
+
+          return (
+            <LibraryCourseCard
+              key={course.id}
+              course={course}
+              progress={progress}
+            />
+          )
+        })}
         {membershipCard ? (
           <MembershipLibraryCard membership={membershipCard} />
         ) : null}

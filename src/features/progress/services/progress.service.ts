@@ -13,7 +13,11 @@ import {
   type MarkVideoCompleteInput,
   type SaveVideoProgressInput,
 } from "@/features/progress/schemas"
-import type { CourseProgress, VideoProgress } from "@/features/progress/types"
+import type {
+  CourseProgress,
+  LibraryCourseProgressSnapshot,
+  VideoProgress,
+} from "@/features/progress/types"
 import { createClient } from "@/lib/supabase/server"
 import { canAccessCourse, canAccessVideo } from "@/server/services/entitlement.service"
 import type { Database } from "@/types/database/supabase"
@@ -433,6 +437,165 @@ export async function markVideoComplete(
   }
 }
 
+type PublishedLessonRow = {
+  courseId: string
+  videoId: string | null
+}
+
+function emptyLibrarySnapshot(courseId: string): LibraryCourseProgressSnapshot {
+  return {
+    courseId,
+    completedLessons: 0,
+    totalLessons: 0,
+    progressPercentage: 0,
+  }
+}
+
+function snapshotFromCounts(
+  courseId: string,
+  completedLessons: number,
+  totalLessons: number
+): LibraryCourseProgressSnapshot {
+  const progressPercentage =
+    totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+
+  return {
+    courseId,
+    completedLessons,
+    totalLessons,
+    progressPercentage,
+  }
+}
+
+/**
+ * Read-only published-lesson progress for My Library cards.
+ * Counts Welcome + all published daily lessons from existing video_progress
+ * rows. Does not upsert or rewrite course_progress / video_progress.
+ */
+export async function getLibraryCourseProgressSnapshots(
+  userId: string,
+  courseIds: string[]
+): Promise<ActionResult<Record<string, LibraryCourseProgressSnapshot>>> {
+  const parsedUserId = userIdSchema.safeParse(userId)
+
+  if (!parsedUserId.success) {
+    return validationFailure(firstValidationMessage(parsedUserId.error))
+  }
+
+  const uniqueCourseIds = [...new Set(courseIds.filter(Boolean))]
+  const snapshots: Record<string, LibraryCourseProgressSnapshot> = {}
+
+  for (const courseId of uniqueCourseIds) {
+    snapshots[courseId] = emptyLibrarySnapshot(courseId)
+  }
+
+  if (uniqueCourseIds.length === 0) {
+    return success(snapshots)
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data: modules, error: modulesError } = await supabase
+      .from("modules")
+      .select("id, course_id")
+      .in("course_id", uniqueCourseIds)
+      .eq("status", "published")
+
+    if (modulesError) {
+      return mapDatabaseError(modulesError)
+    }
+
+    const moduleRows = modules ?? []
+    const moduleIds = moduleRows.map((module) => module.id)
+    const courseIdByModuleId = new Map(
+      moduleRows.map((module) => [module.id, module.course_id])
+    )
+
+    if (moduleIds.length === 0) {
+      return success(snapshots)
+    }
+
+    const { data: lessons, error: lessonsError } = await supabase
+      .from("lessons")
+      .select("id, video_id, module_id")
+      .in("module_id", moduleIds)
+      .eq("status", "published")
+
+    if (lessonsError) {
+      return mapDatabaseError(lessonsError)
+    }
+
+    const lessonRows: PublishedLessonRow[] = []
+
+    for (const lesson of lessons ?? []) {
+      const courseId = courseIdByModuleId.get(lesson.module_id)
+      if (!courseId) {
+        continue
+      }
+
+      lessonRows.push({
+        courseId,
+        videoId: lesson.video_id,
+      })
+    }
+
+    const videoIds = [
+      ...new Set(
+        lessonRows
+          .map((lesson) => lesson.videoId)
+          .filter((videoId): videoId is string => Boolean(videoId))
+      ),
+    ]
+
+    let completedVideoIds = new Set<string>()
+
+    if (videoIds.length > 0) {
+      const { data: progressRows, error: progressError } = await supabase
+        .from("video_progress")
+        .select("video_id, completed_at")
+        .eq("user_id", parsedUserId.data)
+        .in("video_id", videoIds)
+        .not("completed_at", "is", null)
+
+      if (progressError) {
+        return mapDatabaseError(progressError)
+      }
+
+      completedVideoIds = new Set((progressRows ?? []).map((row) => row.video_id))
+    }
+
+    const totals = new Map<string, { completed: number; total: number }>()
+
+    for (const courseId of uniqueCourseIds) {
+      totals.set(courseId, { completed: 0, total: 0 })
+    }
+
+    for (const lesson of lessonRows) {
+      const entry = totals.get(lesson.courseId) ?? { completed: 0, total: 0 }
+      entry.total += 1
+
+      if (!lesson.videoId || completedVideoIds.has(lesson.videoId)) {
+        entry.completed += 1
+      }
+
+      totals.set(lesson.courseId, entry)
+    }
+
+    for (const [courseId, counts] of totals) {
+      snapshots[courseId] = snapshotFromCounts(
+        courseId,
+        counts.completed,
+        counts.total
+      )
+    }
+
+    return success(snapshots)
+  } catch {
+    return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
 export async function calculateCourseProgress(
   userId: string,
   input: CalculateCourseProgressInput
@@ -458,80 +621,24 @@ export async function calculateCourseProgress(
     return failure("entitlement_required", "You do not have access to this course.")
   }
 
-  try {
-    const supabase = await createClient()
+  const snapshotsResult = await getLibraryCourseProgressSnapshots(parsedUserId.data, [
+    parsedInput.data.courseId,
+  ])
 
-    const { data: modules, error: modulesError } = await supabase
-      .from("modules")
-      .select("id")
-      .eq("course_id", parsedInput.data.courseId)
-      .eq("status", "published")
-
-    if (modulesError) {
-      return mapDatabaseError(modulesError)
-    }
-
-    const moduleIds = (modules ?? []).map((module) => module.id)
-
-    if (moduleIds.length === 0) {
-      return upsertCourseProgress(parsedUserId.data, parsedInput.data.courseId, 0, 0)
-    }
-
-    const { data: lessons, error: lessonsError } = await supabase
-      .from("lessons")
-      .select("id, video_id")
-      .in("module_id", moduleIds)
-      .eq("status", "published")
-
-    if (lessonsError) {
-      return mapDatabaseError(lessonsError)
-    }
-
-    const lessonRows = lessons ?? []
-    const totalLessons = lessonRows.length
-
-    if (totalLessons === 0) {
-      return upsertCourseProgress(parsedUserId.data, parsedInput.data.courseId, 0, 0)
-    }
-
-    const videoIds = lessonRows
-      .map((lesson) => lesson.video_id)
-      .filter((videoId): videoId is string => Boolean(videoId))
-
-    let completedVideoIds = new Set<string>()
-
-    if (videoIds.length > 0) {
-      const { data: progressRows, error: progressError } = await supabase
-        .from("video_progress")
-        .select("video_id, completed_at")
-        .eq("user_id", parsedUserId.data)
-        .in("video_id", videoIds)
-        .not("completed_at", "is", null)
-
-      if (progressError) {
-        return mapDatabaseError(progressError)
-      }
-
-      completedVideoIds = new Set((progressRows ?? []).map((row) => row.video_id))
-    }
-
-    const completedLessons = lessonRows.filter((lesson) => {
-      if (!lesson.video_id) {
-        return true
-      }
-
-      return completedVideoIds.has(lesson.video_id)
-    }).length
-
-    return upsertCourseProgress(
-      parsedUserId.data,
-      parsedInput.data.courseId,
-      completedLessons,
-      totalLessons
-    )
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  if (!snapshotsResult.success) {
+    return snapshotsResult
   }
+
+  const snapshot =
+    snapshotsResult.data[parsedInput.data.courseId] ??
+    emptyLibrarySnapshot(parsedInput.data.courseId)
+
+  return upsertCourseProgress(
+    parsedUserId.data,
+    parsedInput.data.courseId,
+    snapshot.completedLessons,
+    snapshot.totalLessons
+  )
 }
 
 async function upsertCourseProgress(

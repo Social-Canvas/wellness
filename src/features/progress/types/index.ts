@@ -14,3 +14,11 @@ export type CourseProgress = {
   totalLessons: number
   completedAt: string | null
 }
+
+/** Read-only library-card snapshot — never writes course_progress. */
+export type LibraryCourseProgressSnapshot = {
+  courseId: string
+  progressPercentage: number
+  completedLessons: number
+  totalLessons: number
+}
