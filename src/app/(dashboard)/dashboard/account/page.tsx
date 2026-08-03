@@ -7,6 +7,11 @@ import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ManageBillingButton } from "@/features/billing/components/manage-billing-button"
 import { ScheduleDowngradeConfirm } from "@/features/billing/components/schedule-downgrade-confirm"
 import { getCurrentSubscription } from "@/features/billing/services/billing.service"
+import {
+  formatCapabilityCustomerLabel,
+  formatMembershipAccessSource,
+  formatMembershipStatusLabel,
+} from "@/features/dashboard/utils/library-membership"
 import { getEffectiveMembership } from "@/server/services/membership.service"
 
 export const metadata: Metadata = {
@@ -116,15 +121,13 @@ export default async function DashboardAccountPage({
             <>
               <p>
                 <span className="font-semibold text-ink">Status:</span>{" "}
-                {membership.status.replaceAll("_", " ")}
+                {formatMembershipStatusLabel(membership.status)}
               </p>
               <p>
                 <span className="font-semibold text-ink">Access source:</span>{" "}
                 {membership.isSponsored
                   ? `Sponsored by ${membership.organizationName ?? "nonprofit"}`
-                  : membership.source === "complimentary"
-                    ? "Complimentary access"
-                    : "Paid personally"}
+                  : formatMembershipAccessSource(membership.source)}
               </p>
               <p>
                 <span className="font-semibold text-ink">Billing period ends:</span>{" "}
@@ -157,7 +160,9 @@ export default async function DashboardAccountPage({
                   <p className="font-semibold text-ink">Privileges</p>
                   <ul className="mt-1 list-disc pl-5">
                     {membership.capabilities.map((capability) => (
-                      <li key={capability}>{capability.replaceAll("_", " ")}</li>
+                      <li key={capability}>
+                        {formatCapabilityCustomerLabel(capability)}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -176,8 +181,8 @@ export default async function DashboardAccountPage({
                 </p>
               ) : membership.source === "complimentary" ? (
                 <p className="pt-1 text-xs">
-                  Complimentary access — plan changes are managed by
-                  administrators.
+                  Complimentary access — plan changes are managed by an
+                  administrator.
                 </p>
               ) : null}
             </>

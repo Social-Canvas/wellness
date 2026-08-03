@@ -108,6 +108,7 @@ test("essential dashboard links remain accessible", () => {
   const essentials = getEssentialNavItems(false).map((item) => item.href)
   assert.deepEqual(essentials, [
     "/dashboard/library",
+    "/dashboard/membership",
     "/dashboard/downloads",
     "/dashboard/certificates",
     "/dashboard/account",
@@ -116,10 +117,12 @@ test("essential dashboard links remain accessible", () => {
 
 test("Programs and Shop remain accessible", () => {
   const secondary = getSecondaryNavItems(false).map((item) => item.label)
-  assert.deepEqual(secondary, ["Programs", "Shop"])
+  assert.deepEqual(secondary, ["Programs", "Shop", "Blog", "About"])
   const more = getMoreNavItems(false).map((item) => item.label)
   assert.ok(more.includes("Programs"))
   assert.ok(more.includes("Shop"))
+  assert.ok(more.includes("Blog"))
+  assert.ok(more.includes("About"))
   const mobile = getMobileNavItems(false).map((item) => item.label)
   assert.ok(mobile.includes("Programs"))
   assert.ok(mobile.includes("Shop"))
@@ -139,25 +142,30 @@ test("medium-width layout uses More/collapsed navigation", () => {
   const moreItems = getMoreNavItems(false).map((item) => item.href)
   assert.ok(moreItems.includes("/programs"))
   assert.ok(moreItems.includes("/shop"))
-  assert.ok(moreItems.includes("/dashboard/live-sessions"))
-  assert.ok(moreItems.includes("/dashboard/recorded-sessions"))
+  assert.ok(moreItems.includes("/blog"))
+  assert.ok(moreItems.includes("/about"))
+  assert.ok(!moreItems.includes("/dashboard/live-sessions"))
+  assert.ok(!moreItems.includes("/dashboard/recorded-sessions"))
 })
 
 test("mobile menu contains all destinations", () => {
   const mobile = getMobileNavItems(true).map((item) => item.label)
   for (const label of [
     "My Library",
-    "Live Sessions",
-    "Recorded Sessions",
+    "Membership",
     "Downloads",
     "Programs",
     "Shop",
+    "Blog",
+    "About",
     "Certificates",
     "Account",
     "Admin",
   ]) {
     assert.ok(mobile.includes(label), `missing ${label}`)
   }
+  assert.ok(!mobile.includes("Live Sessions"))
+  assert.ok(!mobile.includes("Recorded Sessions"))
 
   const header = readSource(
     "src/features/dashboard/components/dashboard-header.tsx"
@@ -259,14 +267,12 @@ test("no authorization or membership logic changes in header helpers", () => {
   assert.match(shell, /subscription\.status === "active"/)
 
   const wide = getWideNavItems(false).map((item) => item.href)
-  assert.deepEqual(wide, [
-    "/dashboard/live-sessions",
-    "/dashboard/recorded-sessions",
-  ])
+  assert.deepEqual(wide, [])
 
   const userLinks = getUserMenuLinks(false).map((item) => item.href)
   assert.ok(userLinks.includes("/dashboard"))
   assert.ok(userLinks.includes("/dashboard/library"))
+  assert.ok(userLinks.includes("/dashboard/membership"))
   assert.ok(userLinks.includes("/dashboard/account"))
   assert.ok(!userLinks.includes("/admin"))
   assert.ok(getUserMenuLinks(true).some((item) => item.href === "/admin"))

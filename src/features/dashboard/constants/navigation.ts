@@ -10,27 +10,23 @@ export type DashboardNavItem = {
 /**
  * Authenticated dashboard destinations.
  * - essential: always visible from md+
- * - wide: inline from xl+; otherwise under More / mobile drawer
- * - secondary: Programs/Shop — inline from xl+; More from md–xl
- * - utility: user menu / mobile drawer (Dashboard home, Admin)
+ * - wide: reserved (unused after membership hub consolidation)
+ * - secondary: Programs/Shop/Blog/About — inline from xl+; More below xl
+ * - utility: user menu / Admin
+ *
+ * Live Sessions and Recorded Sessions remain reachable via the Membership hub
+ * and direct URLs; they are no longer top-level nav items.
  */
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { label: "My Library", href: "/dashboard/library", group: "essential" },
-  {
-    label: "Live Sessions",
-    href: "/dashboard/live-sessions",
-    group: "wide",
-  },
-  {
-    label: "Recorded Sessions",
-    href: "/dashboard/recorded-sessions",
-    group: "wide",
-  },
+  { label: "Membership", href: "/dashboard/membership", group: "essential" },
   { label: "Downloads", href: "/dashboard/downloads", group: "essential" },
   { label: "Certificates", href: "/dashboard/certificates", group: "essential" },
   { label: "Account", href: "/dashboard/account", group: "essential" },
   { label: "Programs", href: "/programs", group: "secondary" },
   { label: "Shop", href: "/shop", group: "secondary" },
+  { label: "Blog", href: "/blog", group: "secondary" },
+  { label: "About", href: "/about", group: "secondary" },
   { label: "Dashboard", href: "/dashboard", group: "utility" },
   { label: "Admin", href: "/admin", group: "utility", adminOnly: true },
 ]
@@ -100,6 +96,7 @@ export function getMobileNavItems(isAdmin: boolean): DashboardNavItem[] {
 export function getUserMenuLinks(isAdmin: boolean): DashboardNavItem[] {
   const links: DashboardNavItem[] = [
     { label: "Account", href: "/dashboard/account", group: "utility" },
+    { label: "Membership", href: "/dashboard/membership", group: "utility" },
     { label: "Dashboard", href: "/dashboard", group: "utility" },
     { label: "My Library", href: "/dashboard/library", group: "utility" },
   ]

@@ -80,7 +80,7 @@ test("4. Current-plan CTA navigates to canonical membership home", () => {
   assert.equal(view.ctaLabel, "Go to my membership")
   assert.equal(view.ctaHref, MEMBERSHIP_HOME_PATH)
   assert.equal(MEMBERSHIP_HOME_PATH, DEST_MEMBERSHIP_HOME_PATH)
-  assert.equal(MEMBERSHIP_HOME_PATH, "/dashboard")
+  assert.equal(MEMBERSHIP_HOME_PATH, "/dashboard/membership")
 })
 
 // 5. Current plan never starts Checkout

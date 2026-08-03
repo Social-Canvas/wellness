@@ -38,6 +38,7 @@ import type {
 function revalidateLivePaths(liveClassId?: string) {
   revalidatePath("/admin/live-sessions")
   revalidatePath("/dashboard/live-sessions")
+  revalidatePath("/dashboard/membership")
   if (liveClassId) {
     revalidatePath(`/dashboard/live-sessions/${liveClassId}`)
     revalidatePath(`/dashboard/live-sessions/${liveClassId}/join`)
@@ -152,6 +153,7 @@ export async function attachRecordingToLiveSessionAction(input: {
     revalidateLivePaths(input.liveClassId)
     revalidatePath("/admin/recorded-sessions")
     revalidatePath("/dashboard/recorded-sessions")
+    revalidatePath("/dashboard/membership")
   }
   return result
 }

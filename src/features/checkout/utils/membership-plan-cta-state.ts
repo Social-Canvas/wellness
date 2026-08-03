@@ -7,7 +7,7 @@
  * directly — same pattern as reset-plan-offer-state.ts.
  */
 
-export const MEMBERSHIP_HOME_PATH = "/dashboard" as const
+export const MEMBERSHIP_HOME_PATH = "/dashboard/membership" as const
 
 export const MEMBERSHIP_PLAN_SLUGS = ["plan-1", "plan-2", "plan-3"] as const
 
