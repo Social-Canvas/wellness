@@ -49,6 +49,7 @@ import {
   sendResetCourseAccessGrantedEmail,
 } from "@/server/integrations/resend/transactional-email.service"
 import { getStripeClient } from "@/server/integrations/stripe/client"
+import { ensureStripeCustomerForProfile } from "@/server/integrations/stripe/customer"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
 import {
   canAccessCourse,
@@ -136,38 +137,6 @@ async function getProfileByUserId(userId: string): Promise<ActionResult<ProfileR
     return success(data)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
-  }
-}
-
-async function ensureStripeCustomer(
-  profile: ProfileRow
-): Promise<ActionResult<string>> {
-  if (profile.stripe_customer_id) {
-    return success(profile.stripe_customer_id)
-  }
-
-  try {
-    const stripe = getStripeClient()
-    const customer = await stripe.customers.create({
-      email: profile.email,
-      metadata: {
-        profile_id: profile.id,
-      },
-    })
-
-    const supabase = createAdminClient()
-    const { error } = await supabase
-      .from("profiles")
-      .update({ stripe_customer_id: customer.id })
-      .eq("id", profile.id)
-
-    if (error) {
-      return mapDatabaseError(error)
-    }
-
-    return success(customer.id)
-  } catch {
-    return failure("provider_error", "Unable to create Stripe customer. Please try again.")
   }
 }
 
@@ -652,7 +621,7 @@ export async function createProductCheckoutSession(
       return profileResult
     }
 
-    const customerResult = await ensureStripeCustomer(profileResult.data)
+    const customerResult = await ensureStripeCustomerForProfile(profileResult.data)
 
     if (!customerResult.success) {
       return customerResult
