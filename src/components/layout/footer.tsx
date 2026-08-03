@@ -19,7 +19,7 @@ function Footer({ isAuthenticated }: FooterProps) {
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
           <div>
-            <BrandLogo variant="horizontal" size="md" appearance="footer" href="/" />
+            <BrandLogo variant="horizontal" size="lg" appearance="footer" href="/" />
             <p className="mt-2.5 max-w-[280px] text-sm">{PUBLIC_FOOTER_DESCRIPTION}</p>
             <div className="mt-3.5 flex flex-wrap gap-3">
               {PUBLIC_SOCIAL_LINKS.map((link) => (

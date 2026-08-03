@@ -4,8 +4,10 @@ import { test } from "node:test"
 import {
   BRAND_LOGO_HOME_LABEL,
   BRAND_LOGO_LOCKUP_DARK_TEXT,
+  BRAND_LOGO_LOCKUP_HEIGHTS,
   BRAND_LOGO_LOCKUP_WHITE_TEXT,
   BRAND_LOGO_MARK,
+  BRAND_LOGO_MARK_HEIGHTS,
   getBrandLogoAbsoluteMarkUrl,
   getBrandLogoImageAlt,
   getBrandLogoLockup,
@@ -34,6 +36,13 @@ test("lockups expose dark-text and white-text assets", () => {
     BRAND_LOGO_LOCKUP_WHITE_TEXT.src
   )
   assert.equal(getBrandLogoLockup().src, BRAND_LOGO_LOCKUP_DARK_TEXT.src)
+})
+
+test("logo display heights keep header lockup readable within sticky bar", () => {
+  assert.deepEqual(BRAND_LOGO_MARK_HEIGHTS, { sm: 40, md: 48, lg: 56 })
+  assert.deepEqual(BRAND_LOGO_LOCKUP_HEIGHTS, { sm: 40, md: 52, lg: 60 })
+  assert.ok(BRAND_LOGO_LOCKUP_HEIGHTS.md < 66)
+  assert.ok(BRAND_LOGO_LOCKUP_HEIGHTS.lg <= 66)
 })
 
 test("icon variant exposes brand name via image alt", () => {

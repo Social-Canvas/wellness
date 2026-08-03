@@ -5,10 +5,13 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import {
   BRAND_LOGO_HOME_LABEL,
+  BRAND_LOGO_LOCKUP_HEIGHTS,
   BRAND_LOGO_MARK,
+  BRAND_LOGO_MARK_HEIGHTS,
   getBrandLogoImageAlt,
   getBrandLogoLockup,
   type BrandLogoLockupTone,
+  type BrandLogoSizeToken,
   type BrandLogoVariant,
 } from "@/lib/brand/logo"
 import { cn } from "@/lib/utils"
@@ -29,19 +32,7 @@ const brandLogoVariants = cva("inline-flex min-w-0 shrink-0 items-center", {
   },
 })
 
-const MARK_SIZES = {
-  sm: 32,
-  md: 36,
-  lg: 48,
-} as const
-
-const LOCKUP_SIZES = {
-  sm: 28,
-  md: 36,
-  lg: 44,
-} as const
-
-type BrandLogoSize = keyof typeof MARK_SIZES
+type BrandLogoSize = BrandLogoSizeToken
 
 type BrandLogoProps = Omit<React.ComponentProps<"div">, "children"> &
   VariantProps<typeof brandLogoVariants> & {
@@ -66,7 +57,7 @@ function appearanceToTone(
 }
 
 function markDimensions(size: BrandLogoSize): { width: number; height: number } {
-  const height = MARK_SIZES[size]
+  const height = BRAND_LOGO_MARK_HEIGHTS[size]
   const width = Math.round(height * (BRAND_LOGO_MARK.width / BRAND_LOGO_MARK.height))
   return { width, height }
 }
@@ -76,7 +67,7 @@ function lockupDimensions(size: BrandLogoSize): {
   height: number
 } {
   const lockup = getBrandLogoLockup("dark-text")
-  const height = LOCKUP_SIZES[size]
+  const height = BRAND_LOGO_LOCKUP_HEIGHTS[size]
   const width = Math.round(height * (lockup.width / lockup.height))
   return { width, height }
 }

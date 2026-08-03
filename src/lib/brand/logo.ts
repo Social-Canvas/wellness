@@ -22,9 +22,25 @@ export const BRAND_LOGO_LOCKUP_WHITE_TEXT = {
 /** Keep in sync with `ELEVATE_BRAND.name`. */
 export const BRAND_LOGO_NAME = "Elevate Health Solutions" as const
 
+/** Display heights (px) for the square mark by size token. */
+export const BRAND_LOGO_MARK_HEIGHTS = {
+  sm: 40,
+  md: 48,
+  lg: 56,
+} as const
+
+/** Display heights (px) for the horizontal lockup by size token. */
+export const BRAND_LOGO_LOCKUP_HEIGHTS = {
+  sm: 40,
+  md: 52,
+  lg: 60,
+} as const
+
 export type BrandLogoVariant = "icon" | "horizontal"
 
 export type BrandLogoLockupTone = "dark-text" | "white-text"
+
+export type BrandLogoSizeToken = keyof typeof BRAND_LOGO_MARK_HEIGHTS
 
 export const BRAND_LOGO_HOME_LABEL = `${BRAND_LOGO_NAME} home`
 
