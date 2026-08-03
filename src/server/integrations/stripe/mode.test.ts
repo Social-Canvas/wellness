@@ -8,6 +8,7 @@ import {
   isStripeLiveSecretKey,
   isStripeTestSecretKey,
   isValidStripeWebhookSecret,
+  summarizeStripeProviderError,
 } from "./mode.ts"
 import { shouldProcessWebhookEvent } from "../../../features/checkout/utils/checkout-success-state.ts"
 
@@ -78,6 +79,34 @@ test("checkout accepts matched test or live key pairs and rejects mixes", () => 
   assert.equal(isConfiguredStripePriceId("price_placeholder_7_day_reset"), false)
   assert.equal(isValidStripeWebhookSecret("whsec_test"), true)
   assert.equal(isValidStripeWebhookSecret("https://dashboard.stripe.com/x"), false)
+})
+
+test("summarizeStripeProviderError redacts key material and maps expired keys", () => {
+  const expired = summarizeStripeProviderError({
+    type: "invalid_request_error",
+    code: "api_key_expired",
+    message: "Expired API Key provided: rkcs_test_abc123",
+  })
+  assert.equal(expired.stripeCode, "api_key_expired")
+  assert.equal(expired.message, "Stripe API key expired")
+  assert.doesNotMatch(expired.message, /rkcs_test_/)
+
+  const noSuchPrice = summarizeStripeProviderError({
+    type: "invalid_request_error",
+    code: "resource_missing",
+    message:
+      "No such price: 'price_1ABC'; a similar object exists in live mode, but a test mode key was used to make this request.",
+  })
+  assert.equal(noSuchPrice.stripeCode, "resource_missing")
+  assert.match(noSuchPrice.message, /No such price/)
+
+  const withKeyFragment = summarizeStripeProviderError({
+    type: "invalid_request_error",
+    code: "api_key_invalid",
+    message: "Invalid API Key provided: sk_test_supersecretvalue",
+  })
+  assert.doesNotMatch(withKeyFragment.message, /sk_test_supersecretvalue/)
+  assert.match(withKeyFragment.message, /\[REDACTED\]/)
 })
 
 // 12. Subscription activation / cancellation preserve correct access semantics

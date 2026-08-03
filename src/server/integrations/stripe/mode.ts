@@ -112,3 +112,63 @@ export function assertCheckoutUsesMatchedModeKeys(params: {
       "Stripe secret and publishable keys must both be test-mode or both be live-mode.",
   }
 }
+
+const STRIPE_SECRET_FRAGMENT =
+  /\b(?:sk|pk|rk|rkcs|whsec)_(?:test|live)?_?[A-Za-z0-9_*]+/g
+
+/**
+ * Safe Stripe error fields for server logs — never returns raw key material.
+ */
+export function summarizeStripeProviderError(error: unknown): {
+  stripeType: string | null
+  stripeCode: string | null
+  message: string
+} {
+  if (error && typeof error === "object") {
+    const record = error as {
+      type?: unknown
+      code?: unknown
+      message?: unknown
+    }
+    const stripeType = typeof record.type === "string" ? record.type : null
+    const stripeCode = typeof record.code === "string" ? record.code : null
+
+    if (stripeCode === "api_key_expired") {
+      return {
+        stripeType,
+        stripeCode,
+        message: "Stripe API key expired",
+      }
+    }
+
+    if (typeof record.message === "string" && record.message.length > 0) {
+      return {
+        stripeType,
+        stripeCode,
+        message: record.message.replace(STRIPE_SECRET_FRAGMENT, "[REDACTED]"),
+      }
+    }
+
+    if (stripeType || stripeCode) {
+      return {
+        stripeType,
+        stripeCode,
+        message: "Stripe provider error",
+      }
+    }
+  }
+
+  if (error instanceof Error) {
+    return {
+      stripeType: null,
+      stripeCode: null,
+      message: error.message.replace(STRIPE_SECRET_FRAGMENT, "[REDACTED]"),
+    }
+  }
+
+  return {
+    stripeType: null,
+    stripeCode: null,
+    message: "Unknown Stripe provider error",
+  }
+}

@@ -27,6 +27,7 @@ import { env } from "@/lib/config"
 import {
   assertCheckoutUsesMatchedModeKeys,
   isConfiguredStripePriceId,
+  summarizeStripeProviderError,
 } from "@/server/integrations/stripe/mode"
 import {
   isProgramCatalogProductType,
@@ -686,7 +687,13 @@ export async function createProductCheckoutSession(
       url: session.url,
       alreadyEntitled: false,
     })
-  } catch {
+  } catch (caught) {
+    const stripeError = summarizeStripeProviderError(caught)
+    logger.error("Unable to create product checkout session.", {
+      stripeType: stripeError.stripeType,
+      stripeCode: stripeError.stripeCode,
+      error: stripeError.message,
+    })
     return failure("provider_error", "Unable to create checkout session. Please try again.")
   }
 }

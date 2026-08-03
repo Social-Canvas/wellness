@@ -22,12 +22,14 @@ import { getStripeClient } from "@/server/integrations/stripe/client"
 import {
   assertCheckoutUsesMatchedModeKeys,
   isConfiguredStripePriceId,
+  summarizeStripeProviderError,
 } from "@/server/integrations/stripe/mode"
 import {
   getStripeCustomerId,
   mapStripeSubscriptionToUpdate,
   mapStripeSubscriptionToUpsert,
 } from "@/server/integrations/stripe/mapper"
+import { logger } from "@/server/utils/logger"
 import type { Database } from "@/types/database/supabase"
 
 const userIdSchema = z.uuid("Invalid user id.")
@@ -205,7 +207,13 @@ async function ensureStripeCustomer(
     }
 
     return success(customer.id)
-  } catch {
+  } catch (caught) {
+    const stripeError = summarizeStripeProviderError(caught)
+    logger.error("Unable to create Stripe customer.", {
+      stripeType: stripeError.stripeType,
+      stripeCode: stripeError.stripeCode,
+      error: stripeError.message,
+    })
     return failure("provider_error", "Unable to create Stripe customer. Please try again.")
   }
 }
@@ -335,7 +343,13 @@ export async function createCheckoutSession(
       sessionId: session.id,
       url: session.url,
     })
-  } catch {
+  } catch (caught) {
+    const stripeError = summarizeStripeProviderError(caught)
+    logger.error("Unable to create membership checkout session.", {
+      stripeType: stripeError.stripeType,
+      stripeCode: stripeError.stripeCode,
+      error: stripeError.message,
+    })
     return failure("provider_error", "Unable to create checkout session. Please try again.")
   }
 }
