@@ -35,6 +35,7 @@ import { env } from "@/lib/config"
 import {
   assertCheckoutUsesMatchedModeKeys,
   isConfiguredStripePriceId,
+  isStripeLiveSecretKey,
   summarizeStripeProviderError,
 } from "@/server/integrations/stripe/mode"
 import {
@@ -438,6 +439,9 @@ export async function listPurchasedDownloads(
       } else if (entitlement?.source === "included") {
         source = "included"
         acquiredAt = entitlement.created_at
+      } else if (entitlement?.source === "complimentary") {
+        source = "complimentary"
+        acquiredAt = entitlement.created_at
       } else if (entitlement?.source === "purchase") {
         source = "purchase"
         acquiredAt = entitlement.created_at ?? paidAt
@@ -714,6 +718,41 @@ export async function createProductCheckoutSession(
     }
 
     const stripe = getStripeClient()
+
+    const stripePrice = await stripe.prices.retrieve(product.stripe_price_id)
+
+    if (
+      !stripePrice.active ||
+      stripePrice.type !== "one_time" ||
+      stripePrice.currency !== "usd" ||
+      stripePrice.unit_amount !== product.price_amount
+    ) {
+      logger.error("Stripe price does not match local product catalog.", {
+        productSlug: product.slug,
+        expectedAmount: product.price_amount,
+        stripeAmount: stripePrice.unit_amount,
+        stripeType: stripePrice.type,
+        stripeCurrency: stripePrice.currency,
+        stripeActive: stripePrice.active,
+      })
+      return failure(
+        "provider_error",
+        "This product is not available for checkout right now."
+      )
+    }
+
+    const secretIsLive = isStripeLiveSecretKey(env.STRIPE_SECRET_KEY)
+    if (Boolean(stripePrice.livemode) !== secretIsLive) {
+      logger.error("Stripe price livemode does not match configured secret key mode.", {
+        productSlug: product.slug,
+        priceLivemode: stripePrice.livemode,
+      })
+      return failure(
+        "provider_error",
+        "This product is not available for checkout right now."
+      )
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerResult.data,
@@ -729,7 +768,11 @@ export async function createProductCheckoutSession(
       metadata: {
         profile_id: parsedUserId.data,
         product_id: product.id,
+        product_slug: product.slug,
         purchase_type: "product",
+        ...(product.granted_course_id
+          ? { granted_course_id: product.granted_course_id }
+          : {}),
       },
     })
 

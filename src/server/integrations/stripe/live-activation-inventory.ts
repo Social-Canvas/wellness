@@ -74,11 +74,11 @@ export const LIVE_STRIPE_ACTIVATION_INVENTORY = [
     slug: "autoimmune-masterclass",
     title: "Autoimmune Masterclass",
     kind: "product",
-    status: "deferred",
-    liveCheckout: false,
-    livePrice: false,
+    status: "eligible",
+    liveCheckout: true,
+    livePrice: true,
     reportLine:
-      "Autoimmune Masterclass — deferred — no live Checkout — no live Price",
+      "Autoimmune Masterclass — eligible — live Checkout — live Price",
   },
   {
     slug: "standalone-live-session",

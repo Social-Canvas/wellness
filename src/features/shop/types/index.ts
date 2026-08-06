@@ -9,7 +9,11 @@ export type ProductPurchaseMode = Database["public"]["Enums"]["product_purchase_
 export type ProductEntitlementSource =
   Database["public"]["Enums"]["product_entitlement_source"]
 
-export type DownloadAcquisitionSource = "purchase" | "free_claim" | "included"
+export type DownloadAcquisitionSource =
+  | "purchase"
+  | "free_claim"
+  | "included"
+  | "complimentary"
 
 export type ShopProduct = {
   id: string

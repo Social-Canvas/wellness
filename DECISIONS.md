@@ -319,3 +319,15 @@ Format:
 **Alternatives considered:** Keep public size pricing cards; Stripe promo codes for sponsored seats; Core-equivalent sponsored capabilities; plaintext code storage; shared org login.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-07 — Autoimmune Masterclass one-time Checkout + complimentary product grants
+
+**Decision:** Wire Autoimmune Masterclass (`autoimmune-masterclass`) as a standalone Stripe Checkout `payment` ($47 / 4700 USD cents) using `products.stripe_price_id` (same registry as Reset/ebook). Access is granted only via webhook-synced paid `orders`, or via `product_entitlements.source = complimentary` for tester/admin grants. Complimentary grants never create Stripe customers, sessions, payments, or paid orders. Revoke removes only the complimentary entitlement row.
+
+**Reason:** Matches the paid standalone-course model already used by Reset while keeping tester access distinguishable and reversible without fake payment records.
+
+**Alternatives considered:** Env-only `STRIPE_PRICE_*` registry; fake paid orders for testers; granting a membership plan solely to unlock the course.
+
+**Status:** Accepted

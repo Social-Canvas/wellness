@@ -30,7 +30,7 @@ export function CheckoutConsentForm({
   const searchParams = useSearchParams()
   const [fullName, setFullName] = useState(defaultFullName ?? "")
   const [email, setEmail] = useState(defaultEmail ?? "")
-  const [consent, setConsent] = useState(false)
+  const [marketingOptIn, setMarketingOptIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -39,11 +39,6 @@ export function CheckoutConsentForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-
-    if (!consent) {
-      setError("Please confirm you agree to receive access and emails.")
-      return
-    }
 
     if (!isAuthenticated) {
       window.location.href = `/login?next=${encodeURIComponent(loginNext)}`
@@ -55,7 +50,7 @@ export function CheckoutConsentForm({
     const result = await proceedToCheckoutAction({
       fullName,
       email,
-      consent: true,
+      marketingOptIn,
       type: context.type,
       planSlug: context.planSlug,
       productSlug: context.productSlug,
@@ -115,15 +110,20 @@ export function CheckoutConsentForm({
             />
           </div>
 
+          <p className="text-sm text-ink-soft">
+            We&apos;ll email your receipt and course-access information.
+          </p>
+
           <label className="flex items-start gap-3 text-sm text-ink-soft">
             <input
               type="checkbox"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
+              checked={marketingOptIn}
+              onChange={(event) => setMarketingOptIn(event.target.checked)}
               className="mt-1 size-4 rounded border-line"
             />
             <span>
-              Yes, send me my access, receipts, and our emails. I can unsubscribe anytime.
+              Send me occasional Elevate updates and offers. I can unsubscribe
+              anytime.
             </span>
           </label>
 

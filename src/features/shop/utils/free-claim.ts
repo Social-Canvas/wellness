@@ -39,9 +39,17 @@ export const INTEGRATION_JOURNAL_SHOP_PATH =
 
 export type ProductPurchaseMode = "paid" | "free_claim" | "enquiry"
 
-export type ProductEntitlementSource = "free_claim" | "purchase" | "included"
+export type ProductEntitlementSource =
+  | "free_claim"
+  | "purchase"
+  | "included"
+  | "complimentary"
 
-export type DownloadSourceLabel = "Purchased" | "Free resource" | "Included"
+export type DownloadSourceLabel =
+  | "Purchased"
+  | "Free resource"
+  | "Included"
+  | "Complimentary"
 
 /**
  * Explicit post-auth return allowlist for claim/shop flows.
@@ -188,6 +196,9 @@ export function resolveDownloadSourceLabel(
   }
   if (source === "included") {
     return "Included"
+  }
+  if (source === "complimentary") {
+    return "Complimentary"
   }
   return "Purchased"
 }

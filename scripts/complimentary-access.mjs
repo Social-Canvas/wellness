@@ -3,34 +3,22 @@
 /**
  * Complimentary tester access tooling.
  *
- * Grants (and revokes) a complimentary, non-Stripe membership entitlement for a
- * single account by inserting a clearly-marked complimentary subscription row.
+ * Plan grants (existing):
+ *   Insert a clearly-marked complimentary subscription row (comp_ prefix).
+ *   Does NOT call Stripe.
  *
- * Access model (see src/server/services/entitlement.service.ts):
- *   subscriptions (user -> plan) -> content_access (plan -> course) -> course/lesson/video access.
- * Granting a complimentary subscription to a plan therefore unlocks every course
- * mapped to that plan via content_access, plus signed Mux playback for the
- * entitled (ready/published) videos in those courses.
- *
- * This tool deliberately does NOT:
- *   - call any Stripe API (no charges, checkout, invoices, or portal),
- *   - create real-looking Stripe identifiers (all ids are `comp_` prefixed),
- *   - send any email,
- *   - touch Mux, publication state, prices, or product-to-course mappings,
- *   - modify content_access (which would affect other users of a plan),
- *   - create or modify auth users / passwords.
- *
- * The complimentary subscription is idempotent (keyed on a deterministic
- * `stripe_subscription_id`) and fully reversible (`revoke` deletes exactly the
- * rows this tool created).
+ * Product grants (standalone courses / digital products):
+ *   Insert a product_entitlements row with source=complimentary.
+ *   Unlocks courses via products.granted_course_id + entitlementService.
+ *   Does NOT create Stripe customers, checkout sessions, payments, or paid orders.
  *
  * Usage:
  *   node scripts/complimentary-access.mjs status  --email <email> [--plan plan-3] [--env-file .env.local]
- *   node scripts/complimentary-access.mjs grant   --email <email> [--plan plan-3] [--env-file .env.local]
+ *   node scripts/complimentary-access.mjs grant   --email <email> [--plan plan-3] [--dry-run] [--env-file .env.local]
  *   node scripts/complimentary-access.mjs revoke  --email <email> [--env-file .env.local]
- *
- * The tester email is always supplied on the command line — it is never
- * hardcoded here, in the app, middleware, route handlers, RLS, or UI.
+ *   node scripts/complimentary-access.mjs status-product  --email <email> --product <slug> [--env-file .env.local]
+ *   node scripts/complimentary-access.mjs grant-product   --email <email> --product <slug> [--dry-run] [--env-file .env.local]
+ *   node scripts/complimentary-access.mjs revoke-product  --email <email> --product <slug> [--env-file .env.local]
  */
 
 import { existsSync, readFileSync } from "node:fs"
@@ -41,7 +29,9 @@ import { createClient } from "@supabase/supabase-js"
 const AUDIT_REASON = "complimentary launch testing access"
 const COMP_PREFIX = "comp_launch_testing"
 const DEFAULT_PLAN_SLUG = "plan-3"
+const DEFAULT_PRODUCT_SLUG = "autoimmune-masterclass"
 const GRANT_PERIOD_DAYS = 365
+const PRODUCT_ENTITLEMENT_SOURCE = "complimentary"
 
 function parseArgValue(name, fallback = "") {
   const index = process.argv.indexOf(name)
@@ -74,9 +64,6 @@ function redactId(id) {
   return `${id.slice(0, 6)}***${id.slice(-4)}`
 }
 
-// The complimentary marker embeds the full profile id
-// (`comp_launch_testing_<profileId>`). Keep the marker prefix visible for
-// auditability, but never print the raw profile id it contains.
 function redactMarker(marker) {
   if (!marker) return "(none)"
   const prefix = `${COMP_PREFIX}_`
@@ -125,7 +112,6 @@ async function resolveProfile(client, email) {
     throw new Error("A valid --email is required.")
   }
 
-  // Case-insensitive, exact email match only.
   const { data, error } = await client
     .from("profiles")
     .select("id, auth_user_id, email, role")
@@ -173,6 +159,33 @@ async function resolvePlan(client, planSlug) {
   return { plan, stripePriceId: monthly.stripe_price_id }
 }
 
+async function resolveProduct(client, productSlug) {
+  const { data: product, error } = await client
+    .from("products")
+    .select(
+      "id, slug, title, status, purchase_mode, price_amount, granted_course_id, stripe_price_id"
+    )
+    .eq("slug", productSlug)
+    .maybeSingle()
+
+  if (error) throw new Error(`Product lookup failed: ${error.message}`)
+  if (!product) throw new Error(`Product "${productSlug}" not found.`)
+
+  let course = null
+  if (product.granted_course_id) {
+    const { data: courseRow, error: courseError } = await client
+      .from("courses")
+      .select("id, slug, title, status")
+      .eq("id", product.granted_course_id)
+      .maybeSingle()
+
+    if (courseError) throw new Error(`Course lookup failed: ${courseError.message}`)
+    course = courseRow
+  }
+
+  return { product, course }
+}
+
 async function listPlanCourses(client, planId) {
   const { data: access, error } = await client
     .from("content_access")
@@ -203,13 +216,47 @@ async function findCompSubscriptions(client, profileId) {
   const { data, error } = await client
     .from("subscriptions")
     .select(
-      "id, plan_id, status, stripe_subscription_id, stripe_customer_id, current_period_end, cancel_at_period_end"
+      "id, plan_id, status, stripe_subscription_id, stripe_customer_id, current_period_end, cancel_at_period_end, access_source"
     )
     .eq("user_id", profileId)
     .like("stripe_subscription_id", `${COMP_PREFIX}_%`)
 
   if (error) throw new Error(`Subscription lookup failed: ${error.message}`)
   return data ?? []
+}
+
+async function findProductEntitlements(client, profileId, productId) {
+  const { data, error } = await client
+    .from("product_entitlements")
+    .select("id, user_id, product_id, source, created_at")
+    .eq("user_id", profileId)
+    .eq("product_id", productId)
+
+  if (error) throw new Error(`product_entitlements lookup failed: ${error.message}`)
+  return data ?? []
+}
+
+async function countPaidProductOrders(client, profileId, productId) {
+  const { data: orders, error } = await client
+    .from("orders")
+    .select("id")
+    .eq("user_id", profileId)
+    .eq("status", "paid")
+
+  if (error) throw new Error(`orders lookup failed: ${error.message}`)
+  if (!orders?.length) return 0
+
+  const { count, error: itemsError } = await client
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .in(
+      "order_id",
+      orders.map((o) => o.id)
+    )
+    .eq("product_id", productId)
+
+  if (itemsError) throw new Error(`order_items lookup failed: ${itemsError.message}`)
+  return count ?? 0
 }
 
 async function commandStatus({ client, projectRef, email, planSlug }) {
@@ -237,6 +284,7 @@ async function commandStatus({ client, projectRef, email, planSlug }) {
       subscriptionIdRedacted: redactId(c.id),
       marker: redactMarker(c.stripe_subscription_id),
       status: c.status,
+      accessSource: c.access_source,
       currentPeriodEnd: c.current_period_end,
       cancelAtPeriodEnd: c.cancel_at_period_end,
     }))
@@ -274,7 +322,6 @@ async function commandGrant({ client, projectRef, email, planSlug, dryRun }) {
   const now = new Date()
   const periodEnd = new Date(now.getTime() + GRANT_PERIOD_DAYS * 24 * 60 * 60 * 1000)
 
-  // Idempotent upsert keyed on the unique, deterministic complimentary marker.
   const payload = {
     user_id: profile.id,
     plan_id: plan.id,
@@ -411,15 +458,299 @@ async function commandRevoke({ client, projectRef, email }) {
   return { revoked: (data ?? []).length }
 }
 
+async function commandStatusProduct({ client, projectRef, email, productSlug }) {
+  const profile = await resolveProfile(client, email)
+  const { product, course } = await resolveProduct(client, productSlug)
+
+  if (!course && product.granted_course_id) {
+    throw new Error(
+      `Product "${productSlug}" references a missing course; stop and resolve manually.`
+    )
+  }
+
+  const summary = {
+    projectRef,
+    email: normalizeEmail(email),
+    accountExists: Boolean(profile),
+    profileIdRedacted: profile ? redactId(profile.id) : "(no account)",
+    product: {
+      slug: product.slug,
+      status: product.status,
+      purchaseMode: product.purchase_mode,
+      priceAmount: product.price_amount,
+      idRedacted: redactId(product.id),
+    },
+    course: course
+      ? { slug: course.slug, status: course.status, idRedacted: redactId(course.id) }
+      : null,
+    complimentaryProductEntitlements: [],
+    paidOrderCount: 0,
+  }
+
+  if (profile) {
+    const ents = await findProductEntitlements(client, profile.id, product.id)
+    summary.complimentaryProductEntitlements = ents
+      .filter((row) => row.source === PRODUCT_ENTITLEMENT_SOURCE)
+      .map((row) => ({
+        entitlementIdRedacted: redactId(row.id),
+        source: row.source,
+        createdAt: row.created_at,
+      }))
+    summary.otherProductEntitlements = ents
+      .filter((row) => row.source !== PRODUCT_ENTITLEMENT_SOURCE)
+      .map((row) => ({
+        entitlementIdRedacted: redactId(row.id),
+        source: row.source,
+        createdAt: row.created_at,
+      }))
+    summary.paidOrderCount = await countPaidProductOrders(
+      client,
+      profile.id,
+      product.id
+    )
+  }
+
+  console.log(JSON.stringify(summary, null, 2))
+  return summary
+}
+
+async function commandGrantProduct({
+  client,
+  projectRef,
+  email,
+  productSlug,
+  dryRun,
+}) {
+  const profile = await resolveProfile(client, email)
+
+  if (!profile) {
+    console.log(
+      JSON.stringify(
+        {
+          projectRef,
+          email: normalizeEmail(email),
+          accountExists: false,
+          action: "none",
+          message:
+            "No account found for this email. The tester must sign up first; " +
+            "no password is invented and no access is granted.",
+        },
+        null,
+        2
+      )
+    )
+    return { granted: false, reason: "account_missing" }
+  }
+
+  const { product, course } = await resolveProduct(client, productSlug)
+
+  if (!product.granted_course_id || !course) {
+    throw new Error(
+      `Product "${productSlug}" has no resolvable granted course; refusing grant.`
+    )
+  }
+
+  const existing = await findProductEntitlements(client, profile.id, product.id)
+  const existingComp = existing.find((row) => row.source === PRODUCT_ENTITLEMENT_SOURCE)
+  const paidOrderCount = await countPaidProductOrders(client, profile.id, product.id)
+
+  if (dryRun) {
+    console.log(
+      JSON.stringify(
+        {
+          projectRef,
+          email: normalizeEmail(email),
+          profileIdRedacted: redactId(profile.id),
+          auditReason: AUDIT_REASON,
+          product: product.slug,
+          course: course.slug,
+          wouldReuseExisting: Boolean(existingComp),
+          paidOrderCount,
+          dryRun: true,
+          stripeCallsMade: 0,
+        },
+        null,
+        2
+      )
+    )
+    return { granted: false, reason: "dry_run" }
+  }
+
+  if (existingComp) {
+    console.log(
+      JSON.stringify(
+        {
+          projectRef,
+          email: normalizeEmail(email),
+          profileIdRedacted: redactId(profile.id),
+          auditReason: AUDIT_REASON,
+          action: "already_granted",
+          entitlementIdRedacted: redactId(existingComp.id),
+          source: existingComp.source,
+          product: product.slug,
+          course: course.slug,
+          paidOrderCount,
+          stripeCallsMade: 0,
+          emailsSent: 0,
+          fakeOrdersCreated: 0,
+        },
+        null,
+        2
+      )
+    )
+    return { granted: true, reason: "already_granted" }
+  }
+
+  // Do not overwrite a non-complimentary entitlement row (e.g. purchase/included).
+  const blocking = existing.find((row) => row.source !== PRODUCT_ENTITLEMENT_SOURCE)
+  if (blocking) {
+    console.log(
+      JSON.stringify(
+        {
+          projectRef,
+          email: normalizeEmail(email),
+          profileIdRedacted: redactId(profile.id),
+          action: "skipped",
+          message:
+            "A non-complimentary product entitlement already exists; " +
+            "access remains via that source. No complimentary row created.",
+          existingSource: blocking.source,
+          entitlementIdRedacted: redactId(blocking.id),
+          product: product.slug,
+          course: course.slug,
+          paidOrderCount,
+          stripeCallsMade: 0,
+        },
+        null,
+        2
+      )
+    )
+    return { granted: false, reason: "other_source_present" }
+  }
+
+  const { data, error } = await client
+    .from("product_entitlements")
+    .insert({
+      user_id: profile.id,
+      product_id: product.id,
+      source: PRODUCT_ENTITLEMENT_SOURCE,
+    })
+    .select("id, source, created_at")
+    .single()
+
+  if (error || !data) {
+    throw new Error(
+      `Product grant failed: ${error ? error.message : "no row returned"}`
+    )
+  }
+
+  console.log(
+    JSON.stringify(
+      {
+        projectRef,
+        email: normalizeEmail(email),
+        profileIdRedacted: redactId(profile.id),
+        auditReason: AUDIT_REASON,
+        action: "created",
+        entitlementIdRedacted: redactId(data.id),
+        source: data.source,
+        product: product.slug,
+        course: course.slug,
+        paidOrderCount,
+        stripeCallsMade: 0,
+        emailsSent: 0,
+        fakeOrdersCreated: 0,
+        membershipUnchanged: true,
+      },
+      null,
+      2
+    )
+  )
+  return { granted: true, reason: "created" }
+}
+
+async function commandRevokeProduct({ client, projectRef, email, productSlug }) {
+  const profile = await resolveProfile(client, email)
+
+  if (!profile) {
+    console.log(
+      JSON.stringify(
+        {
+          projectRef,
+          email: normalizeEmail(email),
+          accountExists: false,
+          action: "none",
+          message: "No account found for this email; nothing to revoke.",
+        },
+        null,
+        2
+      )
+    )
+    return { revoked: 0 }
+  }
+
+  const { product, course } = await resolveProduct(client, productSlug)
+  const paidOrderCountBefore = await countPaidProductOrders(
+    client,
+    profile.id,
+    product.id
+  )
+
+  const { data, error } = await client
+    .from("product_entitlements")
+    .delete()
+    .eq("user_id", profile.id)
+    .eq("product_id", product.id)
+    .eq("source", PRODUCT_ENTITLEMENT_SOURCE)
+    .select("id, source")
+
+  if (error) throw new Error(`Product revoke failed: ${error.message}`)
+
+  const paidOrderCountAfter = await countPaidProductOrders(
+    client,
+    profile.id,
+    product.id
+  )
+
+  console.log(
+    JSON.stringify(
+      {
+        projectRef,
+        email: normalizeEmail(email),
+        profileIdRedacted: redactId(profile.id),
+        action: (data ?? []).length > 0 ? "revoked" : "none",
+        revokedCount: (data ?? []).length,
+        product: product.slug,
+        course: course?.slug ?? null,
+        paidOrdersPreserved: paidOrderCountBefore === paidOrderCountAfter,
+        paidOrderCount: paidOrderCountAfter,
+        message:
+          (data ?? []).length === 0
+            ? "No complimentary product entitlement found; nothing to revoke."
+            : "Removed complimentary product entitlement only.",
+      },
+      null,
+      2
+    )
+  )
+  return { revoked: (data ?? []).length }
+}
+
 function printUsage() {
   console.log(`Complimentary tester access tooling
 
-Usage:
+Plan (membership) commands:
   node scripts/complimentary-access.mjs status  --email <email> [--plan ${DEFAULT_PLAN_SLUG}] [--env-file .env.local]
   node scripts/complimentary-access.mjs grant   --email <email> [--plan ${DEFAULT_PLAN_SLUG}] [--dry-run] [--env-file .env.local]
   node scripts/complimentary-access.mjs revoke  --email <email> [--env-file .env.local]
 
+Product (standalone course) commands:
+  node scripts/complimentary-access.mjs status-product --email <email> --product ${DEFAULT_PRODUCT_SLUG} [--env-file .env.local]
+  node scripts/complimentary-access.mjs grant-product  --email <email> --product ${DEFAULT_PRODUCT_SLUG} [--dry-run] [--env-file .env.local]
+  node scripts/complimentary-access.mjs revoke-product --email <email> --product ${DEFAULT_PRODUCT_SLUG} [--env-file .env.local]
+
 Audit reason recorded for grants: "${AUDIT_REASON}"
+Product grants use product_entitlements.source='complimentary' — never Stripe orders.
 `)
 }
 
@@ -432,6 +763,7 @@ async function main() {
 
   const email = parseArgValue("--email", "")
   const planSlug = parseArgValue("--plan", DEFAULT_PLAN_SLUG)
+  const productSlug = parseArgValue("--product", DEFAULT_PRODUCT_SLUG)
   const dryRun = process.argv.includes("--dry-run")
   const envFilePath = resolve(process.cwd(), parseArgValue("--env-file", ".env.local"))
   const { client, projectRef } = createSupabaseFromEnv(envFilePath)
@@ -448,6 +780,21 @@ async function main() {
 
   if (command === "revoke") {
     await commandRevoke({ client, projectRef, email })
+    return
+  }
+
+  if (command === "status-product") {
+    await commandStatusProduct({ client, projectRef, email, productSlug })
+    return
+  }
+
+  if (command === "grant-product") {
+    await commandGrantProduct({ client, projectRef, email, productSlug, dryRun })
+    return
+  }
+
+  if (command === "revoke-product") {
+    await commandRevokeProduct({ client, projectRef, email, productSlug })
     return
   }
 

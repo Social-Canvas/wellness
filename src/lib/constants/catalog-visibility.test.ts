@@ -92,6 +92,7 @@ describe("Health Professional Session public hide", () => {
     assert.equal(isLiveStripeCheckoutEligible("plan-1"), true)
     assert.equal(isLiveStripeCheckoutEligible("7-day-reset"), true)
     assert.equal(isLiveStripeCheckoutEligible("ebook-1"), true)
+    assert.equal(isLiveStripeCheckoutEligible("autoimmune-masterclass"), true)
   })
 
   test("unauthorized direct access is denied", () => {

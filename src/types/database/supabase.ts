@@ -1521,7 +1521,11 @@ export type Database = {
         | "enterprise"
       migration_status: "not_started" | "uploaded" | "verified" | "failed"
       order_status: "pending" | "paid" | "failed" | "refunded" | "disputed"
-      product_entitlement_source: "free_claim" | "purchase" | "included"
+      product_entitlement_source:
+        | "free_claim"
+        | "purchase"
+        | "included"
+        | "complimentary"
       product_purchase_mode: "paid" | "free_claim" | "enquiry"
       product_type:
         | "ebook"
@@ -1703,7 +1707,12 @@ export const Constants = {
       ],
       migration_status: ["not_started", "uploaded", "verified", "failed"],
       order_status: ["pending", "paid", "failed", "refunded", "disputed"],
-      product_entitlement_source: ["free_claim", "purchase", "included"],
+      product_entitlement_source: [
+        "free_claim",
+        "purchase",
+        "included",
+        "complimentary",
+      ],
       product_purchase_mode: ["paid", "free_claim", "enquiry"],
       product_type: [
         "ebook",

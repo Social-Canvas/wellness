@@ -10,6 +10,13 @@ export const RESET_PRODUCT_SLUG = "7-day-reset"
 
 export const RESET_LIBRARY_PATH = `/dashboard/library/${RESET_COURSE_ID}` as const
 
+/** Canonical Autoimmune Masterclass product + course (standalone $47 purchase). */
+export const AUTOIMMUNE_PRODUCT_SLUG = "autoimmune-masterclass" as const
+export const AUTOIMMUNE_COURSE_ID = "e2fdf5d2-d448-4c28-a7c4-60bcf76358ed" as const
+export const AUTOIMMUNE_LIBRARY_PATH =
+  `/dashboard/library/${AUTOIMMUNE_COURSE_ID}` as const
+export const AUTOIMMUNE_PRICE_AMOUNT_CENTS = 4700 as const
+
 export const MEMBERSHIP_LIBRARY_PATH = "/dashboard/library" as const
 
 /** Canonical in-app membership hub for current-plan CTAs (live, recordings, plan). */
@@ -45,6 +52,21 @@ export function isResetPurchase(input: {
   return false
 }
 
+export function isAutoimmunePurchase(input: {
+  productSlug?: string | null
+  grantedCourseId?: string | null
+}): boolean {
+  if (input.productSlug === AUTOIMMUNE_PRODUCT_SLUG) {
+    return true
+  }
+
+  if (input.grantedCourseId === AUTOIMMUNE_COURSE_ID) {
+    return true
+  }
+
+  return false
+}
+
 /**
  * Map an internal product/plan purchase to a trusted in-app destination.
  * Open redirects are impossible: href is always a fixed allowlisted path.
@@ -64,6 +86,14 @@ export function resolvePostPurchaseDestination(
     return {
       href: RESET_LIBRARY_PATH,
       label: "Open the 7-Day Elevated Reset",
+      autoRedirect: true,
+    }
+  }
+
+  if (isAutoimmunePurchase(input)) {
+    return {
+      href: AUTOIMMUNE_LIBRARY_PATH,
+      label: "Open Autoimmune Masterclass",
       autoRedirect: true,
     }
   }

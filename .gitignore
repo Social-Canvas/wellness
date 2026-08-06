@@ -54,3 +54,6 @@ src/features/marketing-testimonials/data/mux-upload-manifest.json
 
 # Local operator artifacts (Stripe IDs, manifests)
 .local/
+
+# Private Stripe ID scratch (never commit)
+.stripe-autoimmune-ids.local.json
