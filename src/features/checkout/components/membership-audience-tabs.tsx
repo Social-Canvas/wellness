@@ -10,6 +10,9 @@ import {
   NONPROFIT_INQUIRY_CTA,
   NONPROFIT_INQUIRY_HREF,
   NONPROFIT_MEMBERSHIP_BENEFITS,
+  NONPROFIT_MISSION_BODY,
+  NONPROFIT_MISSION_EYEBROW,
+  NONPROFIT_MISSION_HEADING,
   NONPROFIT_SHARED_BENEFITS_TITLE,
   NONPROFIT_SUPPORTING_NOTE,
   buildMembershipAudienceUrl,
@@ -173,6 +176,24 @@ function NonprofitPartnershipOverview() {
         </p>
       </div>
 
+      <aside
+        aria-labelledby="nonprofit-mission-heading"
+        className="mx-auto mb-8 max-w-3xl rounded-2xl border border-line/80 bg-blue/[0.04] px-5 py-6 text-center sm:px-8 sm:py-7"
+      >
+        <p className="text-[11px] font-bold tracking-[0.14em] text-green-deep uppercase">
+          {NONPROFIT_MISSION_EYEBROW}
+        </p>
+        <h4
+          id="nonprofit-mission-heading"
+          className="mt-2 font-display text-lg font-medium text-ink sm:text-xl md:text-[1.35rem]"
+        >
+          {NONPROFIT_MISSION_HEADING}
+        </h4>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-[15px]">
+          {NONPROFIT_MISSION_BODY}
+        </p>
+      </aside>
+
       <section
         aria-labelledby="nonprofit-shared-benefits-heading"
         className="mx-auto max-w-[1100px] rounded-2xl border border-line bg-green/5 px-4 py-5 sm:px-6 sm:py-6"
@@ -199,21 +220,22 @@ function NonprofitPartnershipOverview() {
             </li>
           ))}
         </ul>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-ink-soft">
+        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">
           {NONPROFIT_SUPPORTING_NOTE}
         </p>
-        <div className="mt-6 flex justify-center">
-          <Link
-            href={NONPROFIT_INQUIRY_HREF}
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-            )}
-          >
-            {NONPROFIT_INQUIRY_CTA}
-          </Link>
-        </div>
       </section>
+
+      <div className="mt-7 flex justify-center">
+        <Link
+          href={NONPROFIT_INQUIRY_HREF}
+          className={cn(
+            buttonVariants({ size: "lg" }),
+            "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          )}
+        >
+          {NONPROFIT_INQUIRY_CTA}
+        </Link>
+      </div>
     </div>
   )
 }

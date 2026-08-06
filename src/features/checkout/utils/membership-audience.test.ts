@@ -16,6 +16,9 @@ import {
   NONPROFIT_INQUIRY_CTA,
   NONPROFIT_INQUIRY_HREF,
   NONPROFIT_MEMBERSHIP_BENEFITS,
+  NONPROFIT_MISSION_BODY,
+  NONPROFIT_MISSION_EYEBROW,
+  NONPROFIT_MISSION_HEADING,
   NONPROFIT_PLAN_CHOICE_HEADING,
   NONPROFIT_PUBLIC_PRICING_CONFIRMED,
   NONPROFIT_SEAT_PLANS,
@@ -54,6 +57,27 @@ test("1. Public nonprofit panel has one Connect with us CTA", () => {
   assert.match(panel, /NONPROFIT_INQUIRY_CTA/)
   assert.match(panel, /NONPROFIT_INQUIRY_HREF/)
   assert.equal((panel.match(/NONPROFIT_INQUIRY_CTA/g) ?? []).length, 1)
+})
+
+test("1b. Mission statement sits between intro and shared benefits", () => {
+  const panel = nonprofitPanelSource()
+  const missionIdx = panel.indexOf("nonprofit-mission-heading")
+  const benefitsIdx = panel.indexOf("nonprofit-shared-benefits-heading")
+  const ctaIdx = panel.indexOf("NONPROFIT_INQUIRY_CTA")
+  assert.ok(missionIdx >= 0)
+  assert.ok(benefitsIdx > missionIdx)
+  assert.ok(ctaIdx > benefitsIdx)
+  assert.match(panel, /NONPROFIT_MISSION_EYEBROW/)
+  assert.match(panel, /NONPROFIT_MISSION_HEADING/)
+  assert.match(panel, /NONPROFIT_MISSION_BODY/)
+  assert.equal(NONPROFIT_MISSION_EYEBROW, "OUR BELIEF")
+  assert.equal(
+    NONPROFIT_MISSION_HEADING,
+    "A world where healing belongs to everyone"
+  )
+  assert.match(NONPROFIT_MISSION_BODY, /Dr\. Deepa Pattani/)
+  assert.match(panel, /max-w-3xl/)
+  assert.doesNotMatch(panel, /cure|diagnos|treat|prescri/i)
 })
 
 test("2. Public size/pricing cards are absent", () => {

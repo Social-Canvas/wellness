@@ -145,7 +145,14 @@ test("10. Existing enquiry persistence remains intact", () => {
   assert.match(service, /submitNonprofitPartnership/)
   assert.equal(NONPROFIT_ENQUIRY_EYEBROW, "NONPROFIT PARTNERSHIPS")
   assert.equal(NONPROFIT_ENQUIRY_HEADING, "Let’s support your organization")
-  assert.ok(NONPROFIT_ENQUIRY_DESCRIPTION.includes("nonprofit"))
+  assert.equal(
+    NONPROFIT_ENQUIRY_DESCRIPTION,
+    "Help us understand your organization and the community you serve so we can explore an accessible Elevate partnership together."
+  )
+  assert.doesNotMatch(
+    NONPROFIT_ENQUIRY_DESCRIPTION,
+    /OUR BELIEF|healing belongs to everyone|Dr\. Deepa Pattani/
+  )
   assert.equal(NONPROFIT_ENQUIRY_CTA, "Request partnership information")
   assert.equal(
     NONPROFIT_ENQUIRY_NO_PURCHASE,

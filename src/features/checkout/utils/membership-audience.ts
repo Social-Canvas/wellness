@@ -119,6 +119,14 @@ export const NONPROFIT_INQUIRY_HREF =
 export const NONPROFIT_SHARED_BENEFITS_TITLE =
   "Included with a nonprofit partnership" as const
 
+export const NONPROFIT_MISSION_EYEBROW = "OUR BELIEF" as const
+
+export const NONPROFIT_MISSION_HEADING =
+  "A world where healing belongs to everyone" as const
+
+export const NONPROFIT_MISSION_BODY =
+  "At Elevate, we believe access to peace, resilience, and well-being should not depend on privilege or circumstance. Dr. Deepa Pattani created Elevate’s nonprofit partnerships to help organizations bring supportive, restorative experiences to the people and communities they serve—making meaningful care and connection more accessible to all." as const
+
 /** @deprecated Public size cards removed — kept for test migration detection. */
 export const NONPROFIT_PLAN_CHOICE_HEADING =
   "Choose your organization size" as const

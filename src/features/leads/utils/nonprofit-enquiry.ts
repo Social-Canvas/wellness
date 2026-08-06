@@ -11,7 +11,7 @@ export const NONPROFIT_ENQUIRY_HEADING =
   "Let’s support your organization" as const
 
 export const NONPROFIT_ENQUIRY_DESCRIPTION =
-  "Tell us a little about your nonprofit and the people you would like to support. Our team will follow up with partnership options and next steps." as const
+  "Help us understand your organization and the community you serve so we can explore an accessible Elevate partnership together." as const
 
 export const NONPROFIT_ENQUIRY_FORM_HEADING =
   "Request nonprofit membership information" as const
