@@ -201,6 +201,11 @@ test("inventory includes fifth activate-money-mindset key for mp4 only", () => {
     null
   )
   assert.equal(LOCAL_SESSION_INVENTORY_KEYS.length, 5)
+  assert.equal(
+    LOCAL_SESSION_INVENTORY_KEYS.find((e) => e.key === "visualization-alignment")
+      ?.provisionalTitle,
+    "Visualization"
+  )
 })
 
 // 15

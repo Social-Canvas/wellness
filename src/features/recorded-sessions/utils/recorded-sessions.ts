@@ -213,7 +213,7 @@ export const LOCAL_SESSION_INVENTORY_KEYS = [
   {
     key: "visualization-alignment",
     filenamePatterns: [/visualization[_\s-]*alignment\.mp4$/i],
-    provisionalTitle: "Visualization Alignment",
+    provisionalTitle: "Visualization",
   },
   {
     key: "activate-money-mindset",

@@ -39,7 +39,7 @@ const INVENTORY_KEYS = [
   },
   {
     key: "visualization-alignment",
-    provisionalTitle: "Visualization Alignment",
+    provisionalTitle: "Visualization",
     patterns: [/visualization[_\s-]*alignment\.mp4$/i],
   },
   {
@@ -48,6 +48,14 @@ const INVENTORY_KEYS = [
     patterns: [/activate[_\s-]?money[_\s-]?mindset\.mp4$/i],
   },
 ]
+
+/** Confirmed upload batch — WAV/Money Mindset excluded until a real MP4 exists. */
+const CONFIRMED_UPLOAD_KEYS = new Set([
+  "inner-child-healing",
+  "manifestation-breathwork",
+  "trauma-healing",
+  "visualization-alignment",
+])
 
 function loadEnv(path) {
   if (!existsSync(path)) return {}
@@ -260,6 +268,12 @@ async function main() {
         chosenAsset?.playbackId ?? videoMatch?.mux_playback_id ?? null,
       existingSessionId: existing?.id ?? null,
       action: "missing",
+    }
+
+    if (!CONFIRMED_UPLOAD_KEYS.has(key.key)) {
+      entry.action = local ? "deferred_unconfirmed" : "skipped_no_mp4"
+      report.push(entry)
+      continue
     }
 
     if (!local) {
