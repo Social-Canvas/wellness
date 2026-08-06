@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url"
 import {
   ANNUAL_BILLING_NOTE,
   getMembershipPriceQuote,
+  yearlyComparisonCents,
   yearlySavingsCents,
   yearlySavingsPercent,
 } from "../../../lib/constants/membership-pricing.ts"
@@ -106,20 +107,29 @@ test("Platinum annual shows $1,500", () => {
 test("Core annual saving is $64 and 11%", () => {
   assert.equal(yearlySavingsCents("plan-1"), 6400)
   assert.equal(yearlySavingsPercent("plan-1"), 11)
-  assert.match(
-    getMembershipPriceQuote("plan-1", "yearly").savingsBadge ?? "",
-    /Save \$64 a year · 11%/
-  )
+  const quote = getMembershipPriceQuote("plan-1", "yearly")
+  assert.equal(quote.savingsBadge, "Save 11%")
+  assert.equal(quote.savingsAmountLabel, "Save $64 annually")
 })
 
 test("Gold annual saving is $188 and 16%", () => {
   assert.equal(yearlySavingsCents("plan-2"), 18800)
   assert.equal(yearlySavingsPercent("plan-2"), 16)
+  assert.equal(getMembershipPriceQuote("plan-2", "yearly").savingsBadge, "Save 16%")
+  assert.equal(
+    getMembershipPriceQuote("plan-2", "yearly").savingsAmountLabel,
+    "Save $188 annually"
+  )
 })
 
 test("Platinum annual saving is $288 and 16%", () => {
   assert.equal(yearlySavingsCents("plan-3"), 28800)
   assert.equal(yearlySavingsPercent("plan-3"), 16)
+  assert.equal(getMembershipPriceQuote("plan-3", "yearly").savingsBadge, "Save 16%")
+  assert.equal(
+    getMembershipPriceQuote("plan-3", "yearly").savingsAmountLabel,
+    "Save $288 annually"
+  )
 })
 
 test("Annual equivalent monthly values are correct", () => {
@@ -137,13 +147,68 @@ test("Annual equivalent monthly values are correct", () => {
   )
 })
 
+test("Core comparison shows $564 from monthly × 12", () => {
+  assert.equal(yearlyComparisonCents("plan-1"), 56400)
+  const quote = getMembershipPriceQuote("plan-1", "yearly")
+  assert.equal(quote.yearlyComparisonLabel, "$564")
+  assert.equal(quote.yearlyComparisonHint, "when paid monthly")
+})
+
+test("Gold comparison shows $1,188 from monthly × 12", () => {
+  assert.equal(yearlyComparisonCents("plan-2"), 118800)
+  assert.equal(
+    getMembershipPriceQuote("plan-2", "yearly").yearlyComparisonLabel,
+    "$1,188"
+  )
+})
+
+test("Platinum comparison shows $1,788 from monthly × 12", () => {
+  assert.equal(yearlyComparisonCents("plan-3"), 178800)
+  assert.equal(
+    getMembershipPriceQuote("plan-3", "yearly").yearlyComparisonLabel,
+    "$1,788"
+  )
+})
+
+test("Accessible labels explain the annual comparison", () => {
+  const core = getMembershipPriceQuote("plan-1", "yearly")
+  assert.match(
+    core.accessiblePriceSummary ?? "",
+    /Annual price \$500\. Compared with \$564 when paying monthly\. Save \$64, or 11 percent\./
+  )
+  const gold = getMembershipPriceQuote("plan-2", "yearly")
+  assert.match(
+    gold.accessiblePriceSummary ?? "",
+    /Annual price \$1,000\. Compared with \$1,188 when paying monthly\. Save \$188, or 16 percent\./
+  )
+  const platinum = getMembershipPriceQuote("plan-3", "yearly")
+  assert.match(
+    platinum.accessiblePriceSummary ?? "",
+    /Annual price \$1,500\. Compared with \$1,788 when paying monthly\. Save \$288, or 16 percent\./
+  )
+})
+
 test("Annual copy clearly says billed yearly", () => {
   assert.match(ANNUAL_BILLING_NOTE, /once per year/i)
   assert.doesNotMatch(ANNUAL_BILLING_NOTE, /billed monthly/i)
 })
 
-test("Monthly mode has no savings badge", () => {
-  assert.equal(getMembershipPriceQuote("plan-2", "monthly").savingsBadge, null)
+test("Monthly mode has no savings badge or comparison", () => {
+  const quote = getMembershipPriceQuote("plan-2", "monthly")
+  assert.equal(quote.primaryLabel, "$99")
+  assert.equal(quote.cadenceSuffix, "/ month")
+  assert.equal(quote.savingsBadge, null)
+  assert.equal(quote.savingsAmountLabel, null)
+  assert.equal(quote.yearlyComparisonLabel, null)
+  assert.equal(quote.yearlyComparisonHint, null)
+  assert.equal(quote.accessiblePriceSummary, null)
+  assert.equal(quote.equivalentMonthlyLabel, null)
+})
+
+test("Monthly prices remain unchanged", () => {
+  assert.equal(getMembershipPriceQuote("plan-1", "monthly").primaryLabel, "$47")
+  assert.equal(getMembershipPriceQuote("plan-2", "monthly").primaryLabel, "$99")
+  assert.equal(getMembershipPriceQuote("plan-3", "monthly").primaryLabel, "$149")
 })
 
 test("Current annual plan never starts duplicate Checkout", () => {
@@ -382,6 +447,38 @@ test("Billing sync preserves popstate URL restoration without Stripe Price IDs",
   const cards = readCheckoutSrc("components/membership-pricing-cards.tsx")
   assert.doesNotMatch(cards, /price_/)
   assert.match(cards, /MembershipBillingToggle/)
+})
+
+test("Annual pricing cards highlight savings with monthly comparison", () => {
+  const cards = readCheckoutSrc("components/membership-pricing-cards.tsx")
+  assert.match(cards, /yearlyComparisonLabel/)
+  assert.match(cards, /yearlyComparisonHint/)
+  assert.match(cards, /accessiblePriceSummary/)
+  assert.match(cards, /savingsAmountLabel/)
+  assert.match(cards, /<del/)
+  assert.match(cards, /aria-hidden/)
+  assert.match(cards, /sr-only/)
+  assert.match(cards, /flex-wrap/)
+  assert.match(cards, /min-w-0/)
+  assert.match(cards, /shrink-0/)
+  assert.doesNotMatch(cards, /price_/)
+  assert.doesNotMatch(cards, /STRIPE/)
+})
+
+test("Stripe and Checkout behavior remain interval-based without Price IDs", () => {
+  const cards = readCheckoutSrc("components/membership-pricing-cards.tsx")
+  assert.match(cards, /interval=/)
+  assert.match(cards, /planSlug=/)
+  assert.doesNotMatch(cards, /price_/)
+
+  const available = buildMembershipPlanCardView(
+    "plan-1",
+    { ...emptyMembershipPlanCtaFacts(false), yearlyCheckoutAvailable: true },
+    "yearly"
+  )
+  assert.ok(available.ctaHref)
+  assert.match(available.ctaHref, /interval=yearly/)
+  assert.doesNotMatch(available.ctaHref, /price_/)
 })
 
 test("Audience tabs remain primary tabs and are not a billing switch", () => {

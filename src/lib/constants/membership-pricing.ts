@@ -23,10 +23,23 @@ export type MembershipPriceQuote = {
   cadenceSuffix: string
   /** Only set for yearly — e.g. "Equivalent to $41.67/month". */
   equivalentMonthlyLabel: string | null
-  /** Only set for yearly — e.g. "Save $64 a year · 11%". */
+  /** Compact percent badge for yearly — e.g. "Save 11%". */
   savingsBadge: string | null
+  /** Dollar savings supporting line — e.g. "Save $64 annually". */
+  savingsAmountLabel: string | null
+  /** monthly×12 formatted for comparison — e.g. "$564". */
+  yearlyComparisonLabel: string | null
+  /** Explains the comparison amount — e.g. "when paid monthly". */
+  yearlyComparisonHint: string | null
+  /**
+   * Screen-reader summary of annual vs monthly-year cost.
+   * Visual strikethrough must not be announced as the charged amount.
+   */
+  accessiblePriceSummary: string | null
   savingsCents: number | null
   savingsPercent: number | null
+  /** monthly×12 in cents — yearly only. */
+  yearlyComparisonCents: number | null
 }
 
 const MONTHLY_CENTS: Record<MembershipSlug, number> = {
@@ -47,6 +60,8 @@ const YEARLY_SAVINGS_PERCENT: Record<MembershipSlug, number> = {
   "plan-2": 16,
   "plan-3": 16,
 }
+
+const YEARLY_COMPARISON_HINT = "when paid monthly" as const
 
 function formatUsdFromCents(cents: number): string {
   const dollars = cents / 100
@@ -79,8 +94,13 @@ export function yearlyAmountCents(planSlug: MembershipSlug): number {
   return YEARLY_CENTS[planSlug]
 }
 
+/** Cost of 12 months at the monthly rate (not an old list price). */
+export function yearlyComparisonCents(planSlug: MembershipSlug): number {
+  return MONTHLY_CENTS[planSlug] * 12
+}
+
 export function yearlySavingsCents(planSlug: MembershipSlug): number {
-  return MONTHLY_CENTS[planSlug] * 12 - YEARLY_CENTS[planSlug]
+  return yearlyComparisonCents(planSlug) - YEARLY_CENTS[planSlug]
 }
 
 export function yearlySavingsPercent(planSlug: MembershipSlug): number {
@@ -102,26 +122,40 @@ export function getMembershipPriceQuote(
       cadenceSuffix: "/ month",
       equivalentMonthlyLabel: null,
       savingsBadge: null,
+      savingsAmountLabel: null,
+      yearlyComparisonLabel: null,
+      yearlyComparisonHint: null,
+      accessiblePriceSummary: null,
       savingsCents: null,
       savingsPercent: null,
+      yearlyComparisonCents: null,
     }
   }
 
   const amountCents = YEARLY_CENTS[planSlug]
+  const comparisonCents = yearlyComparisonCents(planSlug)
   const savingsCents = yearlySavingsCents(planSlug)
   const savingsPercent = YEARLY_SAVINGS_PERCENT[planSlug]
+  const primaryLabel = formatUsdFromCents(amountCents)
+  const comparisonLabel = formatUsdFromCents(comparisonCents)
+  const savingsDollars = formatUsdFromCents(savingsCents)
 
   return {
     planSlug,
     interval,
     amountCents,
     currency: "usd",
-    primaryLabel: formatUsdFromCents(amountCents),
+    primaryLabel,
     cadenceSuffix: "/ year",
     equivalentMonthlyLabel: `Equivalent to ${formatEquivalentMonthly(amountCents)}/month`,
-    savingsBadge: `Save ${formatUsdFromCents(savingsCents)} a year · ${savingsPercent}%`,
+    savingsBadge: `Save ${savingsPercent}%`,
+    savingsAmountLabel: `Save ${savingsDollars} annually`,
+    yearlyComparisonLabel: comparisonLabel,
+    yearlyComparisonHint: YEARLY_COMPARISON_HINT,
+    accessiblePriceSummary: `Annual price ${primaryLabel}. Compared with ${comparisonLabel} when paying monthly. Save ${savingsDollars}, or ${savingsPercent} percent.`,
     savingsCents,
     savingsPercent,
+    yearlyComparisonCents: comparisonCents,
   }
 }
 

@@ -132,20 +132,51 @@ function MembershipPricingCard({
         </p>
       ) : null}
 
-      <div className="mt-1 mb-1 font-display text-[30px] font-semibold text-ink">
-        {quote.primaryLabel}
-        <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-          {quote.cadenceSuffix}
-        </small>
-      </div>
-
-      {quote.equivalentMonthlyLabel ? (
-        <p className="mb-1 text-sm text-ink-soft">{quote.equivalentMonthlyLabel}</p>
+      {quote.accessiblePriceSummary ? (
+        <p className="sr-only">{quote.accessiblePriceSummary}</p>
       ) : null}
 
-      {quote.savingsBadge ? (
-        <p className="mb-3 text-sm font-semibold text-green-deep">
-          {quote.savingsBadge}
+      <div
+        className="mt-1 mb-1 flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1"
+        aria-hidden={quote.accessiblePriceSummary ? true : undefined}
+      >
+        <div className="font-display text-[30px] leading-none font-semibold text-ink">
+          {quote.primaryLabel}
+          <small className="ml-1 font-body text-sm font-normal text-ink-soft">
+            {quote.cadenceSuffix}
+          </small>
+        </div>
+        {quote.savingsBadge ? (
+          <span className="inline-flex shrink-0 items-center rounded-md bg-green/15 px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-green-deep uppercase">
+            {quote.savingsBadge}
+          </span>
+        ) : null}
+      </div>
+
+      {quote.yearlyComparisonLabel && quote.yearlyComparisonHint ? (
+        <p
+          className="mb-1 min-w-0 text-sm text-ink-soft"
+          aria-hidden={quote.accessiblePriceSummary ? true : undefined}
+        >
+          <del className="text-ink-soft/80 decoration-ink-soft/70">
+            {quote.yearlyComparisonLabel}
+          </del>{" "}
+          <span>{quote.yearlyComparisonHint}</span>
+        </p>
+      ) : null}
+
+      {quote.equivalentMonthlyLabel ? (
+        <p
+          className="mb-3 min-w-0 text-sm text-ink-soft"
+          aria-hidden={quote.accessiblePriceSummary ? true : undefined}
+        >
+          <span>{quote.equivalentMonthlyLabel}</span>
+          {quote.savingsAmountLabel ? (
+            <span>
+              {" · "}
+              {quote.savingsAmountLabel}
+            </span>
+          ) : null}
         </p>
       ) : (
         <div className="mb-3.5" />
