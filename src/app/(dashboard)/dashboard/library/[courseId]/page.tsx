@@ -5,9 +5,11 @@ import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { CourseCertificateCard } from "@/features/certificates/components"
 import { issueCertificate } from "@/features/certificates/services/certificates.service"
 import {
+  CourseResourcesSection,
   LibraryModuleList,
   LibraryPageHeader,
 } from "@/features/content/components"
+import { listCourseResourcesForMember } from "@/features/content/services/course-resources.service"
 import { getAccessibleCourse } from "@/features/content/services/content.service"
 import { CourseProgressSummary } from "@/features/progress/components"
 import { calculateCourseProgress } from "@/features/progress/services/progress.service"
@@ -116,6 +118,12 @@ export default async function CourseLibraryPage({
     }
   }
 
+  const resourcesResult = !isPreview
+    ? await listCourseResourcesForMember(profileResult.data.id, course.id)
+    : null
+  const resources =
+    resourcesResult?.success === true ? resourcesResult.data : []
+
   return (
     <div className="mt-9 space-y-6">
       <LibraryPageHeader
@@ -150,6 +158,10 @@ export default async function CourseLibraryPage({
         modules={course.modules}
         preview={isPreview}
       />
+
+      {!isPreview ? (
+        <CourseResourcesSection courseId={course.id} resources={resources} />
+      ) : null}
     </div>
   )
 }

@@ -8,10 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui"
-import { BrandImage } from "@/components/media"
+import { MediaThumbnail } from "@/components/media"
 import type { LibraryCourse } from "@/features/content/types"
 import type { LibraryCourseCardProgressView } from "@/features/content/utils/library-course-card-progress"
-import { BRAND_IMAGES } from "@/lib/brand/images"
 
 import { LibraryCertificatePlaceholder } from "./LibraryCertificatePlaceholder"
 
@@ -21,14 +20,12 @@ interface LibraryCourseCardProps {
 }
 
 export function LibraryCourseCard({ course, progress }: LibraryCourseCardProps) {
-  const thumbnail = course.thumbnailUrl
-    ? { src: course.thumbnailUrl, alt: `${course.title} course thumbnail` }
-    : BRAND_IMAGES.meditationSession
-
   const card = (
     <Card className="h-full overflow-hidden transition-colors group-hover:border-blue/30 group-hover:bg-blue-soft/20">
-      <BrandImage
-        image={thumbnail}
+      <MediaThumbnail
+        media={{ thumbnailUrl: course.thumbnailUrl }}
+        alt={`${course.title} course thumbnail`}
+        title={course.title}
         containerClassName="aspect-[16/9] w-full border-b border-line"
         sizes="(max-width: 860px) 100vw, 33vw"
       />

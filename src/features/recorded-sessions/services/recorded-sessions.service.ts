@@ -24,6 +24,7 @@ import {
   isRecordedSessionMemberVisible,
   sortRecordedSessionsNewestFirst,
 } from "@/features/recorded-sessions/utils/recorded-sessions"
+import { resolveMediaThumbnail } from "@/lib/media/resolve-media-thumbnail"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { canAccessRecordedSessions } from "@/server/services/entitlement.service"
 import type { Database } from "@/types/database/supabase"
@@ -70,6 +71,11 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
 }
 
 function toListItem(row: RecordedSession): RecordedSessionListItem {
+  const resolvedThumb = resolveMediaThumbnail({
+    thumbnailUrl: row.thumbnail_url,
+    muxPlaybackId: row.mux_playback_id,
+  })
+
   return {
     id: row.id,
     slug: row.slug,
@@ -83,7 +89,7 @@ function toListItem(row: RecordedSession): RecordedSessionListItem {
     weekNumber: row.week_number,
     weeklyTopic: row.weekly_topic,
     focus: row.focus,
-    thumbnailUrl: row.thumbnail_url,
+    thumbnailUrl: resolvedThumb.kind === "url" ? resolvedThumb.src : null,
     displayOrder: row.display_order,
   }
 }

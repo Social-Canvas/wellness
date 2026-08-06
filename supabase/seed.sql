@@ -304,7 +304,8 @@ join lateral (
 on conflict (module_id, slug) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Placeholder videos & lessons: Autoimmune Masterclass (5 × 60 min)
+-- Placeholder videos & lessons: Autoimmune Masterclass
+-- Intro + five masterclass days (titles/order filled by import script from files)
 -- ---------------------------------------------------------------------------
 
 insert into public.videos (title, duration_seconds, status)
@@ -343,6 +344,42 @@ join lateral (
   select vid.id
   from public.videos vid
   where vid.title = format('Autoimmune Masterclass — Lesson %s (placeholder)', lpad(gs::text, 2, '0'))
+  limit 1
+) v on true
+on conflict (module_id, slug) do nothing;
+
+-- Optional intro lesson row (created idempotently if missing; Mux filled by import)
+insert into public.videos (title, duration_seconds, status)
+select 'Intro to Autoimmune', 313, 'draft'
+where not exists (
+  select 1
+  from public.lessons l
+  join public.modules m on m.id = l.module_id
+  join public.courses c on c.id = m.course_id
+  where c.slug = 'autoimmune-masterclass'
+    and l.slug = 'intro'
+);
+
+insert into public.lessons (module_id, video_id, slug, title, sort_order, status)
+select
+  m.id,
+  v.id,
+  'intro',
+  'Intro to Autoimmune',
+  0,
+  'published'
+from (
+  select mod.id
+  from public.modules mod
+  join public.courses c on c.id = mod.course_id
+  where c.slug = 'autoimmune-masterclass'
+    and mod.slug = 'main'
+  limit 1
+) m
+join lateral (
+  select vid.id
+  from public.videos vid
+  where vid.title = 'Intro to Autoimmune'
   limit 1
 ) v on true
 on conflict (module_id, slug) do nothing;
@@ -703,6 +740,12 @@ set granted_course_id = c.id
 from public.courses as c
 where p.slug = '7-day-reset'
   and c.slug = '7-day-reset-meditation-series';
+
+update public.products as p
+set granted_course_id = c.id
+from public.courses as c
+where p.slug = 'autoimmune-masterclass'
+  and c.slug = 'autoimmune-masterclass';
 
 -- ---------------------------------------------------------------------------
 -- Content access (plan → course)

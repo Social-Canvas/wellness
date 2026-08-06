@@ -97,7 +97,10 @@ export function LessonPlayerView({
     ? resolveLessonHref(lesson.courseId, navigation.next.id, preview)
     : null
 
-  const poster = resolvePosterUrl(lesson.video?.thumbnailUrl)
+  const poster = resolvePosterUrl(
+    lesson.video?.thumbnailUrl,
+    lesson.video?.muxPlaybackId
+  )
   const video = lesson.video
 
   useEffect(() => {

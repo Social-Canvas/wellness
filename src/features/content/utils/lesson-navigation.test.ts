@@ -351,6 +351,12 @@ test("invalid or missing poster does not resolve to a renderable URL", () => {
   )
 })
 
+test("poster falls back to Mux playback ID when thumbnail is missing", () => {
+  const url = resolvePosterUrl(null, "playback_abc")
+  assert.ok(url)
+  assert.match(url!, /image\.mux\.com\/playback_abc\/thumbnail\.jpg/)
+})
+
 test("preview query is preserved only via server-authorized flag helpers", () => {
   assert.equal(
     resolveLessonHref("course-1", "lesson-1", true),

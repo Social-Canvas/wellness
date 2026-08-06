@@ -209,6 +209,65 @@ export type Database = {
           },
         ]
       }
+      course_resources: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          file_name: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          slug: string
+          sort_order: number
+          status: Database["public"]["Enums"]["publish_status"]
+          storage_bucket: string
+          storage_path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          slug: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["publish_status"]
+          storage_bucket?: string
+          storage_path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          slug?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["publish_status"]
+          storage_bucket?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_resources_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           certificate_enabled: boolean

@@ -1,11 +1,10 @@
 import Link from "next/link"
 
 import { Badge, buttonVariants } from "@/components/ui"
-import { BrandImage } from "@/components/media"
+import { MediaThumbnail } from "@/components/media"
 import { formatDuration } from "@/features/content/utils/format-duration"
 import type { RecordedSessionListItem } from "@/features/recorded-sessions/types"
 import { formatFocusLabel } from "@/features/recorded-sessions/utils/recorded-sessions"
-import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 interface RecordedSessionCardProps {
@@ -17,10 +16,6 @@ export function RecordedSessionCard({
   session,
   featured = false,
 }: RecordedSessionCardProps) {
-  const thumbnail = session.thumbnailUrl
-    ? { src: session.thumbnailUrl, alt: `${session.title} session thumbnail` }
-    : BRAND_IMAGES.meditationSession
-
   const focusLabel = formatFocusLabel(session.focus)
   const metaParts = [
     session.monthlyTheme,
@@ -39,8 +34,10 @@ export function RecordedSessionCard({
       }
     >
       <div className={featured ? "grid gap-0 lg:grid-cols-[1.2fr_1fr]" : ""}>
-        <BrandImage
-          image={thumbnail}
+        <MediaThumbnail
+          media={{ thumbnailUrl: session.thumbnailUrl }}
+          alt={`${session.title} session thumbnail`}
+          title={session.title}
           containerClassName={
             featured
               ? "aspect-[16/10] w-full border-b border-line lg:aspect-auto lg:min-h-[18rem] lg:border-b-0 lg:border-r"
