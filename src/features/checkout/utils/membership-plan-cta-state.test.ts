@@ -36,12 +36,15 @@ function personalFacts(
     source: "personal_stripe",
     status: "active",
     effectiveTierSlug: "plan-1",
+    billingInterval: "monthly",
     hasPersonalBilling: true,
     cancelAtPeriodEnd: false,
     currentPeriodEnd: "2026-09-01T00:00:00.000Z",
     scheduledPlanSlug: null,
     scheduledPlanName: null,
+    scheduledBillingInterval: null,
     organizationName: null,
+    yearlyCheckoutAvailable: true,
     ...overrides,
   }
 }
@@ -372,10 +375,15 @@ test("24. Homepage testimonial carousel remains unchanged", () => {
 test("25. Feature surfaces use entitlement resolvers without Stripe price hardcoding", () => {
   const programs = readSrc("app/(public)/programs/page.tsx")
   assert.match(programs, /getEffectiveMembership/)
-  assert.match(programs, /buildAllMembershipPlanCardViews/)
+  assert.match(programs, /membershipPlanCtaFactsFromEffective/)
   assert.match(programs, /buildLiveBreathworkOfferView/)
   assert.doesNotMatch(programs, /Watch intro/)
   assert.doesNotMatch(programs, /VideoPreviewModal/)
+
+  const cards = readSrc(
+    "features/checkout/components/membership-pricing-cards.tsx"
+  )
+  assert.match(cards, /buildAllMembershipPlanCardViews/)
 
   const cta = readSrc("features/checkout/utils/membership-plan-cta-state.ts")
   assert.doesNotMatch(cta, /price_/)

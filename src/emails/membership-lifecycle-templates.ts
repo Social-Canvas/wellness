@@ -14,7 +14,10 @@ export type LifecycleTemplateInput = {
   firstName?: string | null
   membershipName: string
   organizationName?: string | null
+  billingIntervalLabel?: string | null
+  amountLabel?: string | null
   effectiveDateLabel?: string | null
+  nextRenewalLabel?: string | null
   privileges?: MembershipPrivilegeSummary
   cta: { label: string; href: string }
   supportHint?: string
@@ -66,8 +69,15 @@ export function buildMembershipStartedTemplate(input: LifecycleTemplateInput): E
   const name = greetingName(input.firstName)
   const intro = `Hi ${name}, your ${input.membershipName} membership is now active.`
   const bodyLines = [
+    ...(input.billingIntervalLabel
+      ? [`Billing: ${input.billingIntervalLabel}`]
+      : []),
+    ...(input.amountLabel ? [`Amount: ${input.amountLabel}`] : []),
     ...(input.effectiveDateLabel
       ? [`Effective date: ${input.effectiveDateLabel}`]
+      : []),
+    ...(input.nextRenewalLabel
+      ? [`Next renewal: ${input.nextRenewalLabel}`]
       : []),
     ...privilegeLines(input.privileges),
     "Open your programs to begin your next session.",
@@ -111,6 +121,9 @@ export function buildMembershipDowngradeScheduledTemplate(
     input.effectiveDateLabel
       ? `This change takes effect on ${input.effectiveDateLabel}. Until then, your current privileges remain.`
       : "This change takes effect at the end of your current billing period. Until then, your current privileges remain.",
+    ...(input.billingIntervalLabel
+      ? [`Scheduled billing: ${input.billingIntervalLabel}`]
+      : []),
     ...privilegeLines(input.privileges),
   ]
   return buildTemplate({
@@ -151,8 +164,13 @@ export function buildMembershipCancellationScheduledTemplate(
   const intro = `Hi ${name}, your ${input.membershipName} cancellation is scheduled.`
   const bodyLines = [
     input.effectiveDateLabel
-      ? `You keep access until ${input.effectiveDateLabel}.`
+      ? input.billingIntervalLabel?.toLowerCase().includes("annual")
+        ? `Your annual membership remains active until ${input.effectiveDateLabel}.`
+        : `You keep access until ${input.effectiveDateLabel}.`
       : "You keep access until the end of your current billing period.",
+    ...(input.billingIntervalLabel
+      ? [`Billing: ${input.billingIntervalLabel}`]
+      : []),
     "You can manage billing from your account if you change your mind before then.",
   ]
   return buildTemplate({

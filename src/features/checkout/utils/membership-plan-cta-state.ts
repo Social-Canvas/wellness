@@ -42,12 +42,16 @@ export type MembershipCtaStatus =
   | "paused"
   | "suspended"
 
+/** DB billing interval; null when complimentary/sponsored or unknown. */
+export type MembershipCtaBillingInterval = "monthly" | "yearly"
+
 export type MembershipPlanCtaKind =
   | "join"
   | "current"
   | "upgrade"
   | "downgrade"
   | "downgrade_scheduled"
+  | "switch_cadence"
   | "unavailable"
 
 export type MembershipPlanCtaFacts = {
@@ -55,12 +59,17 @@ export type MembershipPlanCtaFacts = {
   source: MembershipCtaAccessSource
   status: MembershipCtaStatus
   effectiveTierSlug: MembershipPlanSlug | null
+  /** Personal Stripe cadence; null for sponsored/complimentary/none. */
+  billingInterval: MembershipCtaBillingInterval | null
   hasPersonalBilling: boolean
   cancelAtPeriodEnd: boolean
   currentPeriodEnd: string | null
   scheduledPlanSlug: MembershipPlanSlug | null
   scheduledPlanName: string | null
+  scheduledBillingInterval: MembershipCtaBillingInterval | null
   organizationName: string | null
+  /** When false, yearly Checkout CTAs are disabled (missing Price config). */
+  yearlyCheckoutAvailable: boolean
 }
 
 export type MembershipPlanCardView = {
@@ -74,13 +83,21 @@ export type MembershipPlanCardView = {
   ctaHref: string | null
   ctaDisabled: boolean
   allowsCheckout: boolean
-  visuallyCurrent: boolean
+  visuallyCurrent: false | true
 }
 
 function isMembershipPlanSlug(value: string | null | undefined): value is MembershipPlanSlug {
   return (
-    value === "plan-1" || value === "plan-2" || value === "plan-3"
+    value === "plan-1" ||
+    value === "plan-2" ||
+    value === "plan-3"
   )
+}
+
+function isBillingInterval(
+  value: string | null | undefined
+): value is MembershipCtaBillingInterval {
+  return value === "monthly" || value === "yearly"
 }
 
 export function shortPlanName(slug: string | null | undefined): string {
@@ -114,11 +131,14 @@ export function formatMembershipPeriodDate(value: string | null): string | null 
   }).format(date)
 }
 
-function buildCheckoutHref(planSlug: MembershipPlanSlug): string {
+function buildCheckoutHref(
+  planSlug: MembershipPlanSlug,
+  interval: MembershipCtaBillingInterval
+): string {
   const search = new URLSearchParams({
     type: "membership",
     planSlug,
-    interval: "monthly",
+    interval,
   })
   return `/checkout/consent?${search.toString()}`
 }
@@ -126,6 +146,17 @@ function buildCheckoutHref(planSlug: MembershipPlanSlug): string {
 function buildDowngradeHref(planSlug: MembershipPlanSlug): string {
   const search = new URLSearchParams({
     downgrade: planSlug,
+  })
+  return `/dashboard/account?${search.toString()}`
+}
+
+function buildCadenceSwitchHref(
+  planSlug: MembershipPlanSlug,
+  targetInterval: MembershipCtaBillingInterval
+): string {
+  const search = new URLSearchParams({
+    switchInterval: targetInterval,
+    plan: planSlug,
   })
   return `/dashboard/account?${search.toString()}`
 }
@@ -147,17 +178,30 @@ function currentCardSourceLabel(facts: MembershipPlanCtaFacts): string | null {
 function currentCardStatusNote(facts: MembershipPlanCtaFacts): string | null {
   const periodEnd = formatMembershipPeriodDate(facts.currentPeriodEnd)
 
-  if (facts.scheduledPlanName || facts.scheduledPlanSlug) {
-    const target =
+  if (facts.scheduledPlanName || facts.scheduledPlanSlug || facts.scheduledBillingInterval) {
+    const targetPlan =
       facts.scheduledPlanName ?? shortPlanName(facts.scheduledPlanSlug)
+    const cadence =
+      facts.scheduledBillingInterval === "yearly"
+        ? "annual"
+        : facts.scheduledBillingInterval === "monthly"
+          ? "monthly"
+          : null
+    const targetLabel = cadence
+      ? `${targetPlan} (${cadence} billing)`
+      : targetPlan
     return periodEnd
-      ? `Scheduled change to ${target} on ${periodEnd}.`
-      : `Scheduled change to ${target} at period end.`
+      ? `Scheduled change to ${targetLabel} on ${periodEnd}.`
+      : `Scheduled change to ${targetLabel} at period end.`
   }
 
   if (facts.cancelAtPeriodEnd || facts.status === "cancel_at_period_end") {
+    const annual =
+      facts.billingInterval === "yearly"
+        ? "Your annual membership remains active until "
+        : "Cancellation scheduled — access continues until "
     return periodEnd
-      ? `Cancellation scheduled — access continues until ${periodEnd}.`
+      ? `${annual}${periodEnd}.`
       : "Cancellation scheduled — access continues until period end."
   }
 
@@ -165,14 +209,45 @@ function currentCardStatusNote(facts: MembershipPlanCtaFacts): string | null {
 }
 
 /**
- * Maps trusted server membership facts to a single plan card presentation.
+ * Classify whether a plan+interval change should be immediate (after payment)
+ * or scheduled for period end.
+ */
+export function classifyMembershipBillingChange(input: {
+  currentPlanSlug: MembershipPlanSlug
+  currentInterval: MembershipCtaBillingInterval
+  targetPlanSlug: MembershipPlanSlug
+  targetInterval: MembershipCtaBillingInterval
+}): "immediate" | "period_end" {
+  const currentRank = MEMBERSHIP_PLAN_RANK[input.currentPlanSlug]
+  const targetRank = MEMBERSHIP_PLAN_RANK[input.targetPlanSlug]
+
+  if (targetRank < currentRank) {
+    return "period_end"
+  }
+
+  if (
+    input.currentInterval === "yearly" &&
+    input.targetInterval === "monthly"
+  ) {
+    return "period_end"
+  }
+
+  return "immediate"
+}
+
+/**
+ * Maps trusted server membership facts to a single plan card presentation
+ * for the selected pricing-board billing interval.
  */
 export function buildMembershipPlanCardView(
   planSlug: MembershipPlanSlug,
-  facts: MembershipPlanCtaFacts
+  facts: MembershipPlanCtaFacts,
+  selectedInterval: MembershipCtaBillingInterval = "monthly"
 ): MembershipPlanCardView {
   const shortName = MEMBERSHIP_PLAN_SHORT_NAMES[planSlug]
-  const joinHref = buildCheckoutHref(planSlug)
+  const joinHref = buildCheckoutHref(planSlug, selectedInterval)
+  const yearlyBlocked =
+    selectedInterval === "yearly" && !facts.yearlyCheckoutAvailable
 
   if (!facts.isAuthenticated || !facts.effectiveTierSlug || !isLiveMembershipAccess(facts.status)) {
     return {
@@ -181,20 +256,26 @@ export function buildMembershipPlanCardView(
       isCurrent: false,
       badge: null,
       sourceLabel: null,
-      statusNote: null,
+      statusNote: yearlyBlocked
+        ? "Annual checkout is not available yet."
+        : null,
       ctaLabel: `Join Elevate ${shortName}`,
-      ctaHref: joinHref,
-      ctaDisabled: false,
-      allowsCheckout: true,
+      ctaHref: yearlyBlocked ? null : joinHref,
+      ctaDisabled: yearlyBlocked,
+      allowsCheckout: !yearlyBlocked,
       visuallyCurrent: false,
     }
   }
 
   const currentRank = MEMBERSHIP_PLAN_RANK[facts.effectiveTierSlug]
   const cardRank = MEMBERSHIP_PLAN_RANK[planSlug]
-  const isCurrent = planSlug === facts.effectiveTierSlug
+  const sameTier = planSlug === facts.effectiveTierSlug
+  const currentInterval = facts.billingInterval
+  const sameCadence =
+    currentInterval != null && currentInterval === selectedInterval
 
-  if (isCurrent) {
+  // Same tier + same cadence → current plan.
+  if (sameTier && (sameCadence || currentInterval == null)) {
     const sourceLabel = currentCardSourceLabel(facts)
     const badge =
       facts.source === "complimentary"
@@ -218,7 +299,117 @@ export function buildMembershipPlanCardView(
     }
   }
 
+  // Same tier, other cadence (personal Stripe only).
+  if (
+    sameTier &&
+    facts.hasPersonalBilling &&
+    currentInterval != null &&
+    currentInterval !== selectedInterval
+  ) {
+    const classification = classifyMembershipBillingChange({
+      currentPlanSlug: facts.effectiveTierSlug,
+      currentInterval,
+      targetPlanSlug: planSlug,
+      targetInterval: selectedInterval,
+    })
+    const periodEnd = formatMembershipPeriodDate(facts.currentPeriodEnd)
+    const switchLabel =
+      selectedInterval === "yearly" ? "Switch to annual" : "Switch to monthly"
+
+    if (yearlyBlocked && selectedInterval === "yearly") {
+      return {
+        planSlug,
+        kind: "unavailable",
+        isCurrent: false,
+        badge: null,
+        sourceLabel: null,
+        statusNote: "Annual checkout is not available yet.",
+        ctaLabel: switchLabel,
+        ctaHref: null,
+        ctaDisabled: true,
+        allowsCheckout: false,
+        visuallyCurrent: false,
+      }
+    }
+
+    if (classification === "period_end") {
+      return {
+        planSlug,
+        kind: "switch_cadence",
+        isCurrent: false,
+        badge: null,
+        sourceLabel: null,
+        statusNote: periodEnd
+          ? `Your billing will change to monthly on ${periodEnd}.`
+          : "Your billing will change to monthly at the end of your current annual period.",
+        ctaLabel: switchLabel,
+        ctaHref: buildCadenceSwitchHref(planSlug, selectedInterval),
+        ctaDisabled: false,
+        allowsCheckout: false,
+        visuallyCurrent: false,
+      }
+    }
+
+    // Immediate after payment (monthly → annual same tier).
+    return {
+      planSlug,
+      kind: "switch_cadence",
+      isCurrent: false,
+      badge: null,
+      sourceLabel: null,
+      statusNote:
+        "Preview the amount due before confirming. Access and cadence update only after payment succeeds.",
+      ctaLabel: switchLabel,
+      ctaHref: buildCadenceSwitchHref(planSlug, selectedInterval),
+      ctaDisabled: false,
+      allowsCheckout: false,
+      visuallyCurrent: false,
+    }
+  }
+
   if (cardRank > currentRank) {
+    if (yearlyBlocked) {
+      return {
+        planSlug,
+        kind: "unavailable",
+        isCurrent: false,
+        badge: null,
+        sourceLabel: null,
+        statusNote: "Annual checkout is not available yet.",
+        ctaLabel: `Upgrade to ${shortName}`,
+        ctaHref: null,
+        ctaDisabled: true,
+        allowsCheckout: false,
+        visuallyCurrent: false,
+      }
+    }
+
+    const classification =
+      facts.hasPersonalBilling && currentInterval
+        ? classifyMembershipBillingChange({
+            currentPlanSlug: facts.effectiveTierSlug,
+            currentInterval,
+            targetPlanSlug: planSlug,
+            targetInterval: selectedInterval,
+          })
+        : "immediate"
+
+    if (classification === "period_end") {
+      return {
+        planSlug,
+        kind: "downgrade",
+        isCurrent: false,
+        badge: null,
+        sourceLabel: null,
+        statusNote: null,
+        ctaLabel: `Change to ${shortName}`,
+        ctaHref: buildDowngradeHref(planSlug),
+        ctaDisabled: false,
+        allowsCheckout: false,
+        visuallyCurrent: false,
+      }
+    }
+
     return {
       planSlug,
       kind: "upgrade",
@@ -310,10 +501,11 @@ export function buildMembershipPlanCardView(
 }
 
 export function buildAllMembershipPlanCardViews(
-  facts: MembershipPlanCtaFacts
+  facts: MembershipPlanCtaFacts,
+  selectedInterval: MembershipCtaBillingInterval = "monthly"
 ): MembershipPlanCardView[] {
   return MEMBERSHIP_PLAN_SLUGS.map((slug) =>
-    buildMembershipPlanCardView(slug, facts)
+    buildMembershipPlanCardView(slug, facts, selectedInterval)
   )
 }
 
@@ -325,12 +517,15 @@ export function emptyMembershipPlanCtaFacts(
     source: "none",
     status: "none",
     effectiveTierSlug: null,
+    billingInterval: null,
     hasPersonalBilling: false,
     cancelAtPeriodEnd: false,
     currentPeriodEnd: null,
     scheduledPlanSlug: null,
     scheduledPlanName: null,
+    scheduledBillingInterval: null,
     organizationName: null,
+    yearlyCheckoutAvailable: false,
   }
 }
 
@@ -343,12 +538,15 @@ export function membershipPlanCtaFactsFromEffective(input: {
   source: MembershipCtaAccessSource
   status: MembershipCtaStatus
   effectiveTierSlug: string | null
+  billingInterval: string | null
   hasPersonalBilling: boolean
   cancelAtPeriodEnd: boolean
   currentPeriodEnd: string | null
   scheduledPlanSlug: string | null
   scheduledPlanName: string | null
+  scheduledBillingInterval: string | null
   organizationName: string | null
+  yearlyCheckoutAvailable: boolean
 }): MembershipPlanCtaFacts {
   if (!input.isAuthenticated) {
     return emptyMembershipPlanCtaFacts(false)
@@ -361,6 +559,9 @@ export function membershipPlanCtaFactsFromEffective(input: {
     effectiveTierSlug: isMembershipPlanSlug(input.effectiveTierSlug)
       ? input.effectiveTierSlug
       : null,
+    billingInterval: isBillingInterval(input.billingInterval)
+      ? input.billingInterval
+      : null,
     hasPersonalBilling: input.hasPersonalBilling,
     cancelAtPeriodEnd: input.cancelAtPeriodEnd,
     currentPeriodEnd: input.currentPeriodEnd,
@@ -368,6 +569,10 @@ export function membershipPlanCtaFactsFromEffective(input: {
       ? input.scheduledPlanSlug
       : null,
     scheduledPlanName: input.scheduledPlanName,
+    scheduledBillingInterval: isBillingInterval(input.scheduledBillingInterval)
+      ? input.scheduledBillingInterval
+      : null,
     organizationName: input.organizationName,
+    yearlyCheckoutAvailable: input.yearlyCheckoutAvailable,
   }
 }

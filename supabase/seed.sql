@@ -41,7 +41,7 @@ where p.slug = 'plan-1'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_1_yearly', 'yearly', 'usd', 56400, true
+select p.id, 'price_placeholder_plan_1_yearly', 'yearly', 'usd', 50000, true
 from public.plans p
 where p.slug = 'plan-1'
 on conflict (stripe_price_id) do nothing;
@@ -53,7 +53,7 @@ where p.slug = 'plan-2'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_2_yearly', 'yearly', 'usd', 118800, true
+select p.id, 'price_placeholder_plan_2_yearly', 'yearly', 'usd', 100000, true
 from public.plans p
 where p.slug = 'plan-2'
 on conflict (stripe_price_id) do nothing;
@@ -65,7 +65,7 @@ where p.slug = 'plan-3'
 on conflict (stripe_price_id) do nothing;
 
 insert into public.plan_prices (plan_id, stripe_price_id, billing_interval, currency, amount, is_active)
-select p.id, 'price_placeholder_plan_3_yearly', 'yearly', 'usd', 178800, true
+select p.id, 'price_placeholder_plan_3_yearly', 'yearly', 'usd', 150000, true
 from public.plans p
 where p.slug = 'plan-3'
 on conflict (stripe_price_id) do nothing;

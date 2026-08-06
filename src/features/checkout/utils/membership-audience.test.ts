@@ -257,11 +257,12 @@ test("15. Individual membership cards remain unchanged", () => {
   )
   const page = readSrc("app/(public)/programs/page.tsx")
   assert.match(page, /MembershipPricingCards/)
-  assert.match(page, /buildAllMembershipPlanCardViews/)
+  assert.match(page, /membershipPlanCtaFactsFromEffective/)
   assert.match(page, /getEffectiveMembership/)
   const cards = readSrc(
     "features/checkout/components/membership-pricing-cards.tsx"
   )
+  assert.match(cards, /buildAllMembershipPlanCardViews/)
   assert.match(cards, /grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3/)
   assert.match(cards, /Most popular/)
   assert.match(cards, /visuallyCurrent|Current complimentary plan|aria-current/)

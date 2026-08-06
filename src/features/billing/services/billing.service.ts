@@ -289,11 +289,15 @@ export async function createCheckoutSession(
         profile_id: parsedUserId.data,
         plan_price_id: parsedPlanPriceId.data,
         purchase_type: "membership",
+        plan_id: planPriceResult.data.plan_id,
+        billing_interval: planPriceResult.data.billing_interval,
       },
       subscription_data: {
         metadata: {
           profile_id: parsedUserId.data,
           plan_price_id: parsedPlanPriceId.data,
+          plan_id: planPriceResult.data.plan_id,
+          billing_interval: planPriceResult.data.billing_interval,
         },
       },
     })

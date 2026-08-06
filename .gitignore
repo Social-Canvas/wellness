@@ -51,3 +51,6 @@ docs/7-day-elevated-reset-media-migration-status.json
 src/features/marketing-testimonials/data/mux-upload-manifest.json
 .tmp-screenshots/
 /tmp/
+
+# Local operator artifacts (Stripe IDs, manifests)
+.local/

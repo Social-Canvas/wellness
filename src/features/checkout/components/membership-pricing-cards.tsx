@@ -1,11 +1,27 @@
+"use client"
+
 import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
 import {
+  MembershipBillingSync,
+  MembershipBillingToggle,
+} from "@/features/checkout/components/membership-billing-toggle"
+import {
+  billingUrlToInterval,
+  type BillingUrlValue,
+} from "@/features/checkout/utils/membership-billing"
+import {
   MEMBERSHIP_PLAN_SLUGS,
+  buildAllMembershipPlanCardViews,
   type MembershipPlanCardView,
+  type MembershipPlanCtaFacts,
   type MembershipPlanSlug,
 } from "@/features/checkout/utils/membership-plan-cta-state"
+import {
+  ANNUAL_BILLING_NOTE,
+  getMembershipPriceQuote,
+} from "@/lib/constants/membership-pricing"
 import {
   ELEVATE_MEMBERSHIPS,
   type MembershipTierContent,
@@ -19,48 +35,75 @@ function membershipAnchorId(slug: MembershipPlanSlug): string {
 }
 
 type MembershipPricingCardsProps = {
-  cardViews: MembershipPlanCardView[]
+  facts: MembershipPlanCtaFacts
+  initialBilling: BillingUrlValue
 }
 
-export function MembershipPricingCards({ cardViews }: MembershipPricingCardsProps) {
-  const viewsBySlug = new Map(cardViews.map((view) => [view.planSlug, view]))
-
+export function MembershipPricingCards({
+  facts,
+  initialBilling,
+}: MembershipPricingCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {ELEVATE_MEMBERSHIPS.map((tier) => {
-        const view = viewsBySlug.get(tier.slug) ?? {
-          planSlug: tier.slug,
-          kind: "join" as const,
-          isCurrent: false,
-          badge: null,
-          sourceLabel: null,
-          statusNote: null,
-          ctaLabel: `Join ${tier.name}`,
-          ctaHref: `/checkout/consent?type=membership&planSlug=${tier.slug}&interval=monthly`,
-          ctaDisabled: false,
-          allowsCheckout: true,
-          visuallyCurrent: false,
-        }
+    <MembershipBillingSync initialBilling={initialBilling}>
+      {({ billing, setBilling }) => {
+        const interval = billingUrlToInterval(billing)
+        const cardViews = buildAllMembershipPlanCardViews(facts, interval)
 
         return (
-          <MembershipPricingCard
-            key={tier.slug}
-            tier={tier}
-            view={view}
-          />
+          <div className="space-y-6">
+            <MembershipBillingToggle value={billing} onChange={setBilling} />
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {ELEVATE_MEMBERSHIPS.map((tier) => {
+                const view = cardViews.find((entry) => entry.planSlug === tier.slug) ?? {
+                  planSlug: tier.slug,
+                  kind: "join" as const,
+                  isCurrent: false,
+                  badge: null,
+                  sourceLabel: null,
+                  statusNote: null,
+                  ctaLabel: `Join ${tier.name}`,
+                  ctaHref: `/checkout/consent?type=membership&planSlug=${tier.slug}&interval=${interval}`,
+                  ctaDisabled: false,
+                  allowsCheckout: true,
+                  visuallyCurrent: false,
+                }
+
+                return (
+                  <MembershipPricingCard
+                    key={tier.slug}
+                    tier={tier}
+                    view={view}
+                    billing={billing}
+                  />
+                )
+              })}
+            </div>
+
+            {billing === "annual" ? (
+              <p className="text-center text-sm text-ink-soft">{ANNUAL_BILLING_NOTE}</p>
+            ) : null}
+          </div>
         )
-      })}
-    </div>
+      }}
+    </MembershipBillingSync>
   )
 }
 
 function MembershipPricingCard({
   tier,
   view,
+  billing,
 }: {
   tier: MembershipTierContent
   view: MembershipPlanCardView
+  billing: BillingUrlValue
 }) {
+  const quote = getMembershipPriceQuote(
+    tier.slug,
+    billing === "annual" ? "yearly" : "monthly"
+  )
+
   return (
     <article
       id={membershipAnchorId(tier.slug)}
@@ -95,12 +138,25 @@ function MembershipPricingCard({
           This is your current {tier.name} membership.
         </p>
       ) : null}
-      <div className="mt-1 mb-3.5 font-display text-[30px] font-semibold text-ink">
-        {tier.priceLabel}
+
+      <div className="mt-1 mb-1 font-display text-[30px] font-semibold text-ink">
+        {quote.primaryLabel}
         <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-          / mo
+          {quote.cadenceSuffix}
         </small>
       </div>
+
+      {quote.equivalentMonthlyLabel ? (
+        <p className="mb-1 text-sm text-ink-soft">{quote.equivalentMonthlyLabel}</p>
+      ) : null}
+
+      {quote.savingsBadge ? (
+        <p className="mb-3 text-sm font-semibold text-green-deep">
+          {quote.savingsBadge}
+        </p>
+      ) : (
+        <div className="mb-3.5" />
+      )}
 
       <p className="mb-3 text-sm text-ink-soft">{tier.whoItIsFor}</p>
 
@@ -149,9 +205,7 @@ function MembershipPricingCard({
           href={view.ctaHref}
           className={cn(
             buttonVariants({
-              variant: view.isCurrent
-                ? "default"
-                : tier.ctaVariant,
+              variant: view.isCurrent ? "default" : tier.ctaVariant,
               size: "block",
             }),
             "mt-auto whitespace-normal text-center leading-snug"

@@ -41,7 +41,10 @@ export type RenderLifecycleEmailContext = {
   membershipName: string
   organizationName?: string | null
   planSlug?: string | null
+  billingIntervalLabel?: string | null
+  amountLabel?: string | null
   effectiveDateLabel?: string | null
+  nextRenewalLabel?: string | null
   isSponsored?: boolean
   forceTemplate?: LifecycleEmailTemplateId
 }
@@ -83,7 +86,10 @@ export function renderLifecycleEmailTemplate(
     firstName: context.firstName,
     membershipName: context.membershipName,
     organizationName: context.organizationName,
+    billingIntervalLabel: context.billingIntervalLabel,
+    amountLabel: context.amountLabel,
     effectiveDateLabel: context.effectiveDateLabel,
+    nextRenewalLabel: context.nextRenewalLabel,
     privileges,
     cta,
   }

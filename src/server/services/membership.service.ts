@@ -47,12 +47,15 @@ export type EffectiveMembership = {
   effectivePlanName: string | null
   source: MembershipAccessSource
   status: NormalizedMembershipStatus
+  /** Personal Stripe cadence from plan_prices; null for sponsored/complimentary. */
+  billingInterval: "monthly" | "yearly" | null
   currentPeriodStart: string | null
   currentPeriodEnd: string | null
   cancelAtPeriodEnd: boolean
   scheduledPlanId: string | null
   scheduledPlanName: string | null
   scheduledPlanSlug: string | null
+  scheduledBillingInterval: "monthly" | "yearly" | null
   capabilities: MembershipCapability[]
   hasCourseLibrary: boolean
   canAttendInPerson: boolean
@@ -226,12 +229,14 @@ export const getEffectiveMembership = cache(
       effectivePlanName: null,
       source: "none",
       status: "none",
+      billingInterval: null,
       currentPeriodStart: null,
       currentPeriodEnd: null,
       cancelAtPeriodEnd: false,
       scheduledPlanId: null,
       scheduledPlanName: null,
       scheduledPlanSlug: null,
+      scheduledBillingInterval: null,
       capabilities: [],
       hasCourseLibrary: false,
       canAttendInPerson: false,
@@ -252,7 +257,7 @@ export const getEffectiveMembership = cache(
         supabase
           .from("subscriptions")
           .select(
-            "id, plan_id, status, current_period_start, current_period_end, cancel_at_period_end, stripe_subscription_id, scheduled_plan_id, access_source, plans!plan_id ( id, name, slug )"
+            "id, plan_id, status, current_period_start, current_period_end, cancel_at_period_end, stripe_subscription_id, stripe_price_id, scheduled_plan_id, scheduled_billing_interval, access_source, plans!plan_id ( id, name, slug )"
           )
           .eq("user_id", parsed.data)
           .order("created_at", { ascending: false }),
@@ -272,7 +277,9 @@ export const getEffectiveMembership = cache(
         current_period_end: string | null
         cancel_at_period_end: boolean
         stripe_subscription_id: string
+        stripe_price_id: string
         scheduled_plan_id?: string | null
+        scheduled_billing_interval?: "monthly" | "yearly" | null
         access_source?: string | null
         plans: { id: string; name: string; slug: string } | null
       }
@@ -313,13 +320,16 @@ export const getEffectiveMembership = cache(
         planName: string
         planSlug: string
         status: NormalizedMembershipStatus
+        billingInterval: "monthly" | "yearly" | null
         currentPeriodStart: string | null
         currentPeriodEnd: string | null
         cancelAtPeriodEnd: boolean
         scheduledPlanId: string | null
+        scheduledBillingInterval: "monthly" | "yearly" | null
         organizationId: string | null
         organizationName: string | null
         hasPersonalBilling: boolean
+        stripePriceId: string | null
       }
 
       const candidates: Candidate[] = []
@@ -328,6 +338,19 @@ export const getEffectiveMembership = cache(
         const isComp = activePersonal.stripe_subscription_id.startsWith(
           COMP_PREVIEW_MARKER_PREFIX
         )
+        let billingInterval: "monthly" | "yearly" | null = null
+        if (!isComp && activePersonal.stripe_price_id) {
+          const { data: planPrice } = await supabase
+            .from("plan_prices")
+            .select("billing_interval")
+            .eq("stripe_price_id", activePersonal.stripe_price_id)
+            .maybeSingle()
+          const interval = (planPrice as { billing_interval?: string } | null)
+            ?.billing_interval
+          if (interval === "monthly" || interval === "yearly") {
+            billingInterval = interval
+          }
+        }
         candidates.push({
           source: isComp ? "complimentary" : "personal_stripe",
           planId: activePersonal.plan_id,
@@ -337,13 +360,17 @@ export const getEffectiveMembership = cache(
             status: activePersonal.status,
             cancelAtPeriodEnd: activePersonal.cancel_at_period_end,
           }),
+          billingInterval: isComp ? null : billingInterval,
           currentPeriodStart: activePersonal.current_period_start,
           currentPeriodEnd: activePersonal.current_period_end,
           cancelAtPeriodEnd: activePersonal.cancel_at_period_end,
           scheduledPlanId: activePersonal.scheduled_plan_id ?? null,
+          scheduledBillingInterval:
+            activePersonal.scheduled_billing_interval ?? null,
           organizationId: null,
           organizationName: null,
           hasPersonalBilling: !isComp,
+          stripePriceId: activePersonal.stripe_price_id,
         })
       }
 
@@ -383,13 +410,16 @@ export const getEffectiveMembership = cache(
             planName,
             planSlug,
             status: "active",
+            billingInterval: null,
             currentPeriodStart: null,
             currentPeriodEnd: null,
             cancelAtPeriodEnd: false,
             scheduledPlanId: null,
+            scheduledBillingInterval: null,
             organizationId: activeSponsored.organizations.id,
             organizationName: activeSponsored.organizations.name,
             hasPersonalBilling: false,
+            stripePriceId: null,
           })
         }
       }
@@ -450,12 +480,14 @@ export const getEffectiveMembership = cache(
         effectivePlanName: selected.planName,
         source: selected.source,
         status: selected.status,
+        billingInterval: selected.billingInterval,
         currentPeriodStart: selected.currentPeriodStart,
         currentPeriodEnd: selected.currentPeriodEnd,
         cancelAtPeriodEnd: selected.cancelAtPeriodEnd,
         scheduledPlanId: selected.scheduledPlanId,
         scheduledPlanName,
         scheduledPlanSlug,
+        scheduledBillingInterval: selected.scheduledBillingInterval,
         capabilities,
         hasCourseLibrary: capabilities.includes("membership_course_library"),
         canAttendInPerson: capabilities.includes("in_person_sessions"),

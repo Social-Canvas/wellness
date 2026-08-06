@@ -14,13 +14,16 @@ import {
   MEMBERSHIP_SECTION_COPY,
   parseMembershipAudienceParam,
 } from "@/features/checkout/utils/membership-audience"
+import { parseBillingParam } from "@/features/checkout/utils/membership-billing"
 import {
-  buildAllMembershipPlanCardViews,
   type MembershipCtaAccessSource,
   type MembershipCtaStatus,
   type MembershipPlanSlug,
   isLiveMembershipAccess,
+  membershipPlanCtaFactsFromEffective,
 } from "@/features/checkout/utils/membership-plan-cta-state"
+import { listPlans } from "@/features/plans/services/plans.service"
+import { isConfiguredStripePriceId } from "@/server/integrations/stripe/mode"
 import { buildLiveBreathworkOfferView } from "@/features/checkout/utils/live-breathwork-offer-state"
 import {
   BREATHWORK_ROADMAP,
@@ -85,18 +88,24 @@ function asPlanSlug(value: string | null | undefined): MembershipPlanSlug | null
 }
 
 type ProgramsPageProps = {
-  searchParams: Promise<{ membership?: string | string[] }>
+  searchParams: Promise<{
+    membership?: string | string[]
+    billing?: string | string[]
+  }>
 }
 
 export default async function ProgramsPage({ searchParams }: ProgramsPageProps) {
   const params = await searchParams
   const initialAudience = parseMembershipAudienceParam(params.membership)
+  const initialBilling = parseBillingParam(params.billing)
 
-  const [productsResult, profileResult, trialSessionsResult] = await Promise.all([
-    listProgramCatalogProducts(),
-    getCurrentProfile(),
-    listTrialOpenLiveSessions(),
-  ])
+  const [productsResult, profileResult, trialSessionsResult, plansResult] =
+    await Promise.all([
+      listProgramCatalogProducts(),
+      getCurrentProfile(),
+      listTrialOpenLiveSessions(),
+      listPlans(),
+    ])
 
   // subscriptions.user_id is profiles.id — never auth.users id
   const userId = profileResult.success ? profileResult.data.id : null
@@ -106,20 +115,31 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   const membership =
     membershipResult && membershipResult.success ? membershipResult.data : null
 
-  const membershipFacts = {
+  const yearlyCheckoutAvailable =
+    plansResult.success &&
+    ["plan-1", "plan-2", "plan-3"].every((slug) => {
+      const plan = plansResult.data.find((entry) => entry.slug === slug)
+      const yearly = plan?.prices.find(
+        (price) => price.billing_interval === "yearly" && price.is_active
+      )
+      return Boolean(yearly && isConfiguredStripePriceId(yearly.stripe_price_id))
+    })
+
+  const membershipFacts = membershipPlanCtaFactsFromEffective({
     isAuthenticated: Boolean(userId),
     source: (membership?.source ?? "none") as MembershipCtaAccessSource,
     status: (membership?.status ?? "none") as MembershipCtaStatus,
     effectiveTierSlug: asPlanSlug(membership?.effectiveTierSlug),
+    billingInterval: membership?.billingInterval ?? null,
     hasPersonalBilling: membership?.hasPersonalBilling ?? false,
     cancelAtPeriodEnd: membership?.cancelAtPeriodEnd ?? false,
     currentPeriodEnd: membership?.currentPeriodEnd ?? null,
     scheduledPlanSlug: asPlanSlug(membership?.scheduledPlanSlug),
     scheduledPlanName: membership?.scheduledPlanName ?? null,
+    scheduledBillingInterval: membership?.scheduledBillingInterval ?? null,
     organizationName: membership?.organizationName ?? null,
-  }
-
-  const membershipCardViews = buildAllMembershipPlanCardViews(membershipFacts)
+    yearlyCheckoutAvailable,
+  })
 
   const membershipAccessActive = membership
     ? isLiveMembershipAccess(membership.status as MembershipCtaStatus)
@@ -167,7 +187,10 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
   )
 
   const individualsPanel = (
-    <MembershipPricingCards cardViews={membershipCardViews} />
+    <MembershipPricingCards
+      facts={membershipFacts}
+      initialBilling={initialBilling}
+    />
   )
 
   return (

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { Badge } from "@/components/ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import { BillingChangeConfirm } from "@/features/billing/components/billing-change-confirm"
 import { ManageBillingButton } from "@/features/billing/components/manage-billing-button"
 import { ScheduleDowngradeConfirm } from "@/features/billing/components/schedule-downgrade-confirm"
 import { getCurrentSubscription } from "@/features/billing/services/billing.service"
@@ -12,6 +13,7 @@ import {
   formatMembershipAccessSource,
   formatMembershipStatusLabel,
 } from "@/features/dashboard/utils/library-membership"
+import { billingIntervalLabel } from "@/lib/constants/membership-pricing"
 import { getEffectiveMembership } from "@/server/services/membership.service"
 
 export const metadata: Metadata = {
@@ -39,8 +41,22 @@ function parseDowngradeSlug(
   return null
 }
 
+function parseSwitchInterval(
+  value: string | string[] | undefined
+): "monthly" | "yearly" | null {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (raw === "monthly" || raw === "yearly") {
+    return raw
+  }
+  return null
+}
+
 type AccountPageProps = {
-  searchParams: Promise<{ downgrade?: string | string[] }>
+  searchParams: Promise<{
+    downgrade?: string | string[]
+    switchInterval?: string | string[]
+    plan?: string | string[]
+  }>
 }
 
 export default async function DashboardAccountPage({
@@ -54,6 +70,8 @@ export default async function DashboardAccountPage({
 
   const params = await searchParams
   const requestedDowngrade = parseDowngradeSlug(params.downgrade)
+  const requestedSwitchInterval = parseSwitchInterval(params.switchInterval)
+  const requestedSwitchPlan = parseDowngradeSlug(params.plan)
 
   const [subscriptionResult, membershipResult] = await Promise.all([
     getCurrentSubscription(profileResult.data.id),
@@ -72,7 +90,22 @@ export default async function DashboardAccountPage({
         membership.downgradePlanSlugs.includes(requestedDowngrade)
     ) &&
     !membership?.scheduledPlanId &&
+    !membership?.scheduledBillingInterval &&
     !membership?.cancelAtPeriodEnd
+
+  const canConfirmBillingChange =
+    Boolean(requestedSwitchInterval) &&
+    Boolean(requestedSwitchPlan) &&
+    Boolean(membership?.hasPersonalBilling) &&
+    !membership?.scheduledPlanId &&
+    !membership?.scheduledBillingInterval &&
+    !membership?.cancelAtPeriodEnd
+
+  const cadenceLabel = billingIntervalLabel(membership?.billingInterval ?? null)
+  const renewsLabel =
+    membership?.currentPeriodEnd != null
+      ? formatDate(membership.currentPeriodEnd)
+      : null
 
   return (
     <div className="space-y-6">
@@ -137,14 +170,26 @@ export default async function DashboardAccountPage({
                   ? `Sponsored by ${membership.organizationName ?? "nonprofit"}`
                   : formatMembershipAccessSource(membership.source)}
               </p>
+              {membership.hasPersonalBilling && cadenceLabel ? (
+                <p>
+                  <span className="font-semibold text-ink">Billing:</span>{" "}
+                  {cadenceLabel}
+                  {renewsLabel ? ` · Renews ${renewsLabel}` : ""}
+                </p>
+              ) : null}
               <p>
                 <span className="font-semibold text-ink">Billing period ends:</span>{" "}
                 {formatDate(membership.currentPeriodEnd)}
               </p>
-              {membership.scheduledPlanName ? (
+              {membership.scheduledPlanName || membership.scheduledBillingInterval ? (
                 <p>
                   <span className="font-semibold text-ink">Scheduled change:</span>{" "}
-                  Your plan will change to {membership.scheduledPlanName}
+                  {membership.scheduledPlanName
+                    ? `Your plan will change to ${membership.scheduledPlanName}`
+                    : "Your billing cadence will change"}
+                  {membership.scheduledBillingInterval
+                    ? ` (${membership.scheduledBillingInterval === "yearly" ? "annual" : "monthly"} billing)`
+                    : ""}
                   {membership.currentPeriodEnd
                     ? ` on ${formatDate(membership.currentPeriodEnd)}`
                     : ""}
@@ -153,8 +198,10 @@ export default async function DashboardAccountPage({
               ) : null}
               {membership.cancelAtPeriodEnd ? (
                 <p>
-                  <span className="font-semibold text-ink">Cancellation:</span> Access
-                  continues until {formatDate(membership.currentPeriodEnd)}.
+                  <span className="font-semibold text-ink">Cancellation:</span>{" "}
+                  {membership.billingInterval === "yearly"
+                    ? `Your annual membership remains active until ${formatDate(membership.currentPeriodEnd)}.`
+                    : `Access continues until ${formatDate(membership.currentPeriodEnd)}.`}
                 </p>
               ) : null}
               <p>
@@ -178,6 +225,16 @@ export default async function DashboardAccountPage({
               {canConfirmDowngrade && requestedDowngrade ? (
                 <div className="pt-3">
                   <ScheduleDowngradeConfirm targetPlanSlug={requestedDowngrade} />
+                </div>
+              ) : null}
+              {canConfirmBillingChange &&
+              requestedSwitchPlan &&
+              requestedSwitchInterval ? (
+                <div className="pt-3">
+                  <BillingChangeConfirm
+                    targetPlanSlug={requestedSwitchPlan}
+                    targetBillingInterval={requestedSwitchInterval}
+                  />
                 </div>
               ) : null}
               {membership.hasPersonalBilling ? (
