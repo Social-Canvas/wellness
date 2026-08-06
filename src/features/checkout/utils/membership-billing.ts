@@ -21,10 +21,19 @@ export const BILLING_TOGGLE_OPTIONS = [
   },
   {
     id: "annual" as const,
-    label: "Annual — Save up to 16%",
+    label: "Annual",
     panelHint: "Billed once per year",
   },
 ] as const
+
+/** Compact helper under the billing toggle — no prices or savings. */
+export const BILLING_HELPER_COPY = {
+  monthly: "Billed monthly. Renews automatically until cancelled.",
+  annual: "Billed once per year. Renews automatically until cancelled.",
+} as const
+
+/** Separate badge beside Annual — not part of the radio option name. */
+export const ANNUAL_SAVINGS_BADGE_LABEL = "Save up to 16%" as const
 
 export function isBillingUrlValue(
   value: string | null | undefined
@@ -116,6 +125,10 @@ export function nextBillingOnKey(
       return options[0]!.id
     case "End":
       return options[options.length - 1]!.id
+    case " ":
+    case "Enter":
+      // Toggle-style cadence control: Space/Enter flips selection.
+      return options[(index + 1) % options.length]!.id
     default:
       return null
   }

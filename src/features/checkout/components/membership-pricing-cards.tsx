@@ -18,10 +18,7 @@ import {
   type MembershipPlanCtaFacts,
   type MembershipPlanSlug,
 } from "@/features/checkout/utils/membership-plan-cta-state"
-import {
-  ANNUAL_BILLING_NOTE,
-  getMembershipPriceQuote,
-} from "@/lib/constants/membership-pricing"
+import { getMembershipPriceQuote } from "@/lib/constants/membership-pricing"
 import {
   ELEVATE_MEMBERSHIPS,
   type MembershipTierContent,
@@ -50,7 +47,7 @@ export function MembershipPricingCards({
         const cardViews = buildAllMembershipPlanCardViews(facts, interval)
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-7 sm:space-y-8">
             <MembershipBillingToggle value={billing} onChange={setBilling} />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -79,10 +76,6 @@ export function MembershipPricingCards({
                 )
               })}
             </div>
-
-            {billing === "annual" ? (
-              <p className="text-center text-sm text-ink-soft">{ANNUAL_BILLING_NOTE}</p>
-            ) : null}
           </div>
         )
       }}

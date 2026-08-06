@@ -15,11 +15,11 @@ export const MEMBERSHIP_SECTION_COPY = {
   eyebrow: "Memberships",
   title: "Elevate Memberships",
   subtitle:
-    "Choose the membership option that fits you or your organization. Every active membership includes the Elevate course library, while additional privileges depend on the selected plan.",
+    "Choose an individual membership or explore sponsored access for nonprofit organizations.",
   individuals: {
     heading: "Memberships for Individuals",
     description:
-      "Choose the level of support and live-session access that fits your goals. All active tiers include the Elevate course library.",
+      "All active tiers include the Elevate course library. Choose the level of live-session access and support that fits your goals.",
   },
   nonprofit: {
     heading: "Memberships for Nonprofit Organizations",

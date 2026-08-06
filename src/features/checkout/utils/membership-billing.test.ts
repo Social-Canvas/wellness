@@ -1,5 +1,8 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
 import { test } from "node:test"
+import { fileURLToPath } from "node:url"
 
 import {
   ANNUAL_BILLING_NOTE,
@@ -8,9 +11,13 @@ import {
   yearlySavingsPercent,
 } from "../../../lib/constants/membership-pricing.ts"
 import {
+  ANNUAL_SAVINGS_BADGE_LABEL,
+  BILLING_HELPER_COPY,
+  BILLING_TOGGLE_OPTIONS,
   billingIntervalToUrl,
   billingUrlToInterval,
   buildMembershipBillingUrl,
+  nextBillingOnKey,
   parseBillingParam,
   parseCheckoutBillingInterval,
 } from "./membership-billing.ts"
@@ -20,6 +27,15 @@ import {
   emptyMembershipPlanCtaFacts,
   type MembershipPlanCtaFacts,
 } from "./membership-plan-cta-state.ts"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+function readCheckoutSrc(relativeFromFeaturesCheckout: string): string {
+  return readFileSync(
+    join(__dirname, "..", relativeFromFeaturesCheckout),
+    "utf8"
+  )
+}
 
 function personalFacts(
   overrides: Partial<MembershipPlanCtaFacts> = {}
@@ -280,4 +296,100 @@ test("Browser cannot provide a Stripe Price ID via CTA href", () => {
   assert.doesNotMatch(available.ctaHref, /price_/)
   assert.match(available.ctaHref, /interval=yearly/)
   assert.match(available.ctaHref, /planSlug=plan-2/)
+})
+
+test("Toggle option labels are Monthly and Annual without embedded savings", () => {
+  assert.deepEqual(
+    BILLING_TOGGLE_OPTIONS.map((option) => option.label),
+    ["Monthly", "Annual"]
+  )
+  assert.doesNotMatch(BILLING_TOGGLE_OPTIONS[1]!.label, /16%/)
+  assert.equal(ANNUAL_SAVINGS_BADGE_LABEL, "Save up to 16%")
+})
+
+test("Toggle changes to Annual and URL updates to billing=annual", () => {
+  assert.equal(nextBillingOnKey("monthly", "ArrowRight"), "annual")
+  const url = buildMembershipBillingUrl(
+    "/programs",
+    "membership=individuals&utm_source=test",
+    "annual"
+  )
+  assert.match(url, /billing=annual/)
+  assert.match(url, /membership=individuals/)
+  assert.match(url, /utm_source=test/)
+})
+
+test("Browser navigation can restore previous billing selection via URL", () => {
+  const annualUrl = buildMembershipBillingUrl(
+    "/programs",
+    "membership=individuals",
+    "annual"
+  )
+  const monthlyUrl = buildMembershipBillingUrl(
+    "/programs",
+    "membership=individuals&billing=annual",
+    "monthly"
+  )
+  assert.equal(parseBillingParam(new URL(annualUrl, "https://example.com").searchParams.get("billing")), "annual")
+  assert.equal(parseBillingParam(new URL(monthlyUrl, "https://example.com").searchParams.get("billing")), "monthly")
+})
+
+test("Monthly and Annual helper copy render correctly", () => {
+  assert.equal(
+    BILLING_HELPER_COPY.monthly,
+    "Billed monthly. Renews automatically until cancelled."
+  )
+  assert.equal(
+    BILLING_HELPER_COPY.annual,
+    "Billed once per year. Renews automatically until cancelled."
+  )
+  assert.doesNotMatch(BILLING_HELPER_COPY.monthly, /\$|16%|Save/)
+  assert.doesNotMatch(BILLING_HELPER_COPY.annual, /\$|16%|Save/)
+})
+
+test("Savings badge is separate from the toggle control", () => {
+  const toggle = readCheckoutSrc("components/membership-billing-toggle.tsx")
+  assert.match(toggle, /ANNUAL_SAVINGS_BADGE_LABEL/)
+  assert.match(toggle, /aria-hidden="true"/)
+  assert.match(toggle, /role="radiogroup"/)
+  assert.match(toggle, /aria-label="Billing frequency"/)
+  assert.match(toggle, /role="radio"/)
+  assert.match(toggle, /aria-checked=/)
+  assert.match(toggle, /BILLING_HELPER_COPY/)
+  assert.doesNotMatch(toggle, /Annual — Save/)
+  assert.match(toggle, /motion-reduce:transition-none/)
+  assert.match(toggle, /duration-200/)
+  assert.match(toggle, /min-h-11/)
+  assert.match(toggle, /sm:flex-row/)
+})
+
+test("Keyboard selection works for billing cadence", () => {
+  assert.equal(nextBillingOnKey("monthly", "ArrowRight"), "annual")
+  assert.equal(nextBillingOnKey("annual", "ArrowLeft"), "monthly")
+  assert.equal(nextBillingOnKey("monthly", " "), "annual")
+  assert.equal(nextBillingOnKey("annual", "Enter"), "monthly")
+  assert.equal(nextBillingOnKey("annual", "Home"), "monthly")
+  assert.equal(nextBillingOnKey("monthly", "End"), "annual")
+})
+
+test("Billing sync preserves popstate URL restoration without Stripe Price IDs", () => {
+  const toggle = readCheckoutSrc("components/membership-billing-toggle.tsx")
+  assert.match(toggle, /popstate/)
+  assert.match(toggle, /history\.pushState/)
+  assert.match(toggle, /parseBillingParam/)
+  assert.doesNotMatch(toggle, /price_/)
+
+  const cards = readCheckoutSrc("components/membership-pricing-cards.tsx")
+  assert.doesNotMatch(cards, /price_/)
+  assert.match(cards, /MembershipBillingToggle/)
+})
+
+test("Audience tabs remain primary tabs and are not a billing switch", () => {
+  const tabs = readCheckoutSrc("components/membership-audience-tabs.tsx")
+  assert.match(tabs, /role="tablist"/)
+  assert.match(tabs, /aria-label="Membership audience"/)
+  assert.match(tabs, /max-w-\[34rem\]/)
+  assert.match(tabs, /\.get\("membership"\)/)
+  assert.match(tabs, /buildMembershipAudienceUrl/)
+  assert.doesNotMatch(tabs, /Billing frequency/)
 })

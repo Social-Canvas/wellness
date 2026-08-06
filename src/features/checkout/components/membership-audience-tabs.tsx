@@ -90,12 +90,12 @@ export function MembershipAudienceTabs({
   }
 
   return (
-    <div className="mt-8 w-full max-w-full overflow-x-hidden">
+    <div className="mt-8 w-full max-w-full overflow-x-hidden sm:mt-9">
       <div className="flex justify-center">
         <div
           role="tablist"
           aria-label="Membership audience"
-          className="inline-flex w-full max-w-lg flex-col gap-2 rounded-2xl border border-line bg-surface p-1.5 sm:w-auto sm:flex-row sm:rounded-full"
+          className="inline-flex w-full max-w-[34rem] flex-col gap-1.5 rounded-2xl border border-line bg-surface p-1 sm:w-auto sm:flex-row sm:rounded-full"
         >
           {MEMBERSHIP_TABS.map((tab) => {
             const selected = audience === tab.id
@@ -114,7 +114,7 @@ export function MembershipAudienceTabs({
                 onClick={() => selectAudience(tab.id)}
                 onKeyDown={(event) => onTabKeyDown(event, tab.id)}
                 className={cn(
-                  "min-h-11 flex-1 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors",
+                  "min-h-11 flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream",
                   selected
                     ? "bg-blue text-white shadow-sm"
@@ -134,11 +134,11 @@ export function MembershipAudienceTabs({
         aria-labelledby="membership-tab-individuals"
         hidden={audience !== "individuals"}
         className={cn(
-          "mt-9 w-full max-w-full",
+          "mt-9 w-full max-w-full sm:mt-10",
           audience !== "individuals" && "hidden"
         )}
       >
-        <div className="mx-auto mb-8 max-w-2xl text-center">
+        <div className="mx-auto mb-6 max-w-2xl text-center sm:mb-7">
           <h3 className="font-display text-xl font-medium text-ink md:text-2xl">
             {MEMBERSHIP_SECTION_COPY.individuals.heading}
           </h3>
@@ -155,7 +155,7 @@ export function MembershipAudienceTabs({
         aria-labelledby="membership-tab-nonprofit"
         hidden={audience !== "nonprofit"}
         className={cn(
-          "mt-9 w-full max-w-full",
+          "mt-9 w-full max-w-full sm:mt-10",
           audience !== "nonprofit" && "hidden"
         )}
       >

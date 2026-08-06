@@ -280,6 +280,18 @@ test("16. Membership section stays inside the configured maximum width", () => {
   assert.match(page, /max-w-\[1200px\]/)
   assert.equal(MEMBERSHIP_SECTION_COPY.eyebrow, "Memberships")
   assert.equal(MEMBERSHIP_SECTION_COPY.title, "Elevate Memberships")
+  assert.equal(
+    MEMBERSHIP_SECTION_COPY.subtitle,
+    "Choose an individual membership or explore sponsored access for nonprofit organizations."
+  )
+  assert.match(
+    MEMBERSHIP_SECTION_COPY.individuals.description,
+    /All active tiers include the Elevate course library/
+  )
+  assert.doesNotMatch(
+    MEMBERSHIP_SECTION_COPY.subtitle,
+    /Elevate course library/
+  )
 })
 
 // Regression: tab model and URL state
