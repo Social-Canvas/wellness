@@ -5,6 +5,10 @@ import { redirect } from "next/navigation"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { MembershipHub } from "@/features/dashboard/components/membership-hub"
 import { latestRecordingsForHub } from "@/features/dashboard/utils/library-membership"
+import {
+  getMemberVirtualQuotaView,
+  getReservationForLiveClass,
+} from "@/features/live-sessions/services/live-session-quota.service"
 import { listUpcomingLiveSessionsForMembers } from "@/features/live-sessions/services/live-sessions.service"
 import { listPublishedRecordedSessionsForMember } from "@/features/recorded-sessions/services/recorded-sessions.service"
 import { buttonVariants } from "@/components/ui/button"
@@ -69,9 +73,10 @@ export default async function MembershipPage() {
     )
   }
 
-  const [sessionsResult, recordingsResult] = await Promise.all([
+  const [sessionsResult, recordingsResult, quotaResult] = await Promise.all([
     listUpcomingLiveSessionsForMembers(profileResult.data.id),
     listPublishedRecordedSessionsForMember(profileResult.data.id),
+    getMemberVirtualQuotaView(profileResult.data.id),
   ])
 
   const upcomingSession =
@@ -83,11 +88,28 @@ export default async function MembershipPage() {
     ? latestRecordingsForHub(recordingsResult.data, 3)
     : []
 
+  const virtualQuota = quotaResult.success ? quotaResult.data : null
+
+  const reservationResult =
+    upcomingSession != null
+      ? await getReservationForLiveClass(
+          profileResult.data.id,
+          upcomingSession.id
+        )
+      : null
+
+  const reservation =
+    reservationResult && reservationResult.success
+      ? reservationResult.data
+      : null
+
   return (
     <MembershipHub
       membership={membership}
       upcomingSession={upcomingSession}
       latestRecordings={latestRecordings}
+      virtualQuota={virtualQuota}
+      reservation={reservation}
     />
   )
 }

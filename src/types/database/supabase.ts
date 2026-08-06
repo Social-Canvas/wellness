@@ -579,6 +579,104 @@ export type Database = {
         }
         Relationships: []
       }
+      live_session_member_reservations: {
+        Row: {
+          attended_at: string | null
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          live_class_id: string
+          period_end: string
+          period_start: string
+          reserved_at: string
+          status: Database["public"]["Enums"]["live_registration_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attended_at?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          live_class_id: string
+          period_end: string
+          period_start: string
+          reserved_at?: string
+          status?: Database["public"]["Enums"]["live_registration_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attended_at?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          live_class_id?: string
+          period_end?: string
+          period_start?: string
+          reserved_at?: string
+          status?: Database["public"]["Enums"]["live_registration_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_member_reservations_live_class_id_fkey"
+            columns: ["live_class_id"]
+            isOneToOne: false
+            referencedRelation: "live_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      in_person_experience_redemptions: {
+        Row: {
+          admin_confirmed_at: string | null
+          admin_confirmed_by: string | null
+          created_at: string
+          experience_label: string
+          id: string
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          plan_slug: string
+          reset_period: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_confirmed_at?: string | null
+          admin_confirmed_by?: string | null
+          created_at?: string
+          experience_label?: string
+          id?: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_slug: string
+          reset_period?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_confirmed_at?: string | null
+          admin_confirmed_by?: string | null
+          created_at?: string
+          experience_label?: string
+          id?: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_slug?: string
+          reset_period?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           course_id: string
@@ -1296,6 +1394,30 @@ export type Database = {
           p_new_name: string
           p_profile_id: string
           p_reason: string
+        }
+        Returns: Json
+      }
+      cancel_virtual_live_session_reservation: {
+        Args: {
+          p_live_class_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      mark_virtual_live_session_attended: {
+        Args: {
+          p_live_class_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      reserve_virtual_live_session: {
+        Args: {
+          p_limit: number
+          p_live_class_id: string
+          p_period_end: string
+          p_period_start: string
+          p_user_id: string
         }
         Returns: Json
       }

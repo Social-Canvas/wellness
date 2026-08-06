@@ -68,7 +68,7 @@ const publishedFixture: HomepageVideoTestimonial[] = Array.from(
     captionsUrl: index === 0 ? "https://cdn.example.com/captions-1.vtt" : null,
     sortOrder: index + 1,
     publicationStatus: "published",
-    accessibleLabel: `Member story ${index + 1}, portrait video testimonial`,
+    accessibleLabel: `Testimonial ${index + 1}, portrait video testimonial`,
   })
 )
 
@@ -396,8 +396,8 @@ test("19. Captions are supported", () => {
 test("20. Keyboard and screen-reader labels work", () => {
   assert.equal(muteControlLabel(false), "Mute testimonial")
   assert.equal(
-    paginationStatusLabel(0, 6, "Member story"),
-    "Showing testimonial 1 of 6: Member story"
+    paginationStatusLabel(0, 6, "Testimonial"),
+    "Showing testimonial 1 of 6: Testimonial"
   )
   const carousel = read(
     "src/features/marketing-testimonials/components/video-testimonials-carousel.tsx"
@@ -455,10 +455,19 @@ test("23. No membership, Stripe, database-auth or email behavior changes", () =>
     assert.doesNotMatch(source, /RESEND_API_KEY/)
   }
 
-  assert.equal(VIDEO_TESTIMONIALS_SECTION.eyebrow, "MEMBER STORIES")
+  assert.equal(VIDEO_TESTIMONIALS_SECTION.eyebrow, "TESTIMONIALS")
   assert.equal(
     VIDEO_TESTIMONIALS_SECTION.title,
     "Real experiences. Meaningful change."
+  )
+  assert.match(
+    VIDEO_TESTIMONIALS_SECTION.subtitle,
+    /practices, programs and events/
+  )
+  assert.equal(VIDEO_TESTIMONIALS_SECTION.id, "testimonials")
+  assert.doesNotMatch(
+    HOMEPAGE_VIDEO_TESTIMONIALS.map((item) => item.accessibleLabel).join("\n"),
+    /Member story/i
   )
 })
 

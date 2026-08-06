@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { Badge } from "@/components/ui"
 import { ManageBillingButton } from "@/features/billing/components/manage-billing-button"
-import { MembershipJoinButton } from "@/features/dashboard/components/membership-join-button"
+import { MembershipLiveSessionControls } from "@/features/dashboard/components/membership-live-session-controls"
 import {
   formatCapabilityCustomerLabels,
   formatMembershipAccessSource,
@@ -12,6 +12,8 @@ import {
   MEMBERSHIP_RECORDINGS_PATH,
   resolveLiveSessionScheduleState,
 } from "@/features/dashboard/utils/library-membership"
+import type { MemberReservationState } from "@/features/live-sessions/services/live-session-quota.service"
+import type { MemberVirtualQuotaView } from "@/features/live-sessions/services/live-session-quota.service"
 import type { LiveSessionPublic } from "@/features/live-sessions/types"
 import { RecordedSessionCard } from "@/features/recorded-sessions/components"
 import type { RecordedSessionListItem } from "@/features/recorded-sessions/types"
@@ -45,12 +47,16 @@ type MembershipHubProps = {
   membership: EffectiveMembership
   upcomingSession: LiveSessionPublic | null
   latestRecordings: RecordedSessionListItem[]
+  virtualQuota: MemberVirtualQuotaView | null
+  reservation: MemberReservationState | null
 }
 
 export function MembershipHub({
   membership,
   upcomingSession,
   latestRecordings,
+  virtualQuota,
+  reservation,
 }: MembershipHubProps) {
   const accessSource = formatMembershipAccessSource(membership.source)
   const privilegeLabels = formatCapabilityCustomerLabels(membership.capabilities)
@@ -177,12 +183,22 @@ export function MembershipHub({
               {formatSessionWhen(upcomingSession.startsAt)} UTC
             </p>
             <div className="mt-4">
-              <MembershipJoinButton
+              <MembershipLiveSessionControls
                 liveClassId={upcomingSession.id}
                 joinAvailable={
                   schedule.kind === "join_open" ? schedule.joinAvailable : false
                 }
                 scheduleLabel={schedule.label}
+                enforcementActive={virtualQuota?.enforcementActive ?? false}
+                showAllowance={virtualQuota?.showAllowance ?? false}
+                reserved={reservation?.reserved ?? false}
+                limitReached={virtualQuota?.limitReached ?? false}
+                allowanceCopy={
+                  virtualQuota?.allowanceCopy ??
+                  "Live virtual session allowance"
+                }
+                remainingCopy={virtualQuota?.remainingCopy ?? null}
+                upgradeHref={virtualQuota?.upgradeHref ?? null}
               />
             </div>
           </article>

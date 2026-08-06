@@ -240,6 +240,8 @@ Format:
 
 **Follow-up (2026-08-03):** Client confirmed publication permission ("I'm ok"). Six assets uploaded with public playback; config published with neutral "Member story" labels. Display names, roles, quotes, and captions still pending client metadata.
 
+**Follow-up (2026-08-07):** Public copy renamed to Testimonials / Testimonial (eyebrow `TESTIMONIALS`, section id `testimonials`, subtitle uses “events”). Member-story wording removed from customer-facing labels; Mux assets and carousel behavior unchanged.
+
 **Status:** Accepted
 
 ## 2026-08-03 — Hide Health Professional Session from public catalog
@@ -289,5 +291,19 @@ Format:
 **Reason:** Reuses the existing protected download pipeline while keeping free claims out of Stripe/order payment records. Explicit purchase mode avoids inferring free status from `price_amount = 0`.
 
 **Alternatives considered:** Zero-price Stripe Checkout sessions; marking free claims as paid orders; a separate downloads system; nonprofit-seat-only journal access.
+
+**Status:** Accepted
+
+---
+
+## 2026-08-07 — Prepare quota-based virtual live-session access (Gold)
+
+**Decision:** Add a data-driven virtual-session quota model and concurrency-safe reservation RPCs without revoking existing Core/nonprofit live access. Gold (`plan-2`): included, limit 2, `calendar_month`, enforcement active (reserve before join). Platinum: unlimited (explicit `mode: "unlimited"`, not a sentinel). Core and nonprofit-sponsored keep legacy boolean `live_online_sessions` join (`quotaEnforcementActive: false`) until confirmed. In-person quantity table prepared for Platinum (`includedQuantity: 1`, `resetPeriod: null`, enforcement inactive). Public Platinum copy: `Includes one live in-person experience` (no month/year). Trials remain independent of membership quota. Stripe prices/subscriptions/capabilities unchanged.
+
+**Reason:** Gold’s confirmed monthly limit cannot be expressed as a boolean capability, but Core/nonprofit/in-person-period rules are still unresolved — activating those would risk incorrect revocations.
+
+**Period note (unconfirmed):** Public Gold copy says “per month.” Stripe also exposes `current_period_start` / `current_period_end`. These can diverge. Gold enforcement currently uses **calendar month (UTC)** to match public copy; the model supports switching to `billing_period` without schema churn once the client confirms.
+
+**Alternatives considered:** Immediately revoke Core live access; encode unlimited as a large integer; silently use Stripe billing period for “monthly”; invent Platinum in-person monthly/annual reset.
 
 **Status:** Accepted

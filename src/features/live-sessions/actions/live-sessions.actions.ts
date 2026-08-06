@@ -20,6 +20,10 @@ import {
   updateLiveSessionSchema,
 } from "@/features/live-sessions/schemas"
 import {
+  cancelVirtualLiveSessionReservationForMember,
+  reserveVirtualLiveSessionForMember,
+} from "@/features/live-sessions/services/live-session-quota.service"
+import {
   attachRecordingToCompletedLiveSession,
   createLiveSession,
   issueMemberJoinUrl,
@@ -165,6 +169,52 @@ export async function issueMemberJoinUrlAction(
   if (!user.success) return user
 
   return issueMemberJoinUrl(user.data.userId, liveClassId)
+}
+
+export async function reserveVirtualLiveSessionAction(
+  liveClassId: string
+): Promise<
+  ActionResult<{
+    reservationId: string
+    status: string
+    allowanceCopy: string
+  }>
+> {
+  const user = await requireUser()
+  if (!user.success) return user
+
+  const result = await reserveVirtualLiveSessionForMember(
+    user.data.userId,
+    liveClassId
+  )
+  if (result.success) {
+    revalidateLivePaths(liveClassId)
+    return {
+      success: true,
+      data: {
+        reservationId: result.data.reservationId,
+        status: result.data.status,
+        allowanceCopy: result.data.allowanceCopy,
+      },
+    }
+  }
+  return result
+}
+
+export async function cancelVirtualLiveSessionReservationAction(
+  liveClassId: string
+): Promise<ActionResult<{ cancelled: true }>> {
+  const user = await requireUser()
+  if (!user.success) return user
+
+  const result = await cancelVirtualLiveSessionReservationForMember(
+    user.data.userId,
+    liveClassId
+  )
+  if (result.success) {
+    revalidateLivePaths(liveClassId)
+  }
+  return result
 }
 
 export async function issueTrialJoinUrlAction(

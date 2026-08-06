@@ -61,12 +61,11 @@ export const ELEVATE_MEMBERSHIPS: MembershipTierContent[] = [
     priceLabel: "$99",
     priceCents: 9900,
     whoItIsFor:
-      "Mid-tier membership with the same course library plus in-person session eligibility.",
+      "Mid-tier membership with the recorded session library and up to two live virtual classes per month.",
     featured: true,
     features: [
-      "Everything in Elevate Core",
-      "In-person sessions included",
-      "Live online session access",
+      "Recorded session library",
+      "Up to 2 live virtual classes per month",
       "Session replays",
       "Stronger accountability",
     ],
@@ -78,13 +77,13 @@ export const ELEVATE_MEMBERSHIPS: MembershipTierContent[] = [
     priceLabel: "$149",
     priceCents: 14900,
     whoItIsFor:
-      "Premium membership with the full course library and the highest-touch Elevate experience.",
+      "Premium membership with everything in Gold, unlimited live virtual classes, and one included live in-person experience.",
     featured: false,
     features: [
       "Everything in Elevate Gold",
-      "In-person sessions included",
+      "Access to all live virtual classes",
+      "Includes one live in-person experience",
       "Priority support",
-      "Highest-touch live Elevate experience",
     ],
     ctaVariant: "outline",
   },

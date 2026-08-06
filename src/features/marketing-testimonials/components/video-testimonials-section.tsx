@@ -3,7 +3,7 @@ import { getCarouselTestimonials } from "../utils/testimonials"
 import { VideoTestimonialsCarousel } from "./video-testimonials-carousel"
 
 /**
- * Public homepage member-stories section.
+ * Public homepage testimonials section.
  * Renders published Mux testimonials when ready; otherwise draft placeholders
  * so layout/a11y can be verified without inventing identities or publishing
  * without consent.

@@ -230,7 +230,7 @@ test("13. Zoom URL is not present before authorization", () => {
     "src/features/dashboard/components/membership-hub.tsx"
   )
   const join = readSource(
-    "src/features/dashboard/components/membership-join-button.tsx"
+    "src/features/dashboard/components/membership-live-session-controls.tsx"
   )
   const page = readSource(
     "src/app/(dashboard)/dashboard/membership/page.tsx"
@@ -238,6 +238,7 @@ test("13. Zoom URL is not present before authorization", () => {
   assert.doesNotMatch(hub, /zoom\.(us|com)|zoom_participant_url|zoomParticipantUrl/)
   assert.doesNotMatch(page, /zoom\.(us|com)|zoom_participant_url/)
   assert.match(join, /issueMemberJoinUrlAction/)
+  assert.match(join, /reserveVirtualLiveSessionAction/)
   assert.doesNotMatch(join, /zoom_participant_url|zoomHostUrl/)
 })
 

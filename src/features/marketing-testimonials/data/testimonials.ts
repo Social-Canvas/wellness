@@ -19,7 +19,7 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 1,
     publicationStatus: "published",
-    accessibleLabel: "Member story 1, portrait video testimonial",
+    accessibleLabel: "Testimonial 1, portrait video testimonial",
   },
   {
     id: "member-story-2",
@@ -32,7 +32,7 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 2,
     publicationStatus: "published",
-    accessibleLabel: "Member story 2, portrait video testimonial",
+    accessibleLabel: "Testimonial 2, portrait video testimonial",
   },
   {
     id: "member-story-3",
@@ -45,7 +45,7 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 3,
     publicationStatus: "published",
-    accessibleLabel: "Member story 3, portrait video testimonial",
+    accessibleLabel: "Testimonial 3, portrait video testimonial",
   },
   {
     id: "member-story-4",
@@ -58,7 +58,7 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 4,
     publicationStatus: "published",
-    accessibleLabel: "Member story 4, portrait video testimonial",
+    accessibleLabel: "Testimonial 4, portrait video testimonial",
   },
   {
     id: "member-story-5",
@@ -71,7 +71,7 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 5,
     publicationStatus: "published",
-    accessibleLabel: "Member story 5, portrait video testimonial",
+    accessibleLabel: "Testimonial 5, portrait video testimonial",
   },
   {
     id: "member-story-6",
@@ -84,16 +84,16 @@ export const HOMEPAGE_VIDEO_TESTIMONIALS: readonly HomepageVideoTestimonial[] = 
     captionsUrl: null,
     sortOrder: 6,
     publicationStatus: "published",
-    accessibleLabel: "Member story 6, portrait video testimonial",
+    accessibleLabel: "Testimonial 6, portrait video testimonial",
   },
 ] as const
 
 export const VIDEO_TESTIMONIALS_SECTION = {
-  eyebrow: "MEMBER STORIES",
+  eyebrow: "TESTIMONIALS",
   title: "Real experiences. Meaningful change.",
   subtitle:
-    "Hear from people who have experienced Elevate’s practices, programs and community.",
-  id: "member-stories",
+    "Hear from people who have experienced Elevate’s practices, programs and events.",
+  id: "testimonials",
 } as const
 
 /** Expected source inventory count for the allowlisted upload script. */

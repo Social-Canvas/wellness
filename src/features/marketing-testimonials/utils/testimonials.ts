@@ -60,7 +60,7 @@ export function resolveTestimonialPoster(
 export function resolveTestimonialDisplayName(
   item: HomepageVideoTestimonial
 ): string {
-  return item.displayName?.trim() || "Member story"
+  return item.displayName?.trim() || "Testimonial"
 }
 
 export function resolveTestimonialRoleContext(

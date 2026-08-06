@@ -5,7 +5,10 @@
  * - Core/Gold/Platinum all include live_online_sessions + session_replays
  *   (business alias for recordings: "recorded_sessions"). Same live schedule
  *   and same recorded_sessions archive — no per-plan content duplication.
- * - Gold/Platinum differ only by confirmed extras (e.g. in_person_sessions).
+ * - Gold virtual-session *quantity* is enforced via quota reservations
+ *   (2 / calendar month) when personally billed — see virtual-session-quota.ts.
+ *   Core / nonprofit keep boolean live access until client confirms.
+ * - Gold/Platinum still differ by confirmed extras (e.g. in_person_sessions).
  * - Nonprofit-sponsored seats use Core-equivalent capabilities via plan-1;
  *   org Small/Mid/Large/Enterprise are billing/seat bands only.
  *

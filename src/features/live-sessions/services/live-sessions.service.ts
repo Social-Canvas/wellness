@@ -24,8 +24,12 @@ import {
   type LiveRegistrationType,
   type SafeLiveSessionPublicFields,
 } from "@/features/live-sessions/utils/live-sessions"
+import { assertQuotaJoinAllowed } from "@/features/live-sessions/services/live-session-quota.service"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { userHasCapability } from "@/server/services/membership.service"
+import {
+  getEffectiveMembership,
+  userHasCapability,
+} from "@/server/services/membership.service"
 import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
 
 function success<T>(data: T): ActionResult<T> {
@@ -540,6 +544,22 @@ export async function issueMemberJoinUrl(
 
     if (!gate.ok) {
       return failure("entitlement_required", gate.reason)
+    }
+
+    // Gold quota plans must reserve first; join must not create a second usage row.
+    // Core / nonprofit / Platinum keep legacy boolean join (no new revocation).
+    const membership = await getEffectiveMembership(parsedUser.data)
+    if (!membership.success) {
+      return membership
+    }
+    const quotaGate = await assertQuotaJoinAllowed({
+      userId: parsedUser.data,
+      liveClassId: parsedClass.data,
+      planSlug: membership.data.effectiveTierSlug,
+      accessSource: membership.data.source,
+    })
+    if (!quotaGate.success) {
+      return quotaGate
     }
 
     const urlResult = await loadParticipantUrl(parsedClass.data)
