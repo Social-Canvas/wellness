@@ -1,12 +1,7 @@
 /**
  * Nonprofit partnership enquiry helpers — pure, safe for unit tests.
- * Runtime plan lookup stays in callers via membership-audience helpers.
+ * Participant estimate is enquiry information only; admins set seat limits later.
  */
-
-import type {
-  NonprofitPlanSlug,
-  NonprofitSeatPlan,
-} from "../../checkout/utils/membership-audience"
 
 export const NONPROFIT_ENQUIRY_INTENT = "nonprofit-partnership" as const
 
@@ -16,13 +11,13 @@ export const NONPROFIT_ENQUIRY_HEADING =
   "Let’s support your organization" as const
 
 export const NONPROFIT_ENQUIRY_DESCRIPTION =
-  "Tell us a little about your nonprofit and the people you would like to support. Our team will follow up with the appropriate membership options and next steps." as const
+  "Tell us a little about your nonprofit and the people you would like to support. Our team will follow up with partnership options and next steps." as const
 
 export const NONPROFIT_ENQUIRY_FORM_HEADING =
   "Request nonprofit membership information" as const
 
 export const NONPROFIT_ENQUIRY_FORM_SUPPORT =
-  "We’ll use these details to prepare the right partnership option for your organization." as const
+  "We’ll use these details to prepare a partnership proposal. Seat limits are confirmed after approval and payment." as const
 
 export const NONPROFIT_ENQUIRY_CTA =
   "Request partnership information" as const
@@ -40,44 +35,45 @@ export const NONPROFIT_ENQUIRY_PLANS_HREF =
   "/programs?membership=nonprofit#memberships" as const
 
 export const NONPROFIT_ENQUIRY_VIEW_PLANS_LABEL =
-  "View all nonprofit plans" as const
+  "Back to nonprofit memberships" as const
 
-/** Compact shared benefits for the enquiry summary (not the full membership list). */
+/** Compact shared benefits for the enquiry summary. */
 export const NONPROFIT_ENQUIRY_SUMMARY_BENEFITS = [
-  "Individual member accounts",
-  "Elevate course library",
-  "Weekly live reset sessions",
-  "Breathwork and guided practices",
+  "Platinum-equivalent sponsored access",
+  "Individual participant accounts",
+  "Elevate course and recorded-session library",
+  "Live virtual classes",
   "Integration Journal",
   "Organization administrator dashboard",
 ] as const
 
 export const NONPROFIT_ENQUIRY_NEXT_STEPS = [
-  "Submit your organization details",
-  "Elevate reviews your participant needs",
-  "The team follows up with enrollment and payment options",
+  "Submit organization details",
+  "Elevate reviews the organization’s needs",
+  "Terms, payment, and seat allowance are confirmed",
+  "The organization receives onboarding and access instructions",
 ] as const
 
 export const NONPROFIT_PARTICIPANT_RANGE_OPTIONS = [
   {
     value: "1-25",
     label: "1–25 participants",
-    planSlug: "small" as const,
   },
   {
     value: "26-75",
     label: "26–75 participants",
-    planSlug: "mid-size" as const,
   },
   {
     value: "76-200",
     label: "76–200 participants",
-    planSlug: "large" as const,
   },
   {
     value: "201+",
     label: "201+ participants",
-    planSlug: "enterprise" as const,
+  },
+  {
+    value: "not-sure",
+    label: "Not sure yet",
   },
 ] as const
 
@@ -94,29 +90,13 @@ export const NONPROFIT_ACCESS_AUDIENCE_OPTIONS = [
 export type NonprofitAccessAudience =
   (typeof NONPROFIT_ACCESS_AUDIENCE_OPTIONS)[number]["value"]
 
-export function participantRangeForPlan(
-  planSlug: NonprofitPlanSlug | null | undefined
-): NonprofitParticipantRange | "" {
-  if (!planSlug) {
-    return ""
-  }
-  const match = NONPROFIT_PARTICIPANT_RANGE_OPTIONS.find(
-    (option) => option.planSlug === planSlug
-  )
-  return match?.value ?? ""
-}
-
-export function formatNonprofitPlanPrice(plan: NonprofitSeatPlan): string {
-  return `${plan.priceLabel}${plan.priceSuffix}`
-}
-
 export type NonprofitEnquiryMessageInput = {
-  plan: NonprofitSeatPlan | null
   organizationName: string
   organizationWebsite?: string | null
   role?: string | null
   estimatedParticipants: string
   accessAudience: NonprofitAccessAudience
+  partnershipNotes?: string | null
   message?: string | null
 }
 
@@ -135,9 +115,6 @@ export function composeNonprofitEnquiryMessage(
 
   const lines = [
     "Nonprofit partnership enquiry",
-    input.plan
-      ? `Selected plan: ${input.plan.name} (${input.plan.slug}) — ${input.plan.seatRangeLabel}, ${formatNonprofitPlanPrice(input.plan)}${input.plan.customPricing ? " (custom pricing)" : ""}`
-      : "Selected plan: not specified (generic enquiry)",
     `Organization: ${input.organizationName}`,
   ]
 
@@ -151,6 +128,12 @@ export function composeNonprofitEnquiryMessage(
   lines.push(`Estimated participants: ${participantLabel}`)
   lines.push(`Who will receive access: ${audienceLabel}`)
 
+  if (input.partnershipNotes?.trim()) {
+    lines.push(
+      `Preferred partnership or billing notes: ${input.partnershipNotes.trim()}`
+    )
+  }
+
   if (input.message?.trim()) {
     lines.push(`Message: ${input.message.trim()}`)
   }
@@ -159,29 +142,24 @@ export function composeNonprofitEnquiryMessage(
 }
 
 export function buildNonprofitEnquiryMetadata(input: {
-  plan: NonprofitSeatPlan | null
   organizationName: string
   organizationWebsite?: string | null
   role?: string | null
   estimatedParticipants: string
   accessAudience: NonprofitAccessAudience
+  partnershipNotes?: string | null
 }): Record<string, string | null> {
   return {
     intent: "nonprofit_partnership",
-    planSlug: input.plan?.slug ?? null,
-    planName: input.plan?.name ?? null,
     organizationName: input.organizationName,
     organizationWebsite: input.organizationWebsite?.trim() || null,
     role: input.role?.trim() || null,
     estimatedParticipants: input.estimatedParticipants,
     accessAudience: input.accessAudience,
+    partnershipNotes: input.partnershipNotes?.trim() || null,
   }
 }
 
-export function nonprofitEnquirySource(
-  planSlug: NonprofitPlanSlug | null
-): string {
-  return planSlug
-    ? `nonprofit_partnership_${planSlug}`
-    : "nonprofit_partnership"
+export function nonprofitEnquirySource(): string {
+  return "nonprofit_partnership"
 }

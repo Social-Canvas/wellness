@@ -3,10 +3,6 @@ import type { Metadata } from "next"
 import { LeadCaptureForm } from "@/features/leads/components/LeadCaptureForm"
 import { LeadPageShell } from "@/features/leads/components/LeadPageShell"
 import { NonprofitPartnershipEnquiryPage } from "@/features/leads/components/NonprofitPartnershipEnquiryPage"
-import {
-  NONPROFIT_SEAT_PLANS,
-  parseNonprofitPlanParam,
-} from "@/features/checkout/utils/membership-audience"
 import { NONPROFIT_ENQUIRY_INTENT } from "@/features/leads/utils/nonprofit-enquiry"
 import { getCurrentUser } from "@/features/auth/services/auth.service"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
@@ -21,7 +17,6 @@ export const metadata: Metadata = {
 type PrivateEventsPageProps = {
   searchParams: Promise<{
     intent?: string | string[]
-    plan?: string | string[]
   }>
 }
 
@@ -39,19 +34,11 @@ export default async function PrivateEventsLeadPage({
   const isNonprofitInquiry = intent === NONPROFIT_ENQUIRY_INTENT
 
   if (isNonprofitInquiry) {
-    // Only approved plan ids resolve; invalid/missing → generic enquiry UI.
-    const planSlug = parseNonprofitPlanParam(params.plan)
-    const selectedPlan = planSlug
-      ? (NONPROFIT_SEAT_PLANS.find((plan) => plan.slug === planSlug) ?? null)
-      : null
     const userResult = await getCurrentUser()
     const isAuthenticated = userResult.success
 
     return (
-      <NonprofitPartnershipEnquiryPage
-        selectedPlan={selectedPlan}
-        isAuthenticated={isAuthenticated}
-      />
+      <NonprofitPartnershipEnquiryPage isAuthenticated={isAuthenticated} />
     )
   }
 

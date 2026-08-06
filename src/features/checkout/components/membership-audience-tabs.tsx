@@ -7,19 +7,15 @@ import { buttonVariants } from "@/components/ui/button"
 import {
   MEMBERSHIP_TABS,
   MEMBERSHIP_SECTION_COPY,
-  NONPROFIT_CUSTOM_PRICING_LABEL,
+  NONPROFIT_INQUIRY_CTA,
+  NONPROFIT_INQUIRY_HREF,
   NONPROFIT_MEMBERSHIP_BENEFITS,
-  NONPROFIT_PLAN_CHOICE_DESCRIPTION,
-  NONPROFIT_PLAN_CHOICE_HEADING,
-  NONPROFIT_SEAT_PLANS,
   NONPROFIT_SHARED_BENEFITS_TITLE,
   NONPROFIT_SUPPORTING_NOTE,
   buildMembershipAudienceUrl,
-  buildNonprofitInquiryHref,
   nextAudienceOnKey,
   parseMembershipAudienceParam,
   type MembershipAudienceId,
-  type NonprofitSeatPlan,
 } from "@/features/checkout/utils/membership-audience"
 import { cn } from "@/lib/utils"
 
@@ -159,21 +155,13 @@ export function MembershipAudienceTabs({
           audience !== "nonprofit" && "hidden"
         )}
       >
-        <NonprofitMembershipPlans />
+        <NonprofitPartnershipOverview />
       </div>
     </div>
   )
 }
 
-function nonprofitPriceAriaLabel(plan: NonprofitSeatPlan): string {
-  const amount = plan.priceLabel.replace(/\$/g, "").replace(/,/g, "")
-  if (plan.customPricing) {
-    return `${amount} dollars per month, custom pricing`
-  }
-  return `${amount} dollars per month`
-}
-
-function NonprofitMembershipPlans() {
+function NonprofitPartnershipOverview() {
   return (
     <div className="mx-auto w-full max-w-[1100px]">
       <div className="mx-auto mb-8 max-w-2xl text-center">
@@ -195,7 +183,7 @@ function NonprofitMembershipPlans() {
         >
           {NONPROFIT_SHARED_BENEFITS_TITLE}
         </h4>
-        <ul className="mt-4 grid list-none grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
+        <ul className="mt-4 grid list-none grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
           {NONPROFIT_MEMBERSHIP_BENEFITS.map((benefit) => (
             <li
               key={benefit}
@@ -214,63 +202,18 @@ function NonprofitMembershipPlans() {
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-ink-soft">
           {NONPROFIT_SUPPORTING_NOTE}
         </p>
-      </section>
-
-      <div className="mx-auto mt-8 mb-5 max-w-2xl text-center">
-        <h4 className="font-display text-lg font-medium text-ink sm:text-xl">
-          {NONPROFIT_PLAN_CHOICE_HEADING}
-        </h4>
-        <p className="mt-1.5 text-sm text-ink-soft">
-          {NONPROFIT_PLAN_CHOICE_DESCRIPTION}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
-        {NONPROFIT_SEAT_PLANS.map((plan) => (
-          <article
-            key={plan.slug}
-            className="relative flex h-full flex-col rounded-2xl border border-line bg-surface p-5 text-left shadow-sm"
+        <div className="mt-6 flex justify-center">
+          <Link
+            href={NONPROFIT_INQUIRY_HREF}
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            )}
           >
-            <span className="text-[11px] font-bold tracking-[0.12em] text-green-deep uppercase">
-              Nonprofit
-            </span>
-            <h5 className="mt-1.5 font-display text-xl font-medium text-ink">
-              {plan.name}
-            </h5>
-            <p className="mt-1 text-sm text-ink-soft">{plan.seatRangeLabel}</p>
-            <p
-              className={cn(
-                "mt-2 font-display text-[26px] font-semibold leading-tight text-ink",
-                plan.customPricing ? "mb-1" : "mb-4"
-              )}
-              aria-label={nonprofitPriceAriaLabel(plan)}
-            >
-              {plan.priceLabel}
-              <small className="ml-1 font-body text-sm font-normal text-ink-soft">
-                {plan.priceSuffix}
-              </small>
-            </p>
-            {plan.customPricing ? (
-              <p className="mb-4 text-sm text-ink-soft">
-                {NONPROFIT_CUSTOM_PRICING_LABEL}
-              </p>
-            ) : null}
-
-            <Link
-              href={buildNonprofitInquiryHref(plan.slug)}
-              className={cn(
-                buttonVariants({
-                  variant: plan.customPricing ? "outline" : "default",
-                  size: "block",
-                }),
-                "mt-auto min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-              )}
-            >
-              {plan.ctaLabel}
-            </Link>
-          </article>
-        ))}
-      </div>
+            {NONPROFIT_INQUIRY_CTA}
+          </Link>
+        </div>
+      </section>
     </div>
   )
 }

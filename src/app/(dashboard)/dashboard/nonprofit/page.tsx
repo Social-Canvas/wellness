@@ -4,20 +4,80 @@ import { redirect } from "next/navigation"
 import { Badge } from "@/components/ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
+import {
+  OrganizationAccessControls,
+  PlatformCreateOrganizationForm,
+} from "@/features/organizations/components/OrganizationAccessControls"
+import {
+  assignOrganizationAdministratorAction,
+  upsertNonprofitOrganizationAction,
+} from "@/features/organizations/actions/organization-admin.actions"
 import { createAdminClient } from "@/lib/supabase/admin"
 import {
   countActiveOrganizationSeats,
   countOccupiedOrganizationSeats,
 } from "@/server/services/membership.service"
+import { getOrganizationAccessCodeMetadata } from "@/server/services/organization-access-code.service"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 export const metadata: Metadata = {
   title: "Nonprofit administration",
-  description: "Manage nonprofit partnership seats and members.",
+  description: "Manage nonprofit partnership seats, access codes, and members.",
 }
 
 function membershipDb(): SupabaseClient {
   return createAdminClient() as unknown as SupabaseClient
+}
+
+async function createOrganizationFromForm(formData: FormData) {
+  "use server"
+
+  const organizationIdRaw = String(formData.get("organizationId") ?? "").trim()
+  const adminEmail = String(formData.get("adminEmail") ?? "").trim()
+
+  const result = await upsertNonprofitOrganizationAction({
+    organizationId: organizationIdRaw || null,
+    name: String(formData.get("name") ?? ""),
+    seatLimit: Number(formData.get("seatLimit") ?? 0),
+    status: String(formData.get("status") ?? "active") as
+      | "pending"
+      | "approved"
+      | "active"
+      | "suspended"
+      | "expired"
+      | "cancelled",
+    billingStatus: String(formData.get("billingStatus") ?? "manual_contract") as
+      | "unpaid"
+      | "invoiced"
+      | "paid"
+      | "manual_contract"
+      | "stripe_subscription"
+      | "past_due"
+      | "cancelled",
+    directActivation: true,
+  })
+
+  if (!result.success) {
+    return { ok: false, message: result.error.message }
+  }
+
+  if (adminEmail) {
+    const assign = await assignOrganizationAdministratorAction({
+      organizationId: result.data.id,
+      email: adminEmail,
+    })
+    if (!assign.success) {
+      return {
+        ok: false,
+        message: `Organization saved, but administrator assignment failed: ${assign.error.message}`,
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    message: `Organization saved (${result.data.id}). Generate an access code below after payment confirmation.`,
+  }
 }
 
 export default async function NonprofitAdminPage() {
@@ -27,14 +87,19 @@ export default async function NonprofitAdminPage() {
     redirect("/login")
   }
 
-  if (profileResult.data.role !== "admin" && profileResult.data.role !== "super_admin") {
+  if (
+    profileResult.data.role !== "admin" &&
+    profileResult.data.role !== "super_admin"
+  ) {
     redirect("/dashboard")
   }
 
   const supabase = membershipDb()
   const { data: organizations } = await supabase
     .from("organizations")
-    .select("id, name, status, seat_limit, access_model, plan_id")
+    .select(
+      "id, name, status, seat_limit, access_model, billing_status, access_start_at, access_end_at, direct_activation"
+    )
     .order("created_at", { ascending: false })
     .limit(20)
 
@@ -44,32 +109,46 @@ export default async function NonprofitAdminPage() {
     status: string
     seat_limit: number
     access_model: string
+    billing_status?: string
+    access_start_at?: string | null
+    access_end_at?: string | null
+    direct_activation?: boolean
   }>
 
   const orgDetails = await Promise.all(
     orgs.map(async (organization) => {
-      const [activeSeats, occupiedSeats, membersResult] = await Promise.all([
-        countActiveOrganizationSeats(organization.id),
-        countOccupiedOrganizationSeats(organization.id),
-        supabase
-          .from("organization_members")
-          .select("id, email, role, status, assigned_plan_id")
-          .eq("organization_id", organization.id)
-          .neq("status", "removed")
-          .order("created_at", { ascending: false })
-          .limit(50),
-      ])
+      const [activeSeats, occupiedSeats, membersResult, codeMeta] =
+        await Promise.all([
+          countActiveOrganizationSeats(organization.id),
+          countOccupiedOrganizationSeats(organization.id),
+          supabase
+            .from("organization_members")
+            .select("id, email, role, status")
+            .eq("organization_id", organization.id)
+            .neq("status", "removed")
+            .order("created_at", { ascending: false })
+            .limit(50),
+          getOrganizationAccessCodeMetadata(organization.id),
+        ])
+
+      const occupied = occupiedSeats.success ? occupiedSeats.data : 0
+      const available =
+        organization.seat_limit > 0
+          ? Math.max(0, organization.seat_limit - occupied)
+          : null
 
       return {
         organization,
         activeSeats: activeSeats.success ? activeSeats.data : 0,
-        occupiedSeats: occupiedSeats.success ? occupiedSeats.data : 0,
+        occupiedSeats: occupied,
+        availableSeats: available,
         members: (membersResult.data ?? []) as Array<{
           id: string
           email: string
           role: string
           status: string
         }>,
+        code: codeMeta.success ? codeMeta.data : null,
       }
     })
   )
@@ -81,58 +160,70 @@ export default async function NonprofitAdminPage() {
           Nonprofit administration
         </h1>
         <p className="mt-1 text-sm text-ink-soft">
-          Review nonprofit partnership contracts, seat limits, and member status.
-          Invite, suspend, and remove actions are enforced server-side.
+          Review enquiries separately, then create organizations, set seat
+          limits, confirm billing, assign administrators, and generate access
+          codes. Sponsored access is Platinum-equivalent.
         </p>
       </div>
+
+      <PlatformCreateOrganizationForm onSubmitAction={createOrganizationFromForm} />
 
       {orgDetails.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-sm text-ink-soft">
-            No nonprofit organizations are configured yet. Create organization
-            records through a reviewed admin workflow after contracts are signed.
+            No nonprofit organizations are configured yet.
           </CardContent>
         </Card>
       ) : (
-        orgDetails.map(({ organization, activeSeats, occupiedSeats, members }) => (
-          <Card key={organization.id}>
-            <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <CardTitle className="font-display text-lg font-medium">
-                {organization.name}
-              </CardTitle>
-              <Badge variant="outline">{organization.status}</Badge>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-ink-soft">
-              <p>
-                <span className="font-semibold text-ink">Access model:</span>{" "}
-                {organization.access_model.replaceAll("_", " ")}
-              </p>
-              <p>
-                <span className="font-semibold text-ink">Seats:</span> {activeSeats}{" "}
-                active / {occupiedSeats} occupied (incl. invitations) /{" "}
-                {organization.seat_limit || "unlimited"} limit
-              </p>
-              {members.length === 0 ? (
-                <p className="text-xs">No members or pending invitations yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {members.map((member) => (
-                    <li
-                      key={member.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-3 py-2"
-                    >
-                      <span>
-                        <span className="font-semibold text-ink">{member.email}</span>
-                        <span className="ml-2 text-xs">({member.role})</span>
-                      </span>
-                      <Badge variant="outline">{member.status}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        ))
+        orgDetails.map(
+          ({
+            organization,
+            activeSeats,
+            occupiedSeats,
+            availableSeats,
+            members,
+            code,
+          }) => (
+            <Card key={organization.id}>
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <CardTitle className="font-display text-lg font-medium">
+                  {organization.name}
+                </CardTitle>
+                <Badge variant="outline">{organization.status}</Badge>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-ink-soft">
+                <p>
+                  <span className="font-semibold text-ink">Sponsored access:</span>{" "}
+                  Platinum-equivalent
+                </p>
+                <p>
+                  <span className="font-semibold text-ink">Billing:</span>{" "}
+                  {organization.billing_status ?? "unpaid"}
+                </p>
+                <p>
+                  <span className="font-semibold text-ink">Seats:</span>{" "}
+                  {occupiedSeats} occupied / {organization.seat_limit || "unlimited"}{" "}
+                  limit
+                  {availableSeats !== null ? ` · ${availableSeats} available` : ""}
+                  {" · "}
+                  {activeSeats} active ·{" "}
+                  {
+                    members.filter((member) => member.status === "suspended")
+                      .length
+                  }{" "}
+                  suspended
+                </p>
+                <OrganizationAccessControls
+                  organizationId={organization.id}
+                  codePrefix={code?.codePrefix ?? null}
+                  codeStatus={code?.status ?? null}
+                  codeExpiresAt={code?.expiresAt ?? null}
+                  members={members}
+                />
+              </CardContent>
+            </Card>
+          )
+        )
       )}
     </div>
   )

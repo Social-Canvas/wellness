@@ -27,7 +27,7 @@ export const ORGANIZATION_BILLING_TIERS = [
 export type OrganizationBillingTier = (typeof ORGANIZATION_BILLING_TIERS)[number]
 
 /** Nonprofit seat bands map to billing only — never to Gold/Platinum content. */
-export const SPONSORED_CONTENT_PLAN_SLUG = "plan-1" as const
+export const SPONSORED_CONTENT_PLAN_SLUG = "plan-3" as const
 
 export const MEMBERSHIP_JOIN_WINDOW = {
   /** Minutes before starts_at when member join opens */

@@ -297,7 +297,7 @@ test("13. Nonprofit behavior remains unchanged pending confirmation", () => {
   const audience = read(
     "src/features/checkout/utils/membership-audience.ts"
   )
-  assert.match(audience, /Weekly live online sessions \(Core-equivalent\)/)
+  assert.match(audience, /Platinum-equivalent membership privileges/)
 })
 
 // 14. In-person reset period is not invented

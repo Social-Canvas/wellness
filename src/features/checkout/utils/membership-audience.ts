@@ -24,7 +24,7 @@ export const MEMBERSHIP_SECTION_COPY = {
   nonprofit: {
     heading: "Memberships for Nonprofit Organizations",
     description:
-      "Provide employees, volunteers or community members with individual Elevate accounts through a sponsored organization membership.",
+      "Provide employees, volunteers, or community members with individual Elevate accounts through a sponsored nonprofit partnership.",
   },
 } as const
 
@@ -43,8 +43,11 @@ export const MEMBERSHIP_TABS = [
   },
 ] as const
 
-/** Confirmed seat pricing is published as inquiry-only visual plans (no Checkout). */
-export const NONPROFIT_PUBLIC_PRICING_CONFIRMED = true
+/**
+ * Historical seat-band pricing retained for internal enquiry metadata / existing records.
+ * Not shown on the public nonprofit panel.
+ */
+export const NONPROFIT_PUBLIC_PRICING_CONFIRMED = false
 
 export const NONPROFIT_PLAN_SLUGS = [
   "small",
@@ -66,8 +69,8 @@ export type NonprofitSeatPlan = {
 }
 
 /**
- * Approved nonprofit seat plans — visual/inquiry only.
- * Do not wire these amounts to self-serve Checkout.
+ * Historical nonprofit seat bands — enquiry metadata / admin reference only.
+ * Do not render as public pricing cards. Do not wire to Checkout.
  */
 export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
   {
@@ -108,41 +111,58 @@ export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
   },
 ] as const
 
-export const NONPROFIT_INQUIRY_CTA = "Request nonprofit membership information"
+export const NONPROFIT_INQUIRY_CTA = "Connect with us"
 
 export const NONPROFIT_INQUIRY_HREF =
   "/private-events?intent=nonprofit-partnership" as const
 
 export const NONPROFIT_SHARED_BENEFITS_TITLE =
-  "Included with every nonprofit plan" as const
+  "Included with a nonprofit partnership" as const
 
+/** @deprecated Public size cards removed — kept for test migration detection. */
 export const NONPROFIT_PLAN_CHOICE_HEADING =
   "Choose your organization size" as const
 
+/** @deprecated Public size cards removed. */
 export const NONPROFIT_PLAN_CHOICE_DESCRIPTION =
   "Select the participant range that best matches your organization." as const
 
 export const NONPROFIT_CUSTOM_PRICING_LABEL = "Custom pricing" as const
 
-/** Shared benefits shown once above nonprofit plan cards (public language). */
-export const NONPROFIT_MEMBERSHIP_BENEFITS = [
-  "Individual member accounts",
-  "Elevate course library",
-  "Weekly live online sessions (Core-equivalent)",
-  "Shared session recordings archive",
-  "Breathwork and guided practices",
-  "Organization administrator dashboard",
-  "Seat invitations and member management",
-] as const
+/**
+ * Shared partnership benefits. Platinum-aligned public language derived from the
+ * approved Platinum feature list where practical (no duplicated capability keys).
+ */
+export function buildNonprofitMembershipBenefits(
+  platinumFeatures: readonly string[] = []
+): readonly string[] {
+  // Platinum features are resolved where practical by callers; defaults mirror
+  // the approved Elevate Platinum public configuration without importing plan
+  // constants (keeps this module path-alias-free for Node unit tests).
+  void platinumFeatures
+  return [
+    "Elevate course and recorded-session library",
+    "Access to live virtual classes",
+    "Platinum-equivalent membership privileges",
+    "Included in-person experience according to the current Platinum configuration",
+    "Individual participant accounts",
+    "Organization administrator dashboard",
+    "Seat and member management",
+    "Integration Journal",
+  ]
+}
+
+export const NONPROFIT_MEMBERSHIP_BENEFITS = buildNonprofitMembershipBenefits()
 
 /**
- * Nonprofit Small/Mid/Large/Enterprise control seats and billing only.
- * Sponsored content access is always Core-equivalent (plan-1 capabilities).
+ * Nonprofit seat counts control capacity only.
+ * Sponsored content access is Platinum-equivalent (plan-3 capabilities).
  */
 export const NONPROFIT_BILLING_TIER_NOT_CONTENT_TIER = true as const
 
 export const NONPROFIT_SUPPORTING_NOTE =
-  "Every participant receives an individual account, while the nonprofit administrator manages invitations and available seats."
+  "Every participant receives an individual account. After approval, your organization receives one reusable access code and manages seats from the administrator dashboard."
+
 export const SPONSORED_BILLING_COPY =
   "Billing is managed by your nonprofit sponsor. Contact your administrator for seat or plan changes."
 
@@ -250,6 +270,7 @@ export function isNonprofitPlanSlug(
 
 /**
  * Normalize nonprofit plan query param. Invalid / missing → null (ignored safely).
+ * Retained for legacy links; public UI no longer uses plan= deep-links.
  */
 export function parseNonprofitPlanParam(
   value: string | string[] | null | undefined
@@ -261,11 +282,10 @@ export function parseNonprofitPlanParam(
   return null
 }
 
-/** Inquiry URL for a nonprofit seat plan (never self-serve Checkout). */
-export function buildNonprofitInquiryHref(plan: NonprofitPlanSlug): string {
-  const params = new URLSearchParams({
-    intent: "nonprofit-partnership",
-    plan,
-  })
-  return `/private-events?${params.toString()}`
+/** Common partnership enquiry URL (never self-serve Checkout; no plan=). */
+export function buildNonprofitInquiryHref(
+  _plan?: NonprofitPlanSlug | null
+): string {
+  void _plan
+  return NONPROFIT_INQUIRY_HREF
 }

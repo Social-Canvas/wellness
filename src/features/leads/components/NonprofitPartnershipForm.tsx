@@ -26,13 +26,10 @@ import {
   NONPROFIT_ENQUIRY_SUCCESS_BODY,
   NONPROFIT_ENQUIRY_SUCCESS_HEADING,
   NONPROFIT_PARTICIPANT_RANGE_OPTIONS,
-  participantRangeForPlan,
 } from "@/features/leads/utils/nonprofit-enquiry"
 import { EDUCATIONAL_DISCLAIMER } from "@/features/checkout/constants/disclaimer"
-import type { NonprofitPlanSlug } from "@/features/checkout/utils/membership-audience"
 
 type NonprofitPartnershipFormProps = {
-  planSlug: NonprofitPlanSlug | null
   isAuthenticated: boolean
   className?: string
 }
@@ -55,7 +52,6 @@ function FieldError({
 }
 
 function NonprofitPartnershipForm({
-  planSlug,
   isAuthenticated,
   className,
 }: NonprofitPartnershipFormProps) {
@@ -79,10 +75,10 @@ function NonprofitPartnershipForm({
       organizationWebsite: "",
       phone: "",
       role: "",
-      estimatedParticipants: participantRangeForPlan(planSlug) || ("" as never),
+      estimatedParticipants: "" as never,
       accessAudience: "" as never,
+      partnershipNotes: "",
       message: "",
-      planSlug: planSlug ?? null,
     },
   })
 
@@ -96,6 +92,7 @@ function NonprofitPartnershipForm({
       "role",
       "estimatedParticipants",
       "accessAudience",
+      "partnershipNotes",
       "message",
     ]
     const first = order.find((key) => errors[key])
@@ -114,10 +111,7 @@ function NonprofitPartnershipForm({
 
     startTransition(async () => {
       try {
-        const result = await submitNonprofitPartnershipAction({
-          ...values,
-          planSlug: planSlug ?? null,
-        })
+        const result = await submitNonprofitPartnershipAction(values)
 
         if (!result.success) {
           setSubmitLocked(false)
@@ -154,6 +148,7 @@ function NonprofitPartnershipForm({
   const roleErrorId = `${formId}-role-error`
   const participantsErrorId = `${formId}-participants-error`
   const accessErrorId = `${formId}-access-error`
+  const notesErrorId = `${formId}-notes-error`
   const messageErrorId = `${formId}-message-error`
   const serverErrorId = `${formId}-server-error`
 
@@ -169,8 +164,6 @@ function NonprofitPartnershipForm({
         className="mt-6 space-y-4"
         aria-describedby={serverError ? serverErrorId : undefined}
       >
-        <input type="hidden" {...register("planSlug")} />
-
         <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor={`${formId}-name`}>
@@ -347,6 +340,25 @@ function NonprofitPartnershipForm({
             message={errors.accessAudience?.message}
           />
         </fieldset>
+
+        <div className="space-y-1.5">
+          <Label htmlFor={`${formId}-notes`}>
+            Preferred partnership or billing notes{" "}
+            <span className="font-normal text-ink-soft">(optional)</span>
+          </Label>
+          <textarea
+            id={`${formId}-notes`}
+            rows={3}
+            className="min-h-20 w-full rounded-[var(--radius-input)] border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            aria-invalid={errors.partnershipNotes ? true : undefined}
+            aria-describedby={errors.partnershipNotes ? notesErrorId : undefined}
+            {...register("partnershipNotes")}
+          />
+          <FieldError
+            id={notesErrorId}
+            message={errors.partnershipNotes?.message}
+          />
+        </div>
 
         <div className="space-y-1.5">
           <Label htmlFor={`${formId}-message`}>

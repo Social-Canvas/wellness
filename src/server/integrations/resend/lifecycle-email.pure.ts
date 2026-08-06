@@ -34,6 +34,13 @@ export type LifecycleEventType =
   | "organization_member_activated"
   | "organization_member_suspended"
   | "organization_member_removed"
+  | "organization_approved"
+  | "organization_administrator_invited"
+  | "organization_access_code_created"
+  | "organization_sponsored_access_activated"
+  | "organization_seat_limit_reached"
+  | "organization_access_expiring"
+  | "organization_access_expired"
   | "capability_granted"
   | "capability_revoked"
   | "live_trial_registered"
@@ -160,6 +167,74 @@ export const LIFECYCLE_EMAIL_MAPPINGS: Record<LifecycleEventType, LifecycleEmail
     recipient: "member",
     ctaPath: "/programs",
     ctaMode: "programs",
+  },
+  organization_approved: {
+    eventType: "organization_approved",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "organization_admin_onboarding_secure_delivery",
+    ctaPath: "/dashboard/organization",
+    ctaMode: "dashboard",
+  },
+  organization_administrator_invited: {
+    eventType: "organization_administrator_invited",
+    template: "organization_member_invited",
+    deliver: true,
+    notifyOrgAdmins: false,
+    recipient: "invite_email",
+    ctaPath: "/dashboard/organization",
+    ctaMode: "dashboard",
+  },
+  organization_access_code_created: {
+    eventType: "organization_access_code_created",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: false,
+    recipient: "none",
+    skipReason: "access_code_secure_delivery_only",
+    ctaPath: null,
+    ctaMode: "none",
+  },
+  organization_sponsored_access_activated: {
+    eventType: "organization_sponsored_access_activated",
+    template: "organization_member_activated",
+    deliver: true,
+    notifyOrgAdmins: false,
+    recipient: "member",
+    ctaPath: "/dashboard/membership",
+    ctaMode: "dashboard",
+  },
+  organization_seat_limit_reached: {
+    eventType: "organization_seat_limit_reached",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: true,
+    recipient: "none",
+    skipReason: "org_admin_notification_pending",
+    ctaPath: "/dashboard/organization",
+    ctaMode: "dashboard",
+  },
+  organization_access_expiring: {
+    eventType: "organization_access_expiring",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: true,
+    recipient: "none",
+    skipReason: "org_expiry_email_pending",
+    ctaPath: "/dashboard/organization",
+    ctaMode: "dashboard",
+  },
+  organization_access_expired: {
+    eventType: "organization_access_expired",
+    template: null,
+    deliver: false,
+    notifyOrgAdmins: true,
+    recipient: "none",
+    skipReason: "org_expiry_email_pending",
+    ctaPath: "/dashboard/organization",
+    ctaMode: "dashboard",
   },
   capability_granted: {
     eventType: "capability_granted",

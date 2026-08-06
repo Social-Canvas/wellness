@@ -69,8 +69,8 @@ test("recorded_sessions business alias maps to deployed session_replays", () => 
 })
 
 // 5
-test("sponsored content plan is Core-equivalent plan-1", () => {
-  assert.equal(sponsoredContentPlanSlug(), "plan-1")
+test("sponsored content plan is Platinum-equivalent plan-3", () => {
+  assert.equal(sponsoredContentPlanSlug(), "plan-3")
 })
 
 // 6
@@ -391,7 +391,7 @@ test("nonprofit billing tier constant separates seats from content", async () =>
   assert.equal(audience.NONPROFIT_BILLING_TIER_NOT_CONTENT_TIER, true)
   assert.ok(
     audience.NONPROFIT_MEMBERSHIP_BENEFITS.some((b: string) =>
-      /Core-equivalent/i.test(b)
+      /Platinum-equivalent/i.test(b)
     )
   )
 })

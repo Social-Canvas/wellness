@@ -375,40 +375,32 @@ export const getEffectiveMembership = cache(
       }
 
       if (activeSponsored?.organizations) {
-        const orgPlan = activeSponsored.organizations.plans
+        // Nonprofit-sponsored access is Platinum-equivalent (plan-3).
+        // Do not duplicate capability lists on organization_members rows —
+        // always resolve against the canonical Platinum plan.
+        const { data: platinumPlan } = await supabase
+          .from("plans")
+          .select("id, name, slug")
+          .eq("slug", "plan-3")
+          .maybeSingle()
+        const platinum = platinumPlan as {
+          id: string
+          name: string
+          slug: string
+        } | null
+
         const planId =
+          platinum?.id ??
           activeSponsored.assigned_plan_id ??
           activeSponsored.organizations.plan_id ??
-          orgPlan?.id
+          activeSponsored.organizations.plans?.id
+
         if (planId) {
-          let planName = orgPlan?.name ?? "Sponsored membership"
-          let planSlug = orgPlan?.slug ?? "plan-1"
-
-          if (
-            activeSponsored.assigned_plan_id &&
-            activeSponsored.assigned_plan_id !== orgPlan?.id
-          ) {
-            const { data: assignedPlan } = await supabase
-              .from("plans")
-              .select("id, name, slug")
-              .eq("id", activeSponsored.assigned_plan_id)
-              .maybeSingle()
-            const assigned = assignedPlan as {
-              id: string
-              name: string
-              slug: string
-            } | null
-            if (assigned) {
-              planName = assigned.name
-              planSlug = assigned.slug
-            }
-          }
-
           candidates.push({
             source: "nonprofit_sponsored",
             planId,
-            planName,
-            planSlug,
+            planName: platinum?.name ?? "Elevate Platinum",
+            planSlug: platinum?.slug ?? "plan-3",
             status: "active",
             billingInterval: null,
             currentPeriodStart: null,
@@ -523,8 +515,9 @@ export async function userHasCapability(
 }
 
 /**
- * Counts seats that consume capacity: active members and pending invitations.
- * Does not count removed, suspended, or expired invitations.
+ * Counts seats that consume capacity:
+ * active members, suspended members (seat reserved), and pending invitations.
+ * Removed members release their seat. Expired invitations are excluded once expired.
  */
 export async function countOccupiedOrganizationSeats(
   organizationId: string
@@ -535,17 +528,26 @@ export async function countOccupiedOrganizationSeats(
   }
 
   const supabase = membershipDb()
-  const { count, error } = await supabase
-    .from("organization_members")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", parsed.data)
-    .in("status", ["active", "invited"])
+  const { data, error } = await supabase.rpc(
+    "count_occupied_organization_seats",
+    { p_organization_id: parsed.data }
+  )
 
   if (error) {
-    return failure("provider_error", "Unable to count organization seats.")
+    // Fallback for environments where the RPC is not yet applied.
+    const { count, error: countError } = await supabase
+      .from("organization_members")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", parsed.data)
+      .in("status", ["active", "suspended", "invited"])
+
+    if (countError) {
+      return failure("provider_error", "Unable to count organization seats.")
+    }
+    return success(count ?? 0)
   }
 
-  return success(count ?? 0)
+  return success(typeof data === "number" ? data : 0)
 }
 
 export async function countActiveOrganizationSeats(
@@ -590,7 +592,7 @@ export async function assertOrganizationSeatLimitChange(input: {
   if (input.newSeatLimit > 0 && occupied.data > input.newSeatLimit) {
     return failure(
       "validation_error",
-      `Cannot reduce seat limit to ${input.newSeatLimit} while ${occupied.data} seats are occupied. Remove or suspend members first.`
+      `Cannot reduce seat limit to ${input.newSeatLimit} while ${occupied.data} seats are occupied. Remove members first.`
     )
   }
 
@@ -642,7 +644,7 @@ export async function inviteOrganizationMember(input: {
   if (org.seat_limit > 0 && seats.data >= org.seat_limit) {
     return failure(
       "validation_error",
-      "Seat limit reached. Remove or suspend a member before inviting another."
+      "Seat limit reached. Remove a member before inviting another."
     )
   }
 
@@ -794,7 +796,7 @@ export async function activateOrganizationMember(input: {
   if (org.seat_limit > 0 && seats.data > org.seat_limit) {
     return failure(
       "validation_error",
-      "Seat limit reached. Remove or suspend a member before activating another."
+      "Seat limit reached. Remove a member before activating another."
     )
   }
 

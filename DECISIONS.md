@@ -307,3 +307,15 @@ Format:
 **Alternatives considered:** Immediately revoke Core live access; encode unlimited as a large integer; silently use Stripe billing period for “monthly”; invent Platinum in-person monthly/annual reset.
 
 **Status:** Accepted
+
+---
+
+## 2026-08-07 — Nonprofit partnership enquiry + sponsorship access codes
+
+**Decision:** Public nonprofit offering is a single partnership enquiry (no Small/Mid/Large/Enterprise pricing cards). After admin approval and payment, an organization receives one reusable access code (SHA-256 hash only; plaintext shown once). Redeeming grants `nonprofit_sponsored` membership with Platinum-equivalent (`plan-3`) capabilities via the effective-membership resolver — no personal Stripe subscription, coupons, or promotion codes. Seat occupancy = active + suspended (reserved) + invited; removed members release seats. Atomic redemption via `redeem_organization_access_code` RPC.
+
+**Reason:** Seat bands were enquiry-only visual pricing and confused content access. Access codes scale better than email invitations alone while keeping participant Auth accounts individual. Platinum-equivalent sponsorship matches the confirmed partnership model.
+
+**Alternatives considered:** Keep public size pricing cards; Stripe promo codes for sponsored seats; Core-equivalent sponsored capabilities; plaintext code storage; shared org login.
+
+**Status:** Accepted

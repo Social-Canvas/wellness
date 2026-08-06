@@ -9,8 +9,8 @@
  *   (2 / calendar month) when personally billed — see virtual-session-quota.ts.
  *   Core / nonprofit keep boolean live access until client confirms.
  * - Gold/Platinum still differ by confirmed extras (e.g. in_person_sessions).
- * - Nonprofit-sponsored seats use Core-equivalent capabilities via plan-1;
- *   org Small/Mid/Large/Enterprise are billing/seat bands only.
+ * - Nonprofit-sponsored seats use Platinum-equivalent capabilities via plan-3;
+ *   organization seat limits control capacity only, not participant privileges.
  *
  * Do not rename session_replays in the DB — it is the deployed recording key.
  */

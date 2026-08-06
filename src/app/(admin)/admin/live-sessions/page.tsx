@@ -30,7 +30,7 @@ export default async function AdminLiveSessionsPage() {
         </h2>
         <p className="mt-1 text-sm text-ink-soft">
           One shared weekly schedule for Core, Gold, Platinum, and nonprofit-sponsored
-          Core-equivalent access. Zoom host URLs never appear in public HTML.
+          Platinum-equivalent access. Zoom host URLs never appear in public HTML.
         </p>
       </div>
       <LiveSessionsAdminTable sessions={result.data} />

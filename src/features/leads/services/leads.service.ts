@@ -16,10 +16,6 @@ import {
   nonprofitEnquirySource,
   type NonprofitAccessAudience,
 } from "@/features/leads/utils/nonprofit-enquiry"
-import {
-  NONPROFIT_SEAT_PLANS,
-  parseNonprofitPlanParam,
-} from "@/features/checkout/utils/membership-audience"
 import { createClient } from "@/lib/supabase/server"
 import type { Database, Json } from "@/types/database/supabase"
 
@@ -93,8 +89,8 @@ export async function submitLead(
 }
 
 /**
- * Nonprofit partnership enquiry — maps approved plan ids only; never persists
- * attacker-controlled plan text.
+ * Nonprofit partnership enquiry — participant estimate is informational only.
+ * Does not assign a public pricing plan or create an organization.
  */
 export async function submitNonprofitPartnership(
   input: SubmitNonprofitPartnershipInput
@@ -106,26 +102,22 @@ export async function submitNonprofitPartnership(
   }
 
   const data = normalizeNonprofitPartnershipInput(parsed.data)
-  const planSlug = parseNonprofitPlanParam(data.planSlug)
-  const plan = planSlug
-    ? (NONPROFIT_SEAT_PLANS.find((entry) => entry.slug === planSlug) ?? null)
-    : null
   const accessAudience = data.accessAudience as NonprofitAccessAudience
   const metadata = buildNonprofitEnquiryMetadata({
-    plan,
     organizationName: data.organizationName,
     organizationWebsite: data.organizationWebsite,
     role: data.role,
     estimatedParticipants: data.estimatedParticipants,
     accessAudience,
+    partnershipNotes: data.partnershipNotes,
   })
   const message = composeNonprofitEnquiryMessage({
-    plan,
     organizationName: data.organizationName,
     organizationWebsite: data.organizationWebsite,
     role: data.role,
     estimatedParticipants: data.estimatedParticipants,
     accessAudience,
+    partnershipNotes: data.partnershipNotes,
     message: data.message,
   })
 
@@ -135,7 +127,7 @@ export async function submitNonprofitPartnership(
     email: data.email,
     phone: data.phone,
     message,
-    source: nonprofitEnquirySource(plan?.slug ?? null),
+    source: nonprofitEnquirySource(),
     metadata,
   })
 }

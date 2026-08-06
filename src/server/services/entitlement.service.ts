@@ -50,7 +50,7 @@ function mapDatabaseError(error: { code?: string; message: string }): ActionResu
  * canAccessLesson per lesson; without this each check re-queries subscriptions.
  * React cache() is per-request only — never shared across users.
  *
- * Includes nonprofit-sponsored organization plan IDs so sponsored Core-equivalent
+ * Includes nonprofit-sponsored organization plan IDs so sponsored Platinum-equivalent
  * members receive the same course-library access as personal Core subscribers.
  */
 const getActivePlanIdsForUser = cache(

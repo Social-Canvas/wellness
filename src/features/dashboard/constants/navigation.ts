@@ -97,11 +97,27 @@ export function getUserMenuLinks(isAdmin: boolean): DashboardNavItem[] {
   const links: DashboardNavItem[] = [
     { label: "Account", href: "/dashboard/account", group: "utility" },
     { label: "Membership", href: "/dashboard/membership", group: "utility" },
+    {
+      label: "Organization",
+      href: "/dashboard/organization",
+      group: "utility",
+    },
+    {
+      label: "Redeem access code",
+      href: "/redeem-organization-access",
+      group: "utility",
+    },
     { label: "Dashboard", href: "/dashboard", group: "utility" },
     { label: "My Library", href: "/dashboard/library", group: "utility" },
   ]
 
   if (isAdmin) {
+    links.push({
+      label: "Nonprofits",
+      href: "/dashboard/nonprofit",
+      group: "utility",
+      adminOnly: true,
+    })
     links.push({
       label: "Admin",
       href: "/admin",

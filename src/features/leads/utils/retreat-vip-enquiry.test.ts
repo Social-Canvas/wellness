@@ -405,7 +405,7 @@ test("20. Nonprofit enquiry page remains unchanged visually", () => {
   const nonprofit = nonprofitEnquiryPageSource()
   assert.match(nonprofit, /EnquiryPageShell/)
   assert.doesNotMatch(nonprofit, /stickySummary/)
-  assert.match(nonprofit, /SelectedPlanSummary/)
+  assert.match(nonprofit, /PartnershipSummary/)
   assert.match(nonprofit, /NONPROFIT_ENQUIRY_EYEBROW/)
   assert.match(nonprofit, /NONPROFIT_ENQUIRY_HEADING/)
   assert.equal(NONPROFIT_ENQUIRY_EYEBROW, "NONPROFIT PARTNERSHIPS")

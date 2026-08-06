@@ -4,7 +4,6 @@ import {
   NONPROFIT_ACCESS_AUDIENCE_OPTIONS,
   NONPROFIT_PARTICIPANT_RANGE_OPTIONS,
 } from "@/features/leads/utils/nonprofit-enquiry"
-import { NONPROFIT_PLAN_SLUGS } from "@/features/checkout/utils/membership-audience"
 
 const participantValues = NONPROFIT_PARTICIPANT_RANGE_OPTIONS.map(
   (option) => option.value
@@ -14,8 +13,6 @@ const accessValues = NONPROFIT_ACCESS_AUDIENCE_OPTIONS.map(
   (option) => option.value
 ) as [string, ...string[]]
 
-const planSlugValues = [...NONPROFIT_PLAN_SLUGS] as [string, ...string[]]
-
 function emptyToNull(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? ""
   return trimmed.length > 0 ? trimmed : null
@@ -23,7 +20,7 @@ function emptyToNull(value: string | null | undefined): string | null {
 
 /**
  * Client/server validation for nonprofit partnership enquiries.
- * planSlug is optional; invalid values are stripped server-side before persistence.
+ * Participant estimate is informational only — no public pricing plan is assigned.
  */
 export const submitNonprofitPartnershipSchema = z.object({
   name: z
@@ -78,14 +75,18 @@ export const submitNonprofitPartnershipSchema = z.object({
   accessAudience: z.enum(accessValues, {
     message: "Select who will receive access.",
   }),
+  partnershipNotes: z
+    .string()
+    .trim()
+    .max(2000, "Partnership notes are too long.")
+    .optional()
+    .or(z.literal("")),
   message: z
     .string()
     .trim()
     .max(2000, "Message is too long.")
     .optional()
     .or(z.literal("")),
-  /** Optional hint from the page — never trusted as free text. */
-  planSlug: z.enum(planSlugValues).nullable().optional(),
 })
 
 export type SubmitNonprofitPartnershipInput = z.infer<
@@ -100,7 +101,7 @@ export function normalizeNonprofitPartnershipInput(
     organizationWebsite: emptyToNull(input.organizationWebsite),
     phone: emptyToNull(input.phone),
     role: emptyToNull(input.role),
+    partnershipNotes: emptyToNull(input.partnershipNotes),
     message: emptyToNull(input.message),
-    planSlug: input.planSlug ?? null,
   }
 }
