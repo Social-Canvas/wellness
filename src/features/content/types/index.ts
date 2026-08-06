@@ -1,5 +1,8 @@
 import type { VideoProgress } from "@/features/progress/types"
 
+export type { LessonProgressState } from "@/features/content/utils/lesson-progress-state"
+import type { LessonProgressState } from "@/features/content/utils/lesson-progress-state"
+
 /**
  * Publication states surfaced to the library UI. Drafts are only ever included
  * when an authorized preview is active; ordinary members never receive them.
@@ -25,6 +28,7 @@ export type LibraryLesson = {
   hasVideo: boolean
   durationSeconds: number | null
   isCompleted: boolean
+  progressState: LessonProgressState
   status: LibraryContentStatus
   /**
    * True only when the lesson is fully published and openable for playback.
@@ -72,6 +76,7 @@ export type LibraryLessonDetail = {
   video: LibraryVideoSummary | null
   videoProgress: VideoProgress | null
   isCompleted: boolean
+  progressState: LessonProgressState
   status: LibraryContentStatus
   /**
    * True only for fully published lessons. Draft lessons surfaced in preview

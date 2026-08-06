@@ -20,6 +20,7 @@ import type {
 } from "@/features/progress/types"
 import { createClient } from "@/lib/supabase/server"
 import { canAccessCourse, canAccessVideo } from "@/server/services/entitlement.service"
+import { countCompletedLessons } from "@/features/content/utils/lesson-progress-state"
 import type { Database } from "@/types/database/supabase"
 
 const userIdSchema = z.uuid("Invalid user id.")
@@ -571,15 +572,17 @@ export async function getLibraryCourseProgressSnapshots(
       totals.set(courseId, { completed: 0, total: 0 })
     }
 
+    const lessonsByCourse = new Map<string, Array<{ videoId: string | null }>>()
+
     for (const lesson of lessonRows) {
-      const entry = totals.get(lesson.courseId) ?? { completed: 0, total: 0 }
-      entry.total += 1
+      const list = lessonsByCourse.get(lesson.courseId) ?? []
+      list.push({ videoId: lesson.videoId })
+      lessonsByCourse.set(lesson.courseId, list)
+    }
 
-      if (!lesson.videoId || completedVideoIds.has(lesson.videoId)) {
-        entry.completed += 1
-      }
-
-      totals.set(lesson.courseId, entry)
+    for (const [courseId, courseLessons] of lessonsByCourse) {
+      const counts = countCompletedLessons(courseLessons, completedVideoIds)
+      totals.set(courseId, counts)
     }
 
     for (const [courseId, counts] of totals) {

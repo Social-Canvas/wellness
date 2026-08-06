@@ -27,7 +27,10 @@ export function LibraryLessonDetailView({ lesson }: LibraryLessonDetailViewProps
               ) : (
                 <Badge variant="outline">Optional</Badge>
               )}
-              <LessonCompletionBadge isCompleted={lesson.isCompleted} />
+              <LessonCompletionBadge
+                isCompleted={lesson.isCompleted}
+                progressState={lesson.progressState}
+              />
             </div>
           </div>
           {lesson.description ? (

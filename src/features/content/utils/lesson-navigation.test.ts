@@ -30,6 +30,7 @@ function lesson(
     hasVideo: true,
     durationSeconds: 60,
     isCompleted: false,
+    progressState: "not_started",
     status: "published",
     isAvailable: true,
     ...overrides,

@@ -22,6 +22,11 @@ import {
   getVideoProgressByVideoIds,
 } from "@/features/progress/services/progress.service"
 import {
+  deriveLessonProgressState,
+  isLessonCompletedFromProgress,
+  lessonHasPlayableVideo,
+} from "@/features/content/utils/lesson-progress-state"
+import {
   canAccessCourse,
   canAccessLesson,
   canPreviewDraftContent,
@@ -150,11 +155,13 @@ function toLibraryStatus(status: string): LibraryContentStatus {
 
 function mapLibraryLesson(
   lesson: LessonWithVideo,
-  isCompleted = false
+  progress: { completedAt: string | null; lastPositionSeconds?: number; watchedSeconds?: number } | null = null
 ): LibraryLesson {
   const video = normalizeVideoRow(lesson.videos)
   const status = toLibraryStatus(lesson.status)
   const isAvailable = status === "published"
+  const progressState = deriveLessonProgressState(progress)
+  const isCompleted = isLessonCompletedFromProgress(progress)
 
   return {
     id: lesson.id,
@@ -164,10 +171,15 @@ function mapLibraryLesson(
     sortOrder: lesson.sort_order,
     isRequired: lesson.is_required,
     videoId: lesson.video_id,
-    hasVideo: Boolean(lesson.video_id && video),
+    hasVideo: lessonHasPlayableVideo(
+      video
+        ? { mux_playback_id: video.mux_playback_id }
+        : null
+    ),
     durationSeconds: video?.duration_seconds ?? null,
     // Draft lessons are never counted as completed in preview.
     isCompleted: isAvailable ? isCompleted : false,
+    progressState: isAvailable ? progressState : "not_started",
     status,
     isAvailable,
   }
@@ -192,18 +204,20 @@ function mapLibraryModule(
 /**
  * Maps lessons for a course outline after course entitlement has already been
  * resolved once. Does not call canAccessLesson per lesson (avoids N+1).
+ * Completion comes only from the user's progress rows — never from missing
+ * video joins, publication, or availability.
  */
 function mapCourseOutlineLessons(
   lessons: LessonWithVideo[],
-  progressByVideoId: Record<string, { completedAt: string | null }>
+  progressByVideoId: Record<
+    string,
+    { completedAt: string | null; lastPositionSeconds?: number; watchedSeconds?: number }
+  >
 ): LibraryLesson[] {
   return lessons.map((lesson) => {
-    const video = normalizeVideoRow(lesson.videos)
-    const isCompleted = video?.id
-      ? Boolean(progressByVideoId[video.id]?.completedAt)
-      : true
-
-    return mapLibraryLesson(lesson, isCompleted)
+    const videoId = lesson.video_id
+    const progress = videoId ? progressByVideoId[videoId] ?? null : null
+    return mapLibraryLesson(lesson, progress)
   })
 }
 
@@ -346,7 +360,7 @@ export async function getAccessibleCourse(
 
     const lessonRows = (lessons ?? []) as LessonWithVideo[]
     const videoIds = lessonRows
-      .map((lesson) => normalizeVideoRow(lesson.videos)?.id)
+      .map((lesson) => lesson.video_id)
       .filter((videoId): videoId is string => Boolean(videoId))
 
     const progressResult = await getVideoProgressByVideoIds(parsedUserId.data, videoIds)
@@ -358,7 +372,11 @@ export async function getAccessibleCourse(
     const progressByVideoId = Object.fromEntries(
       Object.entries(progressResult.data).map(([videoId, progress]) => [
         videoId,
-        { completedAt: progress.completedAt },
+        {
+          completedAt: progress.completedAt,
+          lastPositionSeconds: progress.lastPositionSeconds,
+          watchedSeconds: progress.watchedSeconds,
+        },
       ])
     )
 
@@ -397,6 +415,7 @@ type LessonDetailRow = Pick<
   | "description"
   | "sort_order"
   | "is_required"
+  | "video_id"
   | "status"
 > & {
   videos: VideoSummaryRow | VideoSummaryRow[] | null
@@ -457,6 +476,7 @@ export async function getAccessibleLesson(
         description,
         sort_order,
         is_required,
+        video_id,
         status,
         videos ( id, title, duration_seconds, thumbnail_url, mux_playback_id ),
         modules!inner (
@@ -514,6 +534,7 @@ export async function getAccessibleLesson(
         video: null,
         videoProgress: null,
         isCompleted: false,
+        progressState: "not_started",
         status: lessonStatus,
         isAvailable: false,
         preview: previewAuthorized,
@@ -532,7 +553,8 @@ export async function getAccessibleLesson(
 
     const video = mapLibraryVideo(normalizeVideoRow(lesson.videos))
     let videoProgress = null
-    let isCompleted = !video
+    let isCompleted = false
+    let progressState = deriveLessonProgressState(null)
 
     if (video) {
       const progressResult = await getVideoProgress(parsedUserId.data, {
@@ -544,7 +566,22 @@ export async function getAccessibleLesson(
       }
 
       videoProgress = progressResult.data
-      isCompleted = Boolean(progressResult.data?.completedAt)
+      progressState = deriveLessonProgressState(progressResult.data)
+      isCompleted = isLessonCompletedFromProgress(progressResult.data)
+    } else if (lesson.video_id) {
+      // Video join may be unavailable (e.g. pre-ready status); still resolve
+      // completion from the lesson's video_id progress row only.
+      const progressResult = await getVideoProgress(parsedUserId.data, {
+        videoId: lesson.video_id,
+      })
+
+      if (!progressResult.success) {
+        return progressResult
+      }
+
+      videoProgress = progressResult.data
+      progressState = deriveLessonProgressState(progressResult.data)
+      isCompleted = isLessonCompletedFromProgress(progressResult.data)
     }
 
     return success({
@@ -559,6 +596,7 @@ export async function getAccessibleLesson(
       video,
       videoProgress,
       isCompleted,
+      progressState,
       status: lessonStatus,
       isAvailable: true,
       preview: previewAuthorized,

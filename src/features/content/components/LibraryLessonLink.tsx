@@ -48,7 +48,10 @@ export function LibraryLessonLink({
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-soft">
           <span>{formatDuration(lesson.durationSeconds)}</span>
           <span aria-hidden="true">·</span>
-          <LessonCompletionBadge isCompleted={lesson.isCompleted} />
+          <LessonCompletionBadge
+            isCompleted={lesson.isCompleted}
+            progressState={lesson.progressState}
+          />
           {lesson.hasVideo ? (
             <Badge variant="secondary">Video attached</Badge>
           ) : (
@@ -56,7 +59,9 @@ export function LibraryLessonLink({
           )}
         </div>
       </div>
-      <span className="text-sm font-semibold text-blue">Open</span>
+      <span className="text-sm font-semibold text-blue">
+        {lesson.isCompleted ? "Review" : lesson.progressState === "in_progress" ? "Continue" : "Start"}
+      </span>
     </Link>
   )
 }

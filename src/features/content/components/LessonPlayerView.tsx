@@ -33,15 +33,17 @@ interface LessonPlayerViewProps {
 function CompactLessonStatus({
   isCompleted,
   isAvailable,
+  progressState,
 }: {
   isCompleted: boolean
   isAvailable: boolean
+  progressState?: "not_started" | "in_progress" | "completed"
 }) {
   if (!isAvailable) {
     return <Badge variant="outline">Coming soon</Badge>
   }
 
-  if (isCompleted) {
+  if (isCompleted || progressState === "completed") {
     return (
       <span
         className="inline-flex items-center gap-1.5 rounded-full border border-green/30 bg-green-soft/40 px-2.5 py-1 text-xs font-semibold text-green-deep"
@@ -53,12 +55,23 @@ function CompactLessonStatus({
     )
   }
 
+  if (progressState === "in_progress") {
+    return (
+      <span
+        className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft"
+        data-lesson-status="in_progress"
+      >
+        In progress
+      </span>
+    )
+  }
+
   return (
     <span
       className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft"
       data-lesson-status="incomplete"
     >
-      Not completed
+      Not started
     </span>
   )
 }
@@ -175,6 +188,7 @@ export function LessonPlayerView({
                 <CompactLessonStatus
                   isCompleted={lesson.isCompleted}
                   isAvailable={lesson.isAvailable}
+                  progressState={lesson.progressState}
                 />
               </div>
             </div>

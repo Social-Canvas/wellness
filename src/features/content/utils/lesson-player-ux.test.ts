@@ -57,6 +57,17 @@ test("incomplete lesson shows Mark complete & continue", () => {
   assert.match(controls, /Mark complete & finish/)
 })
 
+test("zero-progress lesson status is Not started not Completed", () => {
+  const player = read(
+    "src/features/content/components/LessonPlayerView.tsx"
+  )
+  assert.match(player, /Not started/)
+  assert.doesNotMatch(
+    player,
+    /data-lesson-status="incomplete"\s*>\s*\n\s*Not completed/
+  )
+})
+
 test("completed lesson shows Continue to next lesson", () => {
   const controls = read(
     "src/features/content/components/LessonNavigationControls.tsx"

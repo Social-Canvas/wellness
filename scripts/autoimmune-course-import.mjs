@@ -266,6 +266,7 @@ async function ensureBucket(supabase) {
 async function main() {
   const apply = hasArg("--apply")
   const dryRun = hasArg("--dry-run") || !apply
+  const videosOnly = hasArg("--videos-only")
   const inventoryDir = resolve(
     parseArgValue("--inventory-dir", DEFAULT_INVENTORY_DIR)
   )
@@ -278,10 +279,11 @@ async function main() {
     JSON.stringify(
       {
         mode: apply ? "apply" : "dry-run",
+        videosOnly,
         inventoryDir,
         courseSlug: COURSE_SLUG,
         expectedVideos: VIDEO_KEYS.length,
-        expectedResources: RESOURCE_KEYS.length,
+        expectedResources: videosOnly ? 0 : RESOURCE_KEYS.length,
       },
       null,
       2
@@ -358,15 +360,19 @@ async function main() {
     }))
   }
 
-  for (const entry of RESOURCE_KEYS) {
-    const file = matchedResources.get(entry.key)
-    if (!file) throw new Error(`Missing required resource for ${entry.key}`)
-    console.log("LOCAL_RESOURCE", JSON.stringify({
-      key: entry.key,
-      name: file.name,
-      sizeBytes: file.sizeBytes,
-      slug: entry.slug,
-    }))
+  if (!videosOnly) {
+    for (const entry of RESOURCE_KEYS) {
+      const file = matchedResources.get(entry.key)
+      if (!file) throw new Error(`Missing required resource for ${entry.key}`)
+      console.log("LOCAL_RESOURCE", JSON.stringify({
+        key: entry.key,
+        name: file.name,
+        sizeBytes: file.sizeBytes,
+        slug: entry.slug,
+      }))
+    }
+  } else {
+    console.log("RESOURCES_SKIPPED", { reason: "--videos-only", count: 0 })
   }
 
   if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -634,6 +640,7 @@ async function main() {
 
   const resourceReport = []
 
+  if (!videosOnly) {
   if (apply) {
     await ensureBucket(supabase)
   }
@@ -722,11 +729,31 @@ async function main() {
 
     resourceReport.push(row)
   }
+  }
 
   console.log("VIDEO_REPORT")
   for (const row of videoReport) console.log(JSON.stringify(row))
   console.log("RESOURCE_REPORT")
   for (const row of resourceReport) console.log(JSON.stringify(row))
+
+  const muxMutations = apply
+    ? videoReport.filter((row) => String(row.action).includes("uploaded")).length
+    : 0
+  const databaseMutations = apply ? videoReport.length + resourceReport.length : 0
+
+  console.log(
+    "ALLOWLIST_COUNTS",
+    JSON.stringify({
+      selectedVideos: videoReport.length,
+      selectedLessons: videoReport.length,
+      resourcesSelected: resourceReport.length,
+      resetVideosSelected: 0,
+      membershipRecordingsSelected: 0,
+      testimonialsSelected: 0,
+      databaseMutations,
+      muxMutations,
+    })
+  )
 
   console.log(
     JSON.stringify(
@@ -740,6 +767,7 @@ async function main() {
           googleExportsNeeded: googleExportsNeeded.length,
           apply,
           dryRun,
+          videosOnly,
           grantedCourseWired: Boolean(product),
         },
       },
