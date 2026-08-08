@@ -6,8 +6,18 @@ import { BrandImage } from "@/components/media"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import {
+  PUBLIC_FACEBOOK_GROUP_LINK,
+  PUBLIC_SOCIAL_PROFILE_LINKS,
+} from "@/lib/constants/social-links"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
+
+const ABOUT_SOCIAL_LINK_LABELS = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+} as const
 
 export const metadata: Metadata = {
   title: `About — ${ELEVATE_BRAND.name}`,
@@ -161,6 +171,47 @@ export default function AboutPage() {
                 we return to ourselves.&rdquo;
               </p>
               <p className="mt-3 text-sm text-ink-soft">— {ELEVATE_BRAND.founder}</p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-[26px] font-medium text-ink">
+                Connect with {ELEVATE_BRAND.founder}
+              </h2>
+              <p className="mt-3 text-[17px] leading-[1.75] text-ink-soft">
+                Follow Elevate and Dr. Pattani on social, or join the community focused on
+                natural autoimmune and pre-autoimmune healing.
+              </p>
+              <nav
+                aria-label="Social media"
+                className="mt-5 flex flex-wrap gap-x-5 gap-y-3"
+              >
+                {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => (
+                  <a
+                    key={link.network}
+                    href={link.href}
+                    target={link.target}
+                    rel={link.rel}
+                    aria-label={link.ariaLabel}
+                    className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-blue underline-offset-2 transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+                  >
+                    {ABOUT_SOCIAL_LINK_LABELS[link.network]}
+                  </a>
+                ))}
+              </nav>
+              <div className="mt-5">
+                <a
+                  href={PUBLIC_FACEBOOK_GROUP_LINK.href}
+                  target={PUBLIC_FACEBOOK_GROUP_LINK.target}
+                  rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
+                  aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
+                  className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-blue underline-offset-2 transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+                >
+                  {PUBLIC_FACEBOOK_GROUP_LINK.label}
+                </a>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {PUBLIC_FACEBOOK_GROUP_LINK.description}
+                </p>
+              </div>
             </section>
 
             <div className="text-center">

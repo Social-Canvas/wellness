@@ -11,13 +11,6 @@ export const PUBLIC_NAV_LINKS = [
   { label: "About", href: "/about" },
 ] as const
 
-export const PUBLIC_SOCIAL_LINKS = [
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "LinkedIn", href: "https://linkedin.com" },
-  { label: "Facebook", href: "https://facebook.com" },
-  { label: "Podcast", href: "/podcast" },
-] as const
-
 export const PUBLIC_FOOTER_DESCRIPTION =
   "Functional medicine, breathwork, and nervous system regulation — science + soul."
 

@@ -3,34 +3,74 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/layout/brand-logo"
 import { Container } from "@/components/layout/container"
 import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedInIcon,
+} from "@/components/layout/social-icons"
+import {
   PUBLIC_FOOTER_DESCRIPTION,
   PUBLIC_LEGAL_DISCLAIMER,
   PUBLIC_NAV_LINKS,
-  PUBLIC_SOCIAL_LINKS,
 } from "@/lib/constants/public-site"
+import {
+  PUBLIC_FACEBOOK_GROUP_LINK,
+  PUBLIC_SOCIAL_LINK_CLASSNAME,
+  PUBLIC_SOCIAL_PROFILE_LINKS,
+} from "@/lib/constants/social-links"
 
 type FooterProps = {
   isAuthenticated: boolean
 }
+
+const PROFILE_ICONS = {
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  linkedin: LinkedInIcon,
+} as const
 
 function Footer({ isAuthenticated }: FooterProps) {
   return (
     <footer className="bg-ink px-(--spacing-wrap-x) py-[46px] pb-7 text-[#C2D2D0]">
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
-          <div>
+          <div className="min-w-0 max-w-full">
             <BrandLogo variant="horizontal" size="lg" appearance="footer" href="/" />
             <p className="mt-2.5 max-w-[280px] text-sm">{PUBLIC_FOOTER_DESCRIPTION}</p>
-            <div className="mt-3.5 flex flex-wrap gap-3">
-              {PUBLIC_SOCIAL_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-semibold text-[#C2D2D0] transition-colors hover:text-white"
-                >
-                  {link.label}
-                </a>
-              ))}
+
+            <nav
+              aria-label="Social media"
+              className="mt-3.5 flex max-w-full flex-wrap items-center gap-1"
+            >
+              {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => {
+                const Icon = PROFILE_ICONS[link.network]
+                return (
+                  <a
+                    key={link.network}
+                    href={link.href}
+                    target={link.target}
+                    rel={link.rel}
+                    aria-label={link.ariaLabel}
+                    className={PUBLIC_SOCIAL_LINK_CLASSNAME}
+                  >
+                    <Icon />
+                  </a>
+                )
+              })}
+            </nav>
+
+            <div className="mt-4 max-w-[320px]">
+              <a
+                href={PUBLIC_FACEBOOK_GROUP_LINK.href}
+                target={PUBLIC_FACEBOOK_GROUP_LINK.target}
+                rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
+                aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
+                className="inline-flex min-h-11 max-w-full items-center rounded-md text-sm font-semibold text-[#C2D2D0] underline-offset-2 transition-colors hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {PUBLIC_FACEBOOK_GROUP_LINK.label}
+              </a>
+              <p className="mt-1 text-[12.5px] leading-snug text-[#8FA3A1]">
+                {PUBLIC_FACEBOOK_GROUP_LINK.description}
+              </p>
             </div>
           </div>
 

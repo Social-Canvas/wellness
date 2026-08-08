@@ -7,6 +7,12 @@ export {
 } from "./brand-logo"
 export { Container, containerVariants } from "./container"
 export { Footer, type FooterProps } from "./footer"
+export {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedInIcon,
+  type SocialIconProps,
+} from "./social-icons"
 export { Logo, logoVariants } from "./logo"
 export {
   Navbar,
