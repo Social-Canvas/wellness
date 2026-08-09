@@ -61,8 +61,14 @@ export default async function AdminLayout({
     redirect("/dashboard")
   }
 
-  const newLeadsResult = await countNewLeads()
-  const newLeadsCount = newLeadsResult.success ? newLeadsResult.data : 0
+  // Badge must never take down admin chrome (schema may be mid-migration).
+  let newLeadsCount = 0
+  try {
+    const newLeadsResult = await countNewLeads()
+    newLeadsCount = newLeadsResult.success ? newLeadsResult.data : 0
+  } catch {
+    newLeadsCount = 0
+  }
 
   return (
     <AdminShell

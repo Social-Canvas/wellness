@@ -25,6 +25,8 @@ export default async function AdminLeadDetailPage({
       notFound()
     }
 
+    const isSchemaIssue = result.error.code === "schema_not_ready"
+
     return (
       <div className="space-y-6">
         <div>
@@ -35,8 +37,20 @@ export default async function AdminLeadDetailPage({
             Unable to open this enquiry.
           </p>
         </div>
-        <div className="rounded-2xl border border-line bg-surface px-6 py-6">
-          <p className="text-sm text-destructive">{result.error.message}</p>
+        <div
+          className={
+            isSchemaIssue
+              ? "rounded-2xl border border-amber-300 bg-amber-50 px-6 py-6"
+              : "rounded-2xl border border-line bg-surface px-6 py-6"
+          }
+        >
+          <p
+            className={
+              isSchemaIssue ? "text-sm text-ink" : "text-sm text-destructive"
+            }
+          >
+            {result.error.message}
+          </p>
         </div>
       </div>
     )

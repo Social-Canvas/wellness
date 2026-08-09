@@ -41,3 +41,9 @@ export type ListLeadsFilters = {
   type?: LeadTypeFilter
   status?: LeadStatusFilter
 }
+
+export type ListLeadsData = {
+  leads: LeadListItem[]
+  /** False when enquiry hardening migration is not applied yet. */
+  schemaReady: boolean
+}
