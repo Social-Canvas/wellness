@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 
 import { submitLeadAction } from "@/features/leads/actions/leads.actions"
 import {
+  ENQUIRY_HONEYPOT_FIELD,
   submitLeadSchema,
   type SubmitLeadInput,
 } from "@/features/leads/schemas/submit-lead"
@@ -48,6 +49,7 @@ function LeadCaptureForm({
       email: "",
       phone: "",
       message: "",
+      [ENQUIRY_HONEYPOT_FIELD]: "",
     },
   })
 
@@ -95,6 +97,16 @@ function LeadCaptureForm({
       <p className="mt-3 text-base text-ink-soft">{description}</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <div className="sr-only" aria-hidden="true">
+          <Label htmlFor="company-url">Company website</Label>
+          <Input
+            id="company-url"
+            tabIndex={-1}
+            autoComplete="off"
+            {...register(ENQUIRY_HONEYPOT_FIELD)}
+          />
+        </div>
+
         <div className="space-y-1.5">
           <Label htmlFor="name">Full name</Label>
           <Input id="name" autoComplete="name" {...register("name")} />

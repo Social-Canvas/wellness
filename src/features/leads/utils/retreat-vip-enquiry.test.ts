@@ -259,12 +259,15 @@ test("9. Arbitrary intent values are rejected", () => {
 test("10. Existing form submission behavior remains intact", () => {
   const form = formSource()
   const service = serviceSource()
+  const core = readSrc("features/leads/services/enquiry-submission.core.ts")
   assert.match(form, /submitLeadAction/)
   assert.match(form, /leadType: config\.leadType/)
   assert.match(form, /source: config\.source/)
   assert.match(service, /\.from\("leads"\)/)
-  assert.match(service, /lead_type: parsed\.data\.leadType/)
-  assert.match(service, /metadata: toJsonMetadata/)
+  assert.match(service, /submitEnquiryCore/)
+  assert.match(service, /createAdminClient/)
+  assert.match(core, /lead_type: parsed\.data\.leadType/)
+  assert.match(core, /metadata: toJsonMetadata/)
   const message = composeRetreatEnquiryMessage({
     message: "Looking for a weekend reset",
     interest: "rishikesh-2027",

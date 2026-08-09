@@ -17,6 +17,7 @@ import {
   submitNonprofitPartnershipSchema,
   type SubmitNonprofitPartnershipInput,
 } from "@/features/leads/schemas/submit-nonprofit-partnership"
+import { ENQUIRY_HONEYPOT_FIELD } from "@/features/leads/schemas/submit-lead"
 import {
   NONPROFIT_ACCESS_AUDIENCE_OPTIONS,
   NONPROFIT_ENQUIRY_CTA,
@@ -79,6 +80,7 @@ function NonprofitPartnershipForm({
       accessAudience: "" as never,
       partnershipNotes: "",
       message: "",
+      [ENQUIRY_HONEYPOT_FIELD]: "",
     },
   })
 
@@ -164,6 +166,16 @@ function NonprofitPartnershipForm({
         className="mt-6 space-y-4"
         aria-describedby={serverError ? serverErrorId : undefined}
       >
+        <div className="sr-only" aria-hidden="true">
+          <Label htmlFor={`${formId}-company-url`}>Company website</Label>
+          <Input
+            id={`${formId}-company-url`}
+            tabIndex={-1}
+            autoComplete="off"
+            {...register(ENQUIRY_HONEYPOT_FIELD)}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor={`${formId}-name`}>

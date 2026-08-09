@@ -353,44 +353,65 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          estimated_participants: string | null
           ghl_contact_id: string | null
           ghl_sync_status: Database["public"]["Enums"]["ghl_sync_status"]
           id: string
+          interest: string | null
+          last_notification_error: string | null
           lead_type: Database["public"]["Enums"]["lead_type"]
           message: string | null
           metadata: Json
           name: string
+          notification_status: Database["public"]["Enums"]["lead_notification_status"]
+          organization_name: string | null
           phone: string | null
           source: string | null
+          status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
+          visitor_ack_status: Database["public"]["Enums"]["lead_notification_status"]
         }
         Insert: {
           created_at?: string
           email: string
+          estimated_participants?: string | null
           ghl_contact_id?: string | null
           ghl_sync_status?: Database["public"]["Enums"]["ghl_sync_status"]
           id?: string
+          interest?: string | null
+          last_notification_error?: string | null
           lead_type: Database["public"]["Enums"]["lead_type"]
           message?: string | null
           metadata?: Json
           name: string
+          notification_status?: Database["public"]["Enums"]["lead_notification_status"]
+          organization_name?: string | null
           phone?: string | null
           source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
+          visitor_ack_status?: Database["public"]["Enums"]["lead_notification_status"]
         }
         Update: {
           created_at?: string
           email?: string
+          estimated_participants?: string | null
           ghl_contact_id?: string | null
           ghl_sync_status?: Database["public"]["Enums"]["ghl_sync_status"]
           id?: string
+          interest?: string | null
+          last_notification_error?: string | null
           lead_type?: Database["public"]["Enums"]["lead_type"]
           message?: string | null
           metadata?: Json
           name?: string
+          notification_status?: Database["public"]["Enums"]["lead_notification_status"]
+          organization_name?: string | null
           phone?: string | null
           source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
+          visitor_ack_status?: Database["public"]["Enums"]["lead_notification_status"]
         }
         Relationships: []
       }
@@ -1500,7 +1521,15 @@ export type Database = {
         | "issue_certificate"
         | "process_video"
         | "retry_webhook"
-      lead_type: "vip" | "retreat" | "private_event" | "free_taster"
+      lead_type:
+        | "vip"
+        | "retreat"
+        | "private_event"
+        | "free_taster"
+        | "nonprofit"
+        | "contact"
+      lead_status: "new" | "contacted" | "qualified" | "closed"
+      lead_notification_status: "pending" | "sent" | "failed" | "skipped"
       live_class_access:
         | "public"
         | "authenticated"
@@ -1698,7 +1727,16 @@ export const Constants = {
         "process_video",
         "retry_webhook",
       ],
-      lead_type: ["vip", "retreat", "private_event", "free_taster"],
+      lead_type: [
+        "vip",
+        "retreat",
+        "private_event",
+        "free_taster",
+        "nonprofit",
+        "contact",
+      ],
+      lead_status: ["new", "contacted", "qualified", "closed"],
+      lead_notification_status: ["pending", "sent", "failed", "skipped"],
       live_class_access: [
         "public",
         "authenticated",

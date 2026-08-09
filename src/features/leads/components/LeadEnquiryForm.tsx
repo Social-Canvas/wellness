@@ -16,6 +16,9 @@ import {
 import { submitLeadAction } from "@/features/leads/actions/leads.actions"
 import { ENQUIRY_EDUCATIONAL_DISCLAIMER } from "@/features/leads/utils/enquiry-intents"
 import {
+  ENQUIRY_HONEYPOT_FIELD,
+} from "@/features/leads/schemas/submit-lead"
+import {
   RETREAT_ENQUIRY_CTA,
   RETREAT_ENQUIRY_FORM_HEADING,
   RETREAT_ENQUIRY_FORM_SUPPORT,
@@ -64,6 +67,7 @@ const leadEnquiryFormSchema = z.object({
     .max(4000, "Message is too long.")
     .optional()
     .nullable(),
+  [ENQUIRY_HONEYPOT_FIELD]: z.string().max(200).optional().nullable(),
 })
 
 type LeadEnquiryFormValues = z.infer<typeof leadEnquiryFormSchema>
@@ -146,6 +150,7 @@ function LeadEnquiryForm({
       location: "",
       interest: "",
       message: "",
+      [ENQUIRY_HONEYPOT_FIELD]: "",
     },
   })
 
@@ -200,7 +205,9 @@ function LeadEnquiryForm({
           email: values.email,
           phone: values.phone?.trim() || null,
           message,
+          interest: variant === "retreat" ? interest : null,
           metadata,
+          [ENQUIRY_HONEYPOT_FIELD]: values[ENQUIRY_HONEYPOT_FIELD] ?? "",
         })
 
         if (!result.success) {
@@ -250,6 +257,16 @@ function LeadEnquiryForm({
         className="mt-6 space-y-4"
         aria-describedby={serverError ? serverErrorId : undefined}
       >
+        <div className="sr-only" aria-hidden="true">
+          <Label htmlFor={`${formId}-company-url`}>Company website</Label>
+          <Input
+            id={`${formId}-company-url`}
+            tabIndex={-1}
+            autoComplete="off"
+            {...register(ENQUIRY_HONEYPOT_FIELD)}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor={`${formId}-name`}>
