@@ -17,6 +17,7 @@ const ABOUT_SOCIAL_LINK_LABELS = {
   instagram: "Instagram",
   facebook: "Facebook",
   linkedin: "LinkedIn",
+  facebookCommunity: "Facebook community",
 } as const
 
 export const metadata: Metadata = {
@@ -197,21 +198,17 @@ export default function AboutPage() {
                     {ABOUT_SOCIAL_LINK_LABELS[link.network]}
                   </a>
                 ))}
-              </nav>
-              <div className="mt-5">
                 <a
                   href={PUBLIC_FACEBOOK_GROUP_LINK.href}
                   target={PUBLIC_FACEBOOK_GROUP_LINK.target}
                   rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
                   aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
+                  title={PUBLIC_FACEBOOK_GROUP_LINK.description}
                   className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-blue underline-offset-2 transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
                 >
-                  {PUBLIC_FACEBOOK_GROUP_LINK.label}
+                  {ABOUT_SOCIAL_LINK_LABELS.facebookCommunity}
                 </a>
-                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                  {PUBLIC_FACEBOOK_GROUP_LINK.description}
-                </p>
-              </div>
+              </nav>
             </section>
 
             <div className="text-center">

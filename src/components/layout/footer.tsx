@@ -3,6 +3,7 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/layout/brand-logo"
 import { Container } from "@/components/layout/container"
 import {
+  FacebookCommunityIcon,
   FacebookIcon,
   InstagramIcon,
   LinkedInIcon,
@@ -50,28 +51,24 @@ function Footer({ isAuthenticated }: FooterProps) {
                     target={link.target}
                     rel={link.rel}
                     aria-label={link.ariaLabel}
+                    title={link.ariaLabel}
                     className={PUBLIC_SOCIAL_LINK_CLASSNAME}
                   >
                     <Icon />
                   </a>
                 )
               })}
-            </nav>
-
-            <div className="mt-4 max-w-[320px]">
               <a
                 href={PUBLIC_FACEBOOK_GROUP_LINK.href}
                 target={PUBLIC_FACEBOOK_GROUP_LINK.target}
                 rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
                 aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
-                className="inline-flex min-h-11 max-w-full items-center rounded-md text-sm font-semibold text-[#C2D2D0] underline-offset-2 transition-colors hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                title={PUBLIC_FACEBOOK_GROUP_LINK.description}
+                className={PUBLIC_SOCIAL_LINK_CLASSNAME}
               >
-                {PUBLIC_FACEBOOK_GROUP_LINK.label}
+                <FacebookCommunityIcon />
               </a>
-              <p className="mt-1 text-[12.5px] leading-snug text-[#8FA3A1]">
-                {PUBLIC_FACEBOOK_GROUP_LINK.description}
-              </p>
-            </div>
+            </nav>
           </div>
 
           <nav

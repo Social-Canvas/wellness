@@ -37,6 +37,17 @@ function FacebookIcon(props: SocialIconProps) {
   )
 }
 
+/** Group/community mark — Facebook "f" plus a second person, distinct from the page icon. */
+function FacebookCommunityIcon(props: SocialIconProps) {
+  return (
+    <svg {...socialIconProps(props)}>
+      <path d="M10 10.5h1.8V8.8c0-1.3.7-2.1 2-2.1H15.5v2.1h-1.1c-.4 0-.6.2-.6.6v1.1h1.7l-.2 2.1h-1.5V19H10v-6.4H8.5v-2.1H10Z" />
+      <circle cx="18" cy="9.5" r="2.1" />
+      <path d="M14.8 17.8c.3-1.5 1.5-2.4 3.2-2.4s2.9.9 3.2 2.4" />
+    </svg>
+  )
+}
+
 function LinkedInIcon(props: SocialIconProps) {
   return (
     <svg {...socialIconProps(props)}>
@@ -46,4 +57,10 @@ function LinkedInIcon(props: SocialIconProps) {
   )
 }
 
-export { FacebookIcon, InstagramIcon, LinkedInIcon, type SocialIconProps }
+export {
+  FacebookCommunityIcon,
+  FacebookIcon,
+  InstagramIcon,
+  LinkedInIcon,
+  type SocialIconProps,
+}
