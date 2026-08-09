@@ -25,6 +25,13 @@ test("normalizeAppOrigin upgrades http vercel hosts to https", () => {
   )
 })
 
+test("normalizeAppOrigin upgrades http canonical elevate host to https", () => {
+  assert.equal(
+    normalizeAppOrigin("http://elevate-healthsolutions.com/"),
+    "https://elevate-healthsolutions.com"
+  )
+})
+
 test("resolveCanonicalAppUrl prefers NEXT_PUBLIC_APP_URL over VERCEL_URL", () => {
   assert.equal(
     resolveCanonicalAppUrl({

@@ -6,7 +6,9 @@ import { RETREATS_PAGE } from "@/features/retreats/constants/retreats-page"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://elevatehealthsolutions.com"
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  "https://elevate-healthsolutions.com"
 
 export const metadata: Metadata = {
   title: `${RETREATS_PAGE.metaTitle} | ${ELEVATE_BRAND.name}`,
