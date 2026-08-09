@@ -129,7 +129,7 @@ function Navbar({
 
           {navMiddle ??
             (links.length > 0 ? (
-              <div className="hidden min-w-0 items-center gap-[22px] min-[861px]:flex">
+              <div className="hidden min-w-0 items-center gap-[22px] lg:flex">
                 {links.map((link) => (
                   <NavbarLinkItem key={`${link.href}-${link.label}`} {...link} />
                 ))}
@@ -138,7 +138,7 @@ function Navbar({
 
           <div className="flex shrink-0 items-center gap-2.5">
             {socialLinks.length > 0 ? (
-              <div className="hidden min-[861px]:flex items-center gap-3">
+              <div className="hidden items-center gap-3 lg:flex">
                 {socialLinks.map((link) => (
                   <NavbarSocialLinkItem
                     key={`${link.href}-${link.label}`}

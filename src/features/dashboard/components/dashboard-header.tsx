@@ -93,6 +93,9 @@ export function DashboardHeader({
       return
     }
 
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMobileOpen(false)
@@ -100,14 +103,29 @@ export function DashboardHeader({
       }
     }
 
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node
+      if (
+        mobileTriggerRef.current?.contains(target) ||
+        mobilePanelRef.current?.contains(target)
+      ) {
+        return
+      }
+      setMobileOpen(false)
+      mobileTriggerRef.current?.focus()
+    }
+
     document.addEventListener("keydown", handleKeyDown)
+    document.addEventListener("mousedown", handlePointerDown)
     const firstFocusable = mobilePanelRef.current?.querySelector<HTMLElement>(
       "a[href], button:not([disabled])"
     )
     firstFocusable?.focus()
 
     return () => {
+      document.body.style.overflow = previousOverflow
       document.removeEventListener("keydown", handleKeyDown)
+      document.removeEventListener("mousedown", handlePointerDown)
     }
   }, [mobileOpen])
 
@@ -142,7 +160,7 @@ export function DashboardHeader({
             <button
               ref={mobileTriggerRef}
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-full border-[1.5px] border-line bg-transparent text-ink transition-colors hover:border-ink md:hidden focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-button)] text-ink transition-colors hover:bg-cream2 lg:hidden focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               aria-expanded={mobileOpen}
               aria-controls={mobilePanelId}
               aria-label={
@@ -150,7 +168,11 @@ export function DashboardHeader({
               }
               onClick={() => setMobileOpen((open) => !open)}
             >
-              {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              {mobileOpen ? (
+                <X className="size-[22px]" aria-hidden />
+              ) : (
+                <Menu className="size-[22px]" aria-hidden />
+              )}
             </button>
 
             <BrandLogo
@@ -166,7 +188,7 @@ export function DashboardHeader({
           <nav
             aria-label="Dashboard"
             data-dashboard-desktop-nav
-            className="hidden min-w-0 flex-1 items-center justify-center gap-x-5 md:flex lg:gap-x-6"
+            className="hidden min-w-0 flex-1 items-center justify-center gap-x-5 lg:flex lg:gap-x-6"
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-x-5 lg:gap-x-6">
               {essentialItems.map((item) => (
@@ -208,58 +230,75 @@ export function DashboardHeader({
             email={email}
             membershipLabel={membershipLabel}
             isAdmin={isAdmin}
-            className="ml-auto hidden md:block"
+            className="ml-auto hidden lg:block"
           />
         </div>
       </div>
 
       {mobileOpen ? (
-        <div
-          id={mobilePanelId}
-          ref={mobilePanelRef}
-          data-dashboard-mobile-nav
-          className="border-t border-line bg-surface md:hidden"
-        >
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6">
-            <div className="mb-4 border-b border-line pb-4">
-              <p
-                data-mobile-menu-email
-                className="break-words text-sm font-semibold text-ink"
-              >
-                {email}
-              </p>
-              <p
-                data-mobile-menu-membership
-                className="mt-1 text-xs font-semibold text-ink-soft"
-              >
-                {membershipLabel}
-              </p>
-            </div>
+        <>
+          <div
+            aria-hidden
+            className="fixed inset-0 z-30 bg-ink/20 lg:hidden"
+            onClick={closeMobileNav}
+          />
+          <div
+            id={mobilePanelId}
+            ref={mobilePanelRef}
+            data-dashboard-mobile-nav
+            className="relative z-40 border-t border-line bg-surface lg:hidden"
+          >
+            <div className="mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6">
+              <div className="mb-4 flex items-start justify-between gap-3 border-b border-line pb-4">
+                <div className="min-w-0">
+                  <p
+                    data-mobile-menu-email
+                    className="break-words text-sm font-semibold text-ink"
+                  >
+                    {email}
+                  </p>
+                  <p
+                    data-mobile-menu-membership
+                    className="mt-1 text-xs font-semibold text-ink-soft"
+                  >
+                    {membershipLabel}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex size-11 flex-none items-center justify-center rounded-[var(--radius-button)] text-ink transition-colors hover:bg-cream2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  aria-label="Close navigation menu"
+                  onClick={closeMobileNav}
+                >
+                  <X className="size-[22px]" aria-hidden />
+                </button>
+              </div>
 
-            <nav aria-label="Dashboard mobile" className="flex flex-col gap-1">
-              {mobileItems.map((item) => (
-                <DashboardNavLink
-                  key={item.href}
-                  item={item}
-                  pathname={pathname}
-                  onNavigate={closeMobileNav}
-                  className="rounded-xl px-3 py-2.5 hover:bg-cream2"
-                />
-              ))}
-            </nav>
+              <nav aria-label="Dashboard mobile" className="flex flex-col gap-1">
+                {mobileItems.map((item) => (
+                  <DashboardNavLink
+                    key={item.href}
+                    item={item}
+                    pathname={pathname}
+                    onNavigate={closeMobileNav}
+                    className="rounded-xl px-3 py-3 hover:bg-cream2"
+                  />
+                ))}
+              </nav>
 
-            <div className="mt-4 border-t border-line pt-4">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={handleMobileSignOut}
-                className="w-full rounded-xl border border-line px-3 py-2.5 text-left font-body text-sm font-semibold text-ink transition-colors hover:border-blue hover:text-blue disabled:opacity-60"
-              >
-                {isPending ? "Signing out…" : "Log out"}
-              </button>
+              <div className="mt-4 border-t border-line pt-4">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleMobileSignOut}
+                  className="w-full rounded-xl border border-line px-3 py-3 text-left font-body text-sm font-semibold text-ink transition-colors hover:border-blue hover:text-blue disabled:opacity-60"
+                >
+                  {isPending ? "Signing out…" : "Log out"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       ) : null}
     </header>
   )

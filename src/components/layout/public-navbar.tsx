@@ -24,9 +24,12 @@ async function PublicNavbar() {
       navMiddle={<NavbarLinks links={PUBLIC_NAV_LINKS} />}
       navActions={
         <>
-          <PublicMobileNav links={PUBLIC_NAV_LINKS} />
+          <PublicMobileNav
+            links={PUBLIC_NAV_LINKS}
+            isAuthenticated={isAuthenticated}
+          />
           {isAuthenticated ? (
-            <>
+            <div className="hidden items-center gap-2.5 lg:flex">
               <Link
                 href="/dashboard"
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
@@ -34,9 +37,9 @@ async function PublicNavbar() {
                 Dashboard
               </Link>
               <NavbarSignOutButton />
-            </>
+            </div>
           ) : (
-            <>
+            <div className="hidden items-center gap-2.5 lg:flex">
               <Link
                 href="/login"
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
@@ -45,14 +48,11 @@ async function PublicNavbar() {
               </Link>
               <Link
                 href="/programs#reset-plan"
-                className={cn(
-                  buttonVariants({ variant: "default", size: "sm" }),
-                  "hidden min-[400px]:inline-flex"
-                )}
+                className={cn(buttonVariants({ variant: "default", size: "sm" }))}
               >
                 Start Reset Plan
               </Link>
-            </>
+            </div>
           )}
         </>
       }
