@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url"
 import {
   ELEVATE_SOCIAL_URLS,
   PUBLIC_FACEBOOK_GROUP_LINK,
+  PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME,
   PUBLIC_SOCIAL_LINK_CLASSNAME,
   PUBLIC_SOCIAL_PROFILE_LINKS,
   SOCIAL_EXTERNAL_LINK_REL,
@@ -95,7 +96,10 @@ describe("official Elevate social links", () => {
 
   test("Facebook Group is labeled as a community destination", () => {
     assert.equal(PUBLIC_FACEBOOK_GROUP_LINK.label, "Join our Facebook community")
-    assert.equal(PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel, "Join our Facebook community")
+    assert.equal(
+      PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel,
+      "Join Healing Auto-immune and Pre Auto-Immune Naturally on Facebook"
+    )
     assert.equal(
       PUBLIC_FACEBOOK_GROUP_LINK.description,
       "Healing Auto-immune and Pre Auto-Immune Naturally"
@@ -127,41 +131,43 @@ describe("official Elevate social links", () => {
     }
   })
 
-  test("footer wires profile and Facebook community icons in one social row", () => {
+  test("footer keeps profile icons in a row and Facebook community as text below", () => {
     const footer = readRepo("src/components/layout/footer.tsx")
     assert.match(footer, /PUBLIC_SOCIAL_PROFILE_LINKS/)
     assert.match(footer, /PUBLIC_FACEBOOK_GROUP_LINK/)
-    assert.match(footer, /FacebookCommunityIcon/)
+    assert.match(footer, /PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME/)
+    assert.match(footer, /PUBLIC_FACEBOOK_GROUP_LINK\.label/)
+    assert.match(footer, /PUBLIC_FACEBOOK_GROUP_LINK\.description/)
     assert.match(footer, /target=\{link\.target\}/)
     assert.match(footer, /rel=\{link\.rel\}/)
     assert.match(footer, /aria-label=\{link\.ariaLabel\}/)
     assert.match(footer, /aria-label=\{PUBLIC_FACEBOOK_GROUP_LINK\.ariaLabel\}/)
-    assert.match(footer, /title=\{PUBLIC_FACEBOOK_GROUP_LINK\.description\}/)
     assert.match(footer, /aria-label="Social media"/)
     assert.match(footer, /PUBLIC_SOCIAL_LINK_CLASSNAME/)
-    assert.doesNotMatch(footer, /PUBLIC_FACEBOOK_GROUP_LINK\.label/)
-    assert.doesNotMatch(
-      footer,
-      />\s*\{PUBLIC_FACEBOOK_GROUP_LINK\.description\}\s*</
-    )
+    assert.match(footer, /gap-3/)
+    assert.match(footer, /mt-4/)
+    assert.doesNotMatch(footer, /FacebookCommunityIcon/)
+    assert.doesNotMatch(footer, /title=\{PUBLIC_FACEBOOK_GROUP_LINK\.description\}/)
     assert.doesNotMatch(footer, /instagram\.com\/[^"']+\?igsh=/)
     assert.doesNotMatch(footer, /https:\/\/instagram\.com"/)
     assert.doesNotMatch(footer, /https:\/\/facebook\.com"/)
     assert.doesNotMatch(footer, /https:\/\/linkedin\.com"/)
 
-    const icons = readRepo("src/components/layout/social-icons.tsx")
-    assert.match(icons, /function FacebookCommunityIcon/)
-    assert.match(icons, /function FacebookIcon/)
-    // Community icon is a group/users silhouette (three heads), not an "f" mark.
-    const communityIcon = icons.slice(
-      icons.indexOf("function FacebookCommunityIcon"),
-      icons.indexOf("function LinkedInIcon")
+    // Community link is outside the social icon nav, not a fourth icon button.
+    const socialNav = footer.slice(
+      footer.indexOf('aria-label="Social media"'),
+      footer.indexOf("</nav>", footer.indexOf('aria-label="Social media"'))
     )
-    assert.match(communityIcon, /circle cx="6\.5"/)
-    assert.match(communityIcon, /circle cx="17\.5"/)
-    assert.match(communityIcon, /circle cx="12"/)
-    assert.doesNotMatch(communityIcon, /M10 10\.5h1\.8/)
-    assert.doesNotMatch(communityIcon, /Facebook "f"/)
+    assert.match(socialNav, /PUBLIC_SOCIAL_PROFILE_LINKS/)
+    assert.doesNotMatch(socialNav, /PUBLIC_FACEBOOK_GROUP_LINK/)
+
+    const icons = readRepo("src/components/layout/social-icons.tsx")
+    assert.doesNotMatch(icons, /FacebookCommunityIcon/)
+    assert.match(icons, /function FacebookIcon/)
+    assert.match(icons, /function InstagramIcon/)
+    assert.match(icons, /function LinkedInIcon/)
+    assert.match(icons, /size-\[21px\]/)
+    assert.match(icons, /fill:\s*"currentColor"/)
   })
 
   test("about page links the same official destinations without navbar clutter", () => {
@@ -183,13 +189,17 @@ describe("official Elevate social links", () => {
   })
 
   test("social anchors remain keyboard accessible with visible focus and touch targets", () => {
-    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /min-h-11/)
-    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /min-w-11/)
+    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /size-11/)
+    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /rounded-full/)
     assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /focus-visible:outline/)
+    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /motion-reduce/)
+    assert.match(PUBLIC_SOCIAL_LINK_CLASSNAME, /hover:-translate-y-px/)
+    assert.match(PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME, /focus-visible:outline/)
 
     const footer = readRepo("src/components/layout/footer.tsx")
     assert.doesNotMatch(footer, /tabIndex=\{?-1\}?/)
     assert.match(footer, /PUBLIC_SOCIAL_LINK_CLASSNAME/)
+    assert.match(footer, /PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME/)
 
     const about = readRepo("src/app/(public)/about/page.tsx")
     assert.doesNotMatch(about, /tabIndex=\{?-1\}?/)

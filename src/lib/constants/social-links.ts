@@ -51,11 +51,19 @@ export const PUBLIC_FACEBOOK_GROUP_LINK = {
   href: ELEVATE_SOCIAL_URLS.facebookGroup,
   label: "Join our Facebook community",
   description: "Healing Auto-immune and Pre Auto-Immune Naturally",
-  ariaLabel: "Join our Facebook community",
+  ariaLabel:
+    "Join Healing Auto-immune and Pre Auto-Immune Naturally on Facebook",
   target: "_blank" as const,
   rel: SOCIAL_EXTERNAL_LINK_REL,
 } as const
 
-/** Shared class for keyboard-visible, mobile-friendly social anchors. */
+/**
+ * Compact circular profile icon buttons (42–46px hit area, 20–22px glyph).
+ * Secondary footer hierarchy — muted by default, brighter on hover.
+ */
 export const PUBLIC_SOCIAL_LINK_CLASSNAME =
-  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#C2D2D0] transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[#C2D2D0] transition-[color,background-color,border-color,transform] duration-200 ease-out hover:-translate-y-px hover:border-white/30 hover:bg-white/15 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+
+/** Text-style Facebook community CTA — not a fourth social icon button. */
+export const PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME =
+  "inline-flex max-w-full items-center gap-1.5 rounded-md text-sm font-semibold text-[#C2D2D0] transition-colors duration-200 ease-out hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

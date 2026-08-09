@@ -3,7 +3,6 @@ import Link from "next/link"
 import { BrandLogo } from "@/components/layout/brand-logo"
 import { Container } from "@/components/layout/container"
 import {
-  FacebookCommunityIcon,
   FacebookIcon,
   InstagramIcon,
   LinkedInIcon,
@@ -15,6 +14,7 @@ import {
 } from "@/lib/constants/public-site"
 import {
   PUBLIC_FACEBOOK_GROUP_LINK,
+  PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME,
   PUBLIC_SOCIAL_LINK_CLASSNAME,
   PUBLIC_SOCIAL_PROFILE_LINKS,
 } from "@/lib/constants/social-links"
@@ -38,37 +38,47 @@ function Footer({ isAuthenticated }: FooterProps) {
             <BrandLogo variant="horizontal" size="lg" appearance="footer" href="/" />
             <p className="mt-2.5 max-w-[280px] text-sm">{PUBLIC_FOOTER_DESCRIPTION}</p>
 
-            <nav
-              aria-label="Social media"
-              className="mt-3.5 flex max-w-full flex-wrap items-center gap-1"
-            >
-              {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => {
-                const Icon = PROFILE_ICONS[link.network]
-                return (
-                  <a
-                    key={link.network}
-                    href={link.href}
-                    target={link.target}
-                    rel={link.rel}
-                    aria-label={link.ariaLabel}
-                    title={link.ariaLabel}
-                    className={PUBLIC_SOCIAL_LINK_CLASSNAME}
-                  >
-                    <Icon />
-                  </a>
-                )
-              })}
-              <a
-                href={PUBLIC_FACEBOOK_GROUP_LINK.href}
-                target={PUBLIC_FACEBOOK_GROUP_LINK.target}
-                rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
-                aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
-                title={PUBLIC_FACEBOOK_GROUP_LINK.description}
-                className={PUBLIC_SOCIAL_LINK_CLASSNAME}
+            <div className="mt-3.5 max-w-full">
+              <nav
+                aria-label="Social media"
+                className="flex w-fit max-w-full flex-nowrap items-center gap-3"
               >
-                <FacebookCommunityIcon />
-              </a>
-            </nav>
+                {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => {
+                  const Icon = PROFILE_ICONS[link.network]
+                  return (
+                    <a
+                      key={link.network}
+                      href={link.href}
+                      target={link.target}
+                      rel={link.rel}
+                      aria-label={link.ariaLabel}
+                      className={PUBLIC_SOCIAL_LINK_CLASSNAME}
+                    >
+                      <Icon />
+                    </a>
+                  )
+                })}
+              </nav>
+
+              <div className="mt-4 max-w-[280px]">
+                <a
+                  href={PUBLIC_FACEBOOK_GROUP_LINK.href}
+                  target={PUBLIC_FACEBOOK_GROUP_LINK.target}
+                  rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
+                  aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
+                  className={PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME}
+                >
+                  <FacebookIcon className="size-3.5 shrink-0 opacity-90" />
+                  <span>{PUBLIC_FACEBOOK_GROUP_LINK.label}</span>
+                  <span aria-hidden="true" className="font-normal">
+                    →
+                  </span>
+                </a>
+                <p className="mt-1 text-xs leading-snug text-[#8FA3A1]">
+                  {PUBLIC_FACEBOOK_GROUP_LINK.description}
+                </p>
+              </div>
+            </div>
           </div>
 
           <nav
