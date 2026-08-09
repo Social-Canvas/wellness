@@ -106,11 +106,11 @@ export const SAMPLE_BLOG_ARTICLES: BlogArticle[] = [
       },
       {
         type: "cta",
-        title: "Try a free taster",
+        title: "Explore Elevate programs",
         description:
-          "Sample a guided session before you choose a membership or program.",
-        href: "/free-taster",
-        label: "Get the free taster",
+          "Start with the Reset Plan or browse memberships designed for nervous system regulation.",
+        href: "/programs",
+        label: "View programs",
       },
     ],
   },

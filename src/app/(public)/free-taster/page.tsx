@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: `Free Taster | ${ELEVATE_BRAND.name}`,
   description:
     "Sample Elevate breathwork and nervous system regulation before you choose a membership or program.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default function FreeTasterLeadPage() {

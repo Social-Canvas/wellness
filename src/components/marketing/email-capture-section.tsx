@@ -22,9 +22,9 @@ function EmailCaptureSection({
   className,
   title,
   description,
-  submitLabel = "Request free taster",
+  submitLabel = "Explore programs",
   note = "No spam, just calm. Unsubscribe anytime.",
-  href = "/free-taster",
+  href = "/programs",
   ...props
 }: EmailCaptureSectionProps) {
   return (

@@ -17,7 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/retreats",
     "/vip",
     "/private-events",
-    "/free-taster",
     "/live-breathwork",
     "/privacy",
   ] as const
