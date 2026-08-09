@@ -152,6 +152,16 @@ describe("official Elevate social links", () => {
     const icons = readRepo("src/components/layout/social-icons.tsx")
     assert.match(icons, /function FacebookCommunityIcon/)
     assert.match(icons, /function FacebookIcon/)
+    // Community icon is a group/users silhouette (three heads), not an "f" mark.
+    const communityIcon = icons.slice(
+      icons.indexOf("function FacebookCommunityIcon"),
+      icons.indexOf("function LinkedInIcon")
+    )
+    assert.match(communityIcon, /circle cx="6\.5"/)
+    assert.match(communityIcon, /circle cx="17\.5"/)
+    assert.match(communityIcon, /circle cx="12"/)
+    assert.doesNotMatch(communityIcon, /M10 10\.5h1\.8/)
+    assert.doesNotMatch(communityIcon, /Facebook "f"/)
   })
 
   test("about page links the same official destinations without navbar clutter", () => {
