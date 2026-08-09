@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 import { Container, Section, SectionHeader } from "@/components/layout"
-import { CtaBand } from "@/components/marketing"
+import { FeatureEnquiryCard } from "@/components/marketing"
 import {
   MembershipAudienceTabs,
   MembershipPricingCards,
@@ -30,8 +30,8 @@ import {
   ELEVATE_BRAND,
   ELEVATE_PROGRAM_OFFERS,
   RESET_PLAN,
-  VIP_COACHING_CTA_FEATURES,
-  RETREATS_CTA_FEATURES,
+  RETREATS_PRIVATE_EVENTS,
+  VIP_COACHING,
 } from "@/lib/constants/elevate-brand"
 import { getPublicProgramOffers } from "@/lib/constants/catalog-visibility"
 import { getProgramOfferBrandImage, BRAND_IMAGES } from "@/lib/brand/images"
@@ -313,34 +313,36 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
       </Section>
 
       <Section padding="default">
-        <Container className="space-y-[18px]">
-          <div id="vip-package">
-            <CtaBand
-              contained={false}
-              eyebrow="Premium 1:1"
-              title="VIP Coaching with Dr. Pattani"
-              description="The 7-Step PATTANI Protocol: advanced diagnostics, one-on-one coaching, and personalized healing strategies for high-touch transformation."
-              features={[...VIP_COACHING_CTA_FEATURES]}
-              price="By enquiry"
-              priceNote="customized high-touch program"
-              action={{ label: "Apply for VIP", href: "/vip" }}
-              image={BRAND_IMAGES.founderCoachingTreePose}
-            />
-          </div>
+        <Container>
+          <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2 lg:items-stretch">
+            <div id="vip-package" className="h-full">
+              <FeatureEnquiryCard
+                eyebrow={VIP_COACHING.eyebrow}
+                title={VIP_COACHING.name}
+                description={VIP_COACHING.description}
+                supportingText={VIP_COACHING.supportingText}
+                action={{
+                  label: VIP_COACHING.ctaLabel,
+                  href: VIP_COACHING.ctaHref,
+                }}
+                image={BRAND_IMAGES.founderCoachingTreePose}
+              />
+            </div>
 
-          <div id="retreats-private-events">
-            <CtaBand
-              contained={false}
-              variant="green"
-              eyebrow="Live & in person"
-              title="Retreats & Private Events"
-              description="Immersive breathwork, sound healing, and functional medicine retreats. Enquire for upcoming dates and private event formats."
-              features={[...RETREATS_CTA_FEATURES]}
-              price="Enquire"
-              priceNote="upcoming dates shared on enquiry"
-              action={{ label: "Enquire", href: "/retreats" }}
-              image={BRAND_IMAGES.retreatSpiritual}
-            />
+            <div id="retreats-private-events" className="h-full">
+              <FeatureEnquiryCard
+                variant="green"
+                eyebrow={RETREATS_PRIVATE_EVENTS.eyebrow}
+                title={RETREATS_PRIVATE_EVENTS.name}
+                description={RETREATS_PRIVATE_EVENTS.description}
+                supportingText={RETREATS_PRIVATE_EVENTS.supportingText}
+                action={{
+                  label: RETREATS_PRIVATE_EVENTS.ctaLabel,
+                  href: RETREATS_PRIVATE_EVENTS.ctaHref,
+                }}
+                image={BRAND_IMAGES.retreatSpiritual}
+              />
+            </div>
           </div>
         </Container>
       </Section>

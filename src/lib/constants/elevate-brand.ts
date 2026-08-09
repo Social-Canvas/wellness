@@ -111,7 +111,27 @@ export const RESET_PLAN = {
     "A focused 7-day experience with guided breathwork and practical tools to help you reset, reconnect, and build a calmer foundation.",
 } as const
 
-/** Retained for VIP/retreats-style bands; Reset Plan card no longer renders these. */
+export const VIP_COACHING = {
+  eyebrow: "Premium 1:1",
+  name: "VIP Coaching with Dr. Pattani",
+  description:
+    "Personalized, high-touch support built around your goals, with private coaching and an individualized approach.",
+  supportingText: "Personalized program",
+  ctaLabel: "Apply for VIP",
+  ctaHref: "/vip",
+} as const
+
+export const RETREATS_PRIVATE_EVENTS = {
+  eyebrow: "Live & in person",
+  name: "Retreats & Private Events",
+  description:
+    "Immersive in-person experiences combining breathwork, reflection, and restorative practices for individuals and private groups.",
+  supportingText: "Upcoming dates and private events",
+  ctaLabel: "Enquire now",
+  ctaHref: "/retreats",
+} as const
+
+/** Retained for reference; Reset / VIP / retreats cards no longer render these. */
 export const RESET_PLAN_CTA_FEATURES = [
   "7-day nervous system reset",
   "Guided breathwork foundations",
@@ -119,6 +139,7 @@ export const RESET_PLAN_CTA_FEATURES = [
   "Your gateway into Elevate",
 ] as const
 
+/** Retained for reference; VIP card no longer renders these. */
 export const VIP_COACHING_CTA_FEATURES = [
   "Advanced diagnostics",
   "Bi-weekly 1:1 coaching",
@@ -126,6 +147,7 @@ export const VIP_COACHING_CTA_FEATURES = [
   "VIP retreat access",
 ] as const
 
+/** Retained for reference; retreats card no longer renders these. */
 export const RETREATS_CTA_FEATURES = [
   "Immersive breathwork retreats",
   "Sound healing experiences",

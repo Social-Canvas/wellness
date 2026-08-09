@@ -1,5 +1,9 @@
 export { CtaBand, type CtaBandAction, type CtaBandProps } from "./cta-band"
 export {
+  FeatureEnquiryCard,
+  type FeatureEnquiryCardProps,
+} from "./feature-enquiry-card"
+export {
   EmailCaptureSection,
   type EmailCaptureSectionProps,
 } from "./email-capture-section"
