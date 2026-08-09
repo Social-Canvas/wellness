@@ -108,7 +108,7 @@ export const RESET_PLAN = {
   name: "Reset Plan",
   priceLabel: "$47",
   description:
-    "Your front-door entry into Elevate — a focused reset to calm the nervous system, release hypervigilance, and begin the Ground phase of your healing journey.",
+    "Your front-door entry into Elevate: a focused reset to calm the nervous system, release hypervigilance, and begin the Ground phase of your healing journey.",
 } as const
 
 export const RESET_PLAN_CTA_FEATURES = [
@@ -158,7 +158,7 @@ export const ELEVATE_PROGRAM_OFFERS: ElevateProgramOffer[] = [
     category: "Year 1 · Deep healing",
     title: "Autoimmune Masterclass",
     description:
-      "Five recorded sessions within the Release phase — supporting emotional safety, stored stress in the body, and the mind-body connection behind chronic inflammation.",
+      "Five recorded sessions within the Release phase, supporting emotional safety, stored stress in the body, and the mind-body connection behind chronic inflammation.",
     ctaLabel: "Explore masterclass",
     ctaVariant: "outline",
   },
@@ -167,7 +167,7 @@ export const ELEVATE_PROGRAM_OFFERS: ElevateProgramOffer[] = [
     category: "Professional",
     title: "Health Professional Session",
     description:
-      "Evidence-informed functional medicine education for practitioners — bridging pharmacology, nervous system science, and integrative healing.",
+      "Evidence-informed functional medicine education for practitioners, bridging pharmacology, nervous system science, and integrative healing.",
     ctaLabel: "Book session",
     ctaVariant: "outline",
     // Hidden from public site before Stripe live activation; DB row retained as draft.
@@ -178,7 +178,7 @@ export const ELEVATE_PROGRAM_OFFERS: ElevateProgramOffer[] = [
     category: "Live experience",
     title: "Live Breathwork Session",
     description:
-      "A one-time trial for one selected upcoming live session — the same Zoom session members attend. No membership, recordings, or future sessions included.",
+      "A one-time trial for one selected upcoming live session (the same Zoom session members attend). No membership, recordings, or future sessions included.",
     ctaLabel: "Reserve your spot",
     ctaVariant: "outline",
   },
@@ -199,7 +199,7 @@ export const ELEVATE_SHOP_COPY = {
     "ebook-1": {
       title: "Clean Living Recipes",
       description:
-        "A Root Cause Care recipe guide for nourishing meals that support inflammation, gut health, and sustained energy — without overwhelm.",
+        "A Root Cause Care recipe guide for nourishing meals that support inflammation, gut health, and sustained energy without overwhelm.",
     },
     "elevate-integration-journal": {
       title: "The Elevate Integration Journal",

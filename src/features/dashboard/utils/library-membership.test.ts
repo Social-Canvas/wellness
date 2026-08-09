@@ -347,11 +347,17 @@ test("18. Full recording archive remains accessible", () => {
 // 19. Public routes remain accessible through More
 test("19. Public routes remain accessible through More", () => {
   const more = getMoreNavItems(false).map((item) => item.label)
-  for (const label of ["Programs", "Shop", "Blog", "About"]) {
+  for (const label of ["Programs", "For Nonprofits", "Shop", "Blog", "About"]) {
     assert.ok(more.includes(label), `missing ${label} in More`)
   }
   const secondary = getSecondaryNavItems(false).map((item) => item.label)
-  assert.deepEqual(secondary, ["Programs", "Shop", "Blog", "About"])
+  assert.deepEqual(secondary, [
+    "Programs",
+    "For Nonprofits",
+    "Shop",
+    "Blog",
+    "About",
+  ])
 })
 
 // 20. Account page uses customer-facing capability labels

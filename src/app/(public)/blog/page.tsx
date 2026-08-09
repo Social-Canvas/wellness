@@ -8,7 +8,7 @@ import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { SAMPLE_BLOG_ARTICLES } from "@/content/blog/sample-articles"
 
 export const metadata: Metadata = {
-  title: `Insights — ${ELEVATE_BRAND.name}`,
+  title: `Insights | ${ELEVATE_BRAND.name}`,
   description:
     "Evidence-informed articles on nervous system regulation, functional medicine, hormones, and root-cause healing.",
 }
@@ -22,7 +22,7 @@ export default function BlogPage() {
             align="center"
             eyebrow="Elevate insights"
             title="Science + soul, explained"
-            subtitle="Practical writing on energy, hormones, gut health, stress, and nervous system regulation — from the Elevate team."
+            subtitle="Practical writing on energy, hormones, gut health, stress, and nervous system regulation from the Elevate team."
           />
 
           <div className="mt-10 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">

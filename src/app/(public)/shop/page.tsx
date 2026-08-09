@@ -12,7 +12,7 @@ import {
 import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
-  title: `Shop — ${ELEVATE_BRAND.name}`,
+  title: `Shop | ${ELEVATE_BRAND.name}`,
   description: ELEVATE_SHOP_COPY.description,
 }
 

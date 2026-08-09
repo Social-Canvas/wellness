@@ -199,10 +199,10 @@ function currentCardStatusNote(facts: MembershipPlanCtaFacts): string | null {
     const annual =
       facts.billingInterval === "yearly"
         ? "Your annual membership remains active until "
-        : "Cancellation scheduled — access continues until "
+        : "Cancellation scheduled. Access continues until "
     return periodEnd
       ? `${annual}${periodEnd}.`
-      : "Cancellation scheduled — access continues until period end."
+      : "Cancellation scheduled. Access continues until period end."
   }
 
   return null

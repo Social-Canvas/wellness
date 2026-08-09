@@ -21,9 +21,9 @@ const ABOUT_SOCIAL_LINK_LABELS = {
 } as const
 
 export const metadata: Metadata = {
-  title: `About — ${ELEVATE_BRAND.name}`,
+  title: `About | ${ELEVATE_BRAND.name}`,
   description:
-    "Meet Dr. Deepa Pattani — Doctor of Pharmacy, functional medicine specialist, and founder of Elevate Health Solutions.",
+    "Meet Dr. Deepa Pattani, Doctor of Pharmacy, functional medicine specialist, and founder of Elevate Health Solutions.",
 }
 
 const CREDENTIALS = [
@@ -41,12 +41,12 @@ const APPROACH_PILLARS = [
   {
     title: "Science + soul",
     description:
-      "Clinical pharmacology meets herbalism, Ayurveda, and breathwork — precision without losing the human element.",
+      "Clinical pharmacology meets herbalism, Ayurveda, and breathwork, with precision that does not lose the human element.",
   },
   {
     title: "Root-cause healing",
     description:
-      "Symptoms are signals. Elevate identifies what is driving dysregulation — nervous system, hormones, gut, inflammation.",
+      "Symptoms are signals. Elevate identifies what is driving dysregulation: nervous system, hormones, gut, inflammation.",
   },
   {
     title: "Nervous system first",
@@ -80,7 +80,7 @@ export default function AboutPage() {
               </p>
               <p className="mt-4 text-base leading-relaxed text-ink-soft">
                 For over two decades, Dr. Pattani has helped exhausted, overwhelmed
-                professionals break free from fatigue, anxiety, and hopelessness — and
+                professionals break free from fatigue, anxiety, and hopelessness, and
                 step into energy, control, and vibrant health through the signature
                 7-Step PATTANI Protocol.
               </p>
@@ -103,15 +103,15 @@ export default function AboutPage() {
                 A third-generation healer
               </h2>
               <p className="mt-3 text-[17px] leading-[1.75] text-ink-soft">
-                Healing runs in her blood. A personal transformation in Bali — where
-                traditional practices met modern medical science — confirmed what years of
+                Healing runs in her blood. A personal transformation in Bali, where
+                traditional practices met modern medical science, confirmed what years of
                 clinical work had shown: sustainable healing requires both evidence and
                 embodiment.
               </p>
               <p className="mt-4 text-[17px] leading-[1.75] text-ink-soft">
                 After losing 40 pounds without pharmaceuticals using the same holistic
-                tools she now teaches, Dr. Pattani committed fully to functional medicine
-                — finding and fixing root causes rather than managing symptoms on the
+                tools she now teaches, Dr. Pattani committed fully to functional medicine,
+                finding and fixing root causes rather than managing symptoms on the
                 surface.
               </p>
             </section>
@@ -134,7 +134,7 @@ export default function AboutPage() {
                 Best-selling author of <em>Unleashing the Storrie Within</em> and
                 contributing author to the Amazon bestseller{" "}
                 <em>Creating a Functional Medicine Revolution</em>. She is currently
-                writing <em>The Earth is My Body</em> — the first in a series on human
+                writing <em>The Earth is My Body</em>, the first in a series on human
                 healing and the natural world.
               </p>
             </section>
@@ -160,18 +160,18 @@ export default function AboutPage() {
                 The Elevate breathwork journey
               </h2>
               <p className="mt-3 text-[17px] leading-[1.75] text-ink-soft">
-                Membership follows a three-year framework — Ground → Release → Align →
-                Expand — designed for long-term nervous system transformation, not
+                Membership follows a three-year framework (Ground → Release → Align →
+                Expand) designed for long-term nervous system transformation, not
                 quick fixes.
               </p>
             </section>
 
             <section className="rounded-2xl border border-line bg-cream2/60 p-8 text-center">
               <p className="font-display text-xl font-medium text-ink">
-                &ldquo;Healing is not something we force — it is something we allow when
+                &ldquo;Healing is not something we force. It is something we allow when
                 we return to ourselves.&rdquo;
               </p>
-              <p className="mt-3 text-sm text-ink-soft">— {ELEVATE_BRAND.founder}</p>
+              <p className="mt-3 text-sm text-ink-soft">{ELEVATE_BRAND.founder}</p>
             </section>
 
             <section>

@@ -18,7 +18,7 @@ function NavbarLinks({ links }: NavbarLinksProps) {
   const pathname = usePathname()
 
   return (
-    <div className="hidden min-[861px]:flex items-center gap-[22px]">
+    <div className="hidden min-[861px]:flex items-center gap-3.5 min-[1100px]:gap-[22px]">
       {links.map((link) => {
         const isActive =
           link.href === "/"

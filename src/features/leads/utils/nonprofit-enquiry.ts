@@ -1,5 +1,5 @@
 /**
- * Nonprofit partnership enquiry helpers — pure, safe for unit tests.
+ * Nonprofit partnership enquiry helpers. Pure and safe for unit tests.
  * Participant estimate is enquiry information only; admins set seat limits later.
  */
 
@@ -26,16 +26,15 @@ export const NONPROFIT_ENQUIRY_NO_PURCHASE =
   "Submitting this form does not create a purchase or subscription." as const
 
 export const NONPROFIT_ENQUIRY_SUCCESS_HEADING =
-  "Thank you — your enquiry has been received" as const
+  "Thank you. Your enquiry has been received" as const
 
 export const NONPROFIT_ENQUIRY_SUCCESS_BODY =
   "The Elevate team will follow up with membership options and next steps for your organization." as const
 
-export const NONPROFIT_ENQUIRY_PLANS_HREF =
-  "/programs?membership=nonprofit#memberships" as const
+export const NONPROFIT_ENQUIRY_PLANS_HREF = "/nonprofits" as const
 
 export const NONPROFIT_ENQUIRY_VIEW_PLANS_LABEL =
-  "Back to nonprofit memberships" as const
+  "Learn more about nonprofit partnerships" as const
 
 /** Compact shared benefits for the enquiry summary. */
 export const NONPROFIT_ENQUIRY_SUMMARY_BENEFITS = [
@@ -57,15 +56,15 @@ export const NONPROFIT_ENQUIRY_NEXT_STEPS = [
 export const NONPROFIT_PARTICIPANT_RANGE_OPTIONS = [
   {
     value: "1-25",
-    label: "1–25 participants",
+    label: "1 to 25 participants",
   },
   {
     value: "26-75",
-    label: "26–75 participants",
+    label: "26 to 75 participants",
   },
   {
     value: "76-200",
-    label: "76–200 participants",
+    label: "76 to 200 participants",
   },
   {
     value: "201+",

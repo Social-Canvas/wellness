@@ -211,7 +211,7 @@ test("7. VIP copy and CTA render correctly", () => {
   assert.equal(VIP_ENQUIRY_CTA, "Enquire about VIP Coaching")
   assert.equal(
     VIP_ENQUIRY_MESSAGE_LABEL,
-    "What would you like support with? — optional"
+    "What would you like support with? (optional)"
   )
   assert.equal(
     VIP_ENQUIRY_NO_PURCHASE,
@@ -313,7 +313,7 @@ test("13. Correct success panel renders for each intent", () => {
   assert.match(form, /EnquirySuccessPanel/)
   assert.equal(
     RETREAT_ENQUIRY_SUCCESS_HEADING,
-    "Thank you — your retreat enquiry has been received"
+    "Thank you. Your retreat enquiry has been received"
   )
   assert.match(
     RETREAT_ENQUIRY_SUCCESS_BODY,
@@ -321,7 +321,7 @@ test("13. Correct success panel renders for each intent", () => {
   )
   assert.equal(
     VIP_ENQUIRY_SUCCESS_HEADING,
-    "Thank you — your VIP Coaching enquiry has been received"
+    "Thank you. Your VIP Coaching enquiry has been received"
   )
   assert.match(
     VIP_ENQUIRY_SUCCESS_BODY,

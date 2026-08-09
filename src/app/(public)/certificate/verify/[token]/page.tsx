@@ -19,7 +19,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${result.data.courseTitle} — Certificate Verification`,
+    title: `${result.data.courseTitle} | Certificate Verification`,
     description: `Verify certificate ${result.data.certificateNumber}.`,
   }
 }

@@ -11,7 +11,7 @@ export type DashboardNavItem = {
  * Authenticated dashboard destinations.
  * - essential: always visible from md+
  * - wide: reserved (unused after membership hub consolidation)
- * - secondary: Programs/Shop/Blog/About — inline from xl+; More below xl
+ * - secondary: Programs/For Nonprofits/Shop/Blog/About — inline from xl+; More below xl
  * - utility: user menu / Admin
  *
  * Live Sessions and Recorded Sessions remain reachable via the Membership hub
@@ -24,6 +24,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { label: "Certificates", href: "/dashboard/certificates", group: "essential" },
   { label: "Account", href: "/dashboard/account", group: "essential" },
   { label: "Programs", href: "/programs", group: "secondary" },
+  { label: "For Nonprofits", href: "/nonprofits", group: "secondary" },
   { label: "Shop", href: "/shop", group: "secondary" },
   { label: "Blog", href: "/blog", group: "secondary" },
   { label: "About", href: "/about", group: "secondary" },
@@ -33,6 +34,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
 
 export const DASHBOARD_FOOTER_LINKS = [
   { label: "Programs", href: "/programs" },
+  { label: "For Nonprofits", href: "/nonprofits" },
   { label: "Shop", href: "/shop" },
   { label: "Blog", href: "/blog" },
   { label: "About", href: "/about" },

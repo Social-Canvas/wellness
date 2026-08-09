@@ -38,7 +38,7 @@ function privilegeLines(privileges?: MembershipPrivilegeSummary): string[] {
 function withSupport(outro?: string): string {
   return (
     outro ??
-    `Questions? Reply to this email or contact support. — ${ELEVATE_BRAND.name}`
+    `Questions? Reply to this email or contact support. ${ELEVATE_BRAND.name}`
   )
 }
 
@@ -210,10 +210,10 @@ export function buildMembershipPaymentFailedTemplate(
   const intro = `Hi ${name}, we could not process a payment for your ${input.membershipName} membership.`
   const bodyLines = [
     "Please update your payment method to avoid an interruption to your access.",
-    "Stripe also sends payment receipts and invoice notices directly — this message is an Elevate access reminder only.",
+    "Stripe also sends payment receipts and invoice notices directly. This message is an Elevate access reminder only.",
   ]
   return buildTemplate({
-    subject: "Payment failed — action needed",
+    subject: "Payment failed: action needed",
     preheader: "Action needed to keep your membership active.",
     heading: "Payment failed",
     intro,
@@ -235,7 +235,7 @@ export function buildMembershipPaymentRecoveredTemplate(
     ...privilegeLines(input.privileges),
   ]
   return buildTemplate({
-    subject: "Payment recovered — membership active",
+    subject: "Payment recovered: membership active",
     preheader: "Your Elevate membership payment is up to date.",
     heading: "Payment recovered",
     intro,

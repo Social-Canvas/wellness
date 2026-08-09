@@ -107,6 +107,7 @@ function Navbar({
       data-slot="navbar"
       className={cn(
         "sticky top-0 z-40 border-b border-line bg-[rgba(246,250,249,0.96)] backdrop-blur-[10px]",
+        "relative",
         className
       )}
       {...props}

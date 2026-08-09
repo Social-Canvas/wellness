@@ -5,9 +5,9 @@ import { RetreatEnquiryPage } from "@/features/leads/components/RetreatEnquiryPa
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 
 export const metadata: Metadata = {
-  title: `Retreats — ${ELEVATE_BRAND.name}`,
+  title: `Retreats | ${ELEVATE_BRAND.name}`,
   description:
-    "Enquire about Elevate retreats — immersive breathwork, sound healing, and nervous system reset experiences.",
+    "Enquire about Elevate retreats: immersive breathwork, sound healing, and nervous system reset experiences.",
 }
 
 export default async function RetreatsLeadPage() {

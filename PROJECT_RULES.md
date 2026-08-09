@@ -109,3 +109,8 @@ All AI-generated and hand-written code must follow these rules.
 5. Entitlement checks for protected resources
 6. Types complete
 7. Follows folder structure in AI_CONTEXT.md
+
+## Content & Copy
+
+- Avoid em dashes in customer-facing Elevate copy. Prefer periods, commas, colons, parentheses, or sentence rewrites.
+- Keep public marketing copy in shared config modules (`public-site`, `elevate-brand`, membership audience helpers) so navigation and landing pages stay consistent.

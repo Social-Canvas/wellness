@@ -149,7 +149,7 @@ export function MembershipHub({
             </p>
           ) : membership.source === "complimentary" ? (
             <p className="text-sm text-ink-soft">
-              Complimentary access — plan changes are managed by an
+              Complimentary access. Plan changes are managed by an
               administrator.
             </p>
           ) : null}

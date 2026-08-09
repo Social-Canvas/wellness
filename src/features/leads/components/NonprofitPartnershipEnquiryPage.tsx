@@ -37,7 +37,7 @@ function PartnershipSummary() {
       </h2>
       <p className="mt-1 text-sm text-ink-soft">
         Share your organization details and estimated participant needs. Seat
-        limits are confirmed after approval — this form does not assign a public
+        limits are confirmed after approval. This form does not assign a public
         pricing plan.
       </p>
 

@@ -18,7 +18,7 @@ import { getEffectiveMembership } from "@/server/services/membership.service"
 export const metadata: Metadata = {
   title: "Membership",
   description:
-    "Your Elevate membership hub — plan status, live sessions, and recordings.",
+    "Your Elevate membership hub: plan status, live sessions, and recordings.",
 }
 
 export default async function MembershipPage() {

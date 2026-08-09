@@ -52,6 +52,8 @@ Use for complete modules, one at a time:
 
 Always prefix prompts with: *"Follow AI_CONTEXT.md and PROJECT_RULES.md."*
 
+Copy style: Avoid em dashes in customer-facing Elevate copy. Prefer periods, commas, colons, parentheses, or sentence rewrites.
+
 ### Cursor — Pair Programmer
 
 Use for:

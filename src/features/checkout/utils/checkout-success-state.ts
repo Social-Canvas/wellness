@@ -63,7 +63,7 @@ export function buildSuccessViewFromLocalState(input: {
     return {
       state: "fulfilled",
       title: "Payment successful",
-      message: "Payment successful — your access is ready.",
+      message: "Payment successful. Your access is ready.",
       productName: input.productName,
       purchaseType: input.purchaseType,
       destination: input.destination,

@@ -47,7 +47,7 @@ test("successful checkout creates fulfilled view when access is ready", () => {
 
   assert.equal(view.state, "fulfilled")
   assert.equal(view.accessReady, true)
-  assert.equal(view.message, "Payment successful — your access is ready.")
+  assert.equal(view.message, "Payment successful. Your access is ready.")
   assert.equal(view.destination?.href, RESET_LIBRARY_PATH)
 })
 

@@ -85,7 +85,7 @@ const VARIANT_CONFIG = {
     noPurchase: RETREAT_ENQUIRY_NO_PURCHASE,
     successHeading: RETREAT_ENQUIRY_SUCCESS_HEADING,
     successBody: RETREAT_ENQUIRY_SUCCESS_BODY,
-    messageLabel: "Message — optional",
+    messageLabel: "Message (optional)",
     showExtraFields: true,
   },
   vip: {

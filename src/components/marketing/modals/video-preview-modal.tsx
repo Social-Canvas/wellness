@@ -59,7 +59,7 @@ export function VideoPreviewModal({
                 </div>
               </div>
               <p className="absolute right-4 bottom-4 left-4 text-sm text-white/90">
-                Intro preview — full playback is available after enrollment.
+                Intro preview. Full playback is available after enrollment.
               </p>
             </div>
           </div>

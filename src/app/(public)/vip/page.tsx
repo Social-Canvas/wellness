@@ -5,9 +5,9 @@ import { VipEnquiryPage } from "@/features/leads/components/VipEnquiryPage"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 
 export const metadata: Metadata = {
-  title: `VIP Coaching — ${ELEVATE_BRAND.name}`,
+  title: `VIP Coaching | ${ELEVATE_BRAND.name}`,
   description:
-    "Apply for high-touch VIP coaching with Dr. Deepa Pattani — functional medicine, breathwork, and nervous system transformation.",
+    "Apply for high-touch VIP coaching with Dr. Deepa Pattani: functional medicine, breathwork, and nervous system transformation.",
 }
 
 export default async function VipLeadPage() {

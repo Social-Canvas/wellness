@@ -6,12 +6,13 @@ export const PUBLIC_TICKER_MESSAGE =
 export const PUBLIC_NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Programs", href: "/programs" },
+  { label: "For Nonprofits", href: "/nonprofits" },
   { label: "Shop", href: "/shop" },
   { label: "Blog", href: "/blog" },
   { label: "About", href: "/about" },
 ] as const
 
 export const PUBLIC_FOOTER_DESCRIPTION =
-  "Functional medicine, breathwork, and nervous system regulation — science + soul."
+  "Functional medicine, breathwork, and nervous system regulation: science + soul."
 
-export const PUBLIC_LEGAL_DISCLAIMER = `© 2026 ${ELEVATE_BRAND.name}. Educational content only — not medical advice.`
+export const PUBLIC_LEGAL_DISCLAIMER = `© 2026 ${ELEVATE_BRAND.name}. Educational content only; not medical advice.`

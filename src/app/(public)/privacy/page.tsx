@@ -5,7 +5,7 @@ import { Container, Section } from "@/components/layout"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 
 export const metadata: Metadata = {
-  title: `Privacy Policy — ${ELEVATE_BRAND.name}`,
+  title: `Privacy Policy | ${ELEVATE_BRAND.name}`,
   description: `How ${ELEVATE_BRAND.name} collects and uses information submitted through our website.`,
 }
 

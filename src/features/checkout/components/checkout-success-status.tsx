@@ -78,7 +78,7 @@ export function CheckoutSuccessStatus({
 
         if (result.data.state === "fulfilled") {
           setState("fulfilled")
-          setMessage("Payment successful — your access is ready.")
+          setMessage("Payment successful. Your access is ready.")
           setHref(result.data.destinationHref)
           if (result.data.destinationHref) {
             setLabel(label ?? "Continue")

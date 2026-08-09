@@ -246,7 +246,7 @@ export default async function DashboardAccountPage({
                 </p>
               ) : membership.source === "complimentary" ? (
                 <p className="pt-1 text-xs">
-                  Complimentary access — plan changes are managed by an
+                  Complimentary access. Plan changes are managed by an
                   administrator.
                 </p>
               ) : null}

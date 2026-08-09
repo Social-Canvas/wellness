@@ -1,6 +1,6 @@
 /**
  * Public membership audience tab model for /programs.
- * Pure helpers — safe for unit tests and Client Components.
+ * Pure helpers, safe for unit tests and Client Components.
  */
 
 export const MEMBERSHIP_QUERY_KEY = "membership" as const
@@ -69,14 +69,14 @@ export type NonprofitSeatPlan = {
 }
 
 /**
- * Historical nonprofit seat bands — enquiry metadata / admin reference only.
+ * Historical nonprofit seat bands (enquiry metadata / admin reference only).
  * Do not render as public pricing cards. Do not wire to Checkout.
  */
 export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
   {
     slug: "small",
     name: "Small Organization",
-    seatRangeLabel: "1–25 participants",
+    seatRangeLabel: "1 to 25 participants",
     priceLabel: "$497",
     priceSuffix: "/ month",
     ctaLabel: "Request this plan",
@@ -85,7 +85,7 @@ export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
   {
     slug: "mid-size",
     name: "Mid-Size Organization",
-    seatRangeLabel: "26–75 participants",
+    seatRangeLabel: "26 to 75 participants",
     priceLabel: "$997",
     priceSuffix: "/ month",
     ctaLabel: "Request this plan",
@@ -94,7 +94,7 @@ export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
   {
     slug: "large",
     name: "Large Organization",
-    seatRangeLabel: "76–200 participants",
+    seatRangeLabel: "76 to 200 participants",
     priceLabel: "$1,997",
     priceSuffix: "/ month",
     ctaLabel: "Request this plan",
@@ -104,7 +104,7 @@ export const NONPROFIT_SEAT_PLANS: readonly NonprofitSeatPlan[] = [
     slug: "enterprise",
     name: "Enterprise",
     seatRangeLabel: "201+ participants",
-    priceLabel: "$3,000–$5,000",
+    priceLabel: "$3,000 to $5,000",
     priceSuffix: "/ month",
     ctaLabel: "Discuss enterprise access",
     customPricing: true,
@@ -116,18 +116,58 @@ export const NONPROFIT_INQUIRY_CTA = "Connect with us"
 export const NONPROFIT_INQUIRY_HREF =
   "/private-events?intent=nonprofit-partnership" as const
 
+export const NONPROFIT_LANDING_HREF = "/nonprofits" as const
+
+export const NONPROFIT_LEARN_MORE_CTA =
+  "Learn more about nonprofit partnerships" as const
+
+export const NONPROFIT_START_CONVERSATION_CTA = "Start a conversation" as const
+
+export const NONPROFIT_SEE_WHATS_INCLUDED_CTA = "See what's included" as const
+
+export const NONPROFIT_EXPLORE_CTA = "Explore nonprofit partnerships" as const
+
 export const NONPROFIT_SHARED_BENEFITS_TITLE =
   "Included with a nonprofit partnership" as const
 
 export const NONPROFIT_MISSION_EYEBROW = "OUR BELIEF" as const
 
+export const NONPROFIT_LANDING_EYEBROW = "NONPROFIT PARTNERSHIPS" as const
+
 export const NONPROFIT_MISSION_HEADING =
   "A world where healing belongs to everyone" as const
 
 export const NONPROFIT_MISSION_BODY =
-  "At Elevate, we believe access to peace, resilience, and well-being should not depend on privilege or circumstance. Dr. Deepa Pattani created Elevate’s nonprofit partnerships to help organizations bring supportive, restorative experiences to the people and communities they serve—making meaningful care and connection more accessible to all." as const
+  "At Elevate, we believe access to peace, resilience, and well-being should not depend on privilege or circumstance. Dr. Deepa Pattani created Elevate’s nonprofit partnerships to help organizations bring supportive, restorative experiences to the people and communities they serve, making meaningful care and connection more accessible to all." as const
 
-/** @deprecated Public size cards removed — kept for test migration detection. */
+export const NONPROFIT_HOW_IT_WORKS_HEADING =
+  "How nonprofit partnerships work" as const
+
+export const NONPROFIT_HOW_IT_WORKS_STEPS = [
+  {
+    title: "Tell us about your organization",
+    description:
+      "Share who you support and approximately how many people need access.",
+  },
+  {
+    title: "We build the right partnership",
+    description:
+      "Elevate confirms access, seats, payment, and onboarding details with your organization.",
+  },
+  {
+    title: "Your community gets access",
+    description:
+      "Approved participants create individual accounts and activate their sponsored Elevate access.",
+  },
+] as const
+
+export const HOMEPAGE_NONPROFIT_SECTION = {
+  eyebrow: "FOR NONPROFITS",
+  heading: "Make Elevate accessible to the people you serve",
+  body: "Partner with Elevate to provide sponsored access to supportive programs, live experiences, and shared resources for your organization or community.",
+} as const
+
+/** @deprecated Public size cards removed; kept for test migration detection. */
 export const NONPROFIT_PLAN_CHOICE_HEADING =
   "Choose your organization size" as const
 
@@ -174,7 +214,7 @@ export const NONPROFIT_SUPPORTING_NOTE =
 export const SPONSORED_BILLING_COPY =
   "Billing is managed by your nonprofit sponsor. Contact your administrator for seat or plan changes."
 
-/** Forbidden public placeholder — unconfirmed Platinum benefits must be omitted. */
+/** Forbidden public placeholder; unconfirmed Platinum benefits must be omitted. */
 export const PLATINUM_PLACEHOLDER_COPY =
   "Additional Platinum privileges configurable"
 

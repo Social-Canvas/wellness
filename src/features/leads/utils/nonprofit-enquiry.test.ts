@@ -134,7 +134,7 @@ test("9. Enquiry message omits selected plan pricing", () => {
     accessAudience: "combination",
     partnershipNotes: "Prefer annual invoice",
   })
-  assert.match(message, /Estimated participants: 1–25 participants/)
+  assert.match(message, /Estimated participants: 1 to 25 participants/)
   assert.match(message, /Prefer annual invoice/)
   assert.doesNotMatch(message, /Selected plan:|\$497/)
 })

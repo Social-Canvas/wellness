@@ -23,6 +23,7 @@ export {
   type NavbarProps,
   type NavbarSocialLink,
 } from "./navbar"
+export { PublicMobileNav, type PublicMobileNavProps } from "./public-mobile-nav"
 export { NavbarLinks, type NavbarLinkItem } from "./navbar-links"
 export { NavbarSignOutButton } from "./navbar-sign-out-button"
 export { Section, sectionVariants } from "./section"

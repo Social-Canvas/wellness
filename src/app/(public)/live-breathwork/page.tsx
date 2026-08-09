@@ -91,7 +91,7 @@ export default async function LiveBreathworkTrialPage() {
         {(LIVE_BREATHWORK_TRIAL_CATALOG_AMOUNT_CENTS / 100).toFixed(0)}
         {priceApproved
           ? " (approved in app config for sandbox checkout when a Price ID is set)."
-          : ` — ${LIVE_BREATHWORK_TRIAL_CONFIRMATION_NEEDED}`}
+          : `. ${LIVE_BREATHWORK_TRIAL_CONFIRMATION_NEEDED}`}
       </p>
 
       <div className="mt-10 space-y-4">

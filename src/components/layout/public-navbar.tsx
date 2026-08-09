@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Navbar } from "@/components/layout/navbar"
 import { NavbarLinks } from "@/components/layout/navbar-links"
 import { NavbarSignOutButton } from "@/components/layout/navbar-sign-out-button"
+import { PublicMobileNav } from "@/components/layout/public-mobile-nav"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { PUBLIC_NAV_LINKS } from "@/lib/constants/public-site"
@@ -22,32 +23,38 @@ async function PublicNavbar() {
       actions={[]}
       navMiddle={<NavbarLinks links={PUBLIC_NAV_LINKS} />}
       navActions={
-        isAuthenticated ? (
-          <>
-            <Link
-              href="/dashboard"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Dashboard
-            </Link>
-            <NavbarSignOutButton />
-          </>
-        ) : (
-          <>
-            <Link
-              href="/login"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/programs#reset-plan"
-              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
-            >
-              Start Reset Plan
-            </Link>
-          </>
-        )
+        <>
+          <PublicMobileNav links={PUBLIC_NAV_LINKS} />
+          {isAuthenticated ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                Dashboard
+              </Link>
+              <NavbarSignOutButton />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                Log in
+              </Link>
+              <Link
+                href="/programs#reset-plan"
+                className={cn(
+                  buttonVariants({ variant: "default", size: "sm" }),
+                  "hidden min-[400px]:inline-flex"
+                )}
+              >
+                Start Reset Plan
+              </Link>
+            </>
+          )}
+        </>
       }
     />
   )

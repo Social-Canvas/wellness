@@ -12,13 +12,20 @@ import { Container, Section } from "@/components/layout"
 import { buttonVariants } from "@/components/ui/button"
 import { ResetPlanOfferBand } from "@/features/checkout/components"
 import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import {
+  HOMEPAGE_NONPROFIT_SECTION,
+  NONPROFIT_EXPLORE_CTA,
+  NONPROFIT_INQUIRY_CTA,
+  NONPROFIT_INQUIRY_HREF,
+  NONPROFIT_LANDING_HREF,
+} from "@/features/checkout/utils/membership-audience"
 import { VideoTestimonialsSection } from "@/features/marketing-testimonials"
 import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: `${ELEVATE_BRAND.name} — Functional Medicine & Breathwork`,
+  title: `${ELEVATE_BRAND.name} | Functional Medicine & Breathwork`,
   description:
     "Science + soul for nervous system regulation, functional medicine, and root-cause healing with Dr. Deepa Pattani.",
 }
@@ -30,7 +37,7 @@ const HERO_TITLE = "Regulate your nervous system."
 const HERO_HIGHLIGHTED_TITLE = "Heal at the root."
 
 const HERO_DESCRIPTION =
-  "Elevate Health Solutions blends functional medicine, breathwork, and evidence-informed healing to help high-performing professionals move beyond burnout, anxiety, and depletion — into clarity, resilience, and vibrant health."
+  "Elevate Health Solutions blends functional medicine, breathwork, and evidence-informed healing to help high-performing professionals move beyond burnout, anxiety, and depletion into clarity, resilience, and vibrant health."
 
 const HERO_ACTIONS: HeroAction[] = [
   { label: "Start Reset Plan", href: "/programs#reset-plan", variant: "primary" },
@@ -49,7 +56,7 @@ const JOURNEY_STEPS = [
     number: "1",
     title: "Ground",
     description:
-      "Nervous system safety first — release survival mode, reduce burnout, and teach the body it is safe to rest.",
+      "Nervous system safety first: release survival mode, reduce burnout, and teach the body it is safe to rest.",
   },
   {
     number: "2",
@@ -61,7 +68,7 @@ const JOURNEY_STEPS = [
     number: "3",
     title: "Align & expand",
     description:
-      "Embody sustainable transformation — clarity, resilience, purpose, and leadership from a regulated nervous system.",
+      "Embody sustainable transformation: clarity, resilience, purpose, and leadership from a regulated nervous system.",
   },
 ]
 
@@ -99,7 +106,7 @@ const FAQ_ITEMS = [
   {
     question: "How is this different from conventional medicine?",
     answer:
-      "Conventional care often manages symptoms. Dr. Pattani's approach identifies root causes — nervous system dysregulation, inflammation, hormones, and lifestyle — using science + soul.",
+      "Conventional care often manages symptoms. Dr. Pattani's approach identifies root causes (nervous system dysregulation, inflammation, hormones, and lifestyle) using science + soul.",
   },
   {
     question: "Where do I start?",
@@ -150,6 +157,34 @@ export default function HomePage() {
         cards={MEMBERSHIP_CARDS}
         footerCta={{ label: "View all programs & sessions", href: "/programs" }}
       />
+
+      <Section id="for-nonprofits" variant="soft" padding="default">
+        <Container className="mx-auto max-w-3xl text-center">
+          <p className="font-body text-[11.5px] font-bold uppercase tracking-[0.12em] text-green-deep">
+            {HOMEPAGE_NONPROFIT_SECTION.eyebrow}
+          </p>
+          <h2 className="mt-2 font-display text-[clamp(1.375rem,2.8vw,1.875rem)] font-medium text-ink">
+            {HOMEPAGE_NONPROFIT_SECTION.heading}
+          </h2>
+          <p className="mx-auto mt-3 max-w-[540px] text-base leading-relaxed text-ink-soft">
+            {HOMEPAGE_NONPROFIT_SECTION.body}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={NONPROFIT_LANDING_HREF}
+              className={cn(buttonVariants({ variant: "default", size: "default" }))}
+            >
+              {NONPROFIT_EXPLORE_CTA}
+            </Link>
+            <Link
+              href={NONPROFIT_INQUIRY_HREF}
+              className={cn(buttonVariants({ variant: "outline", size: "default" }))}
+            >
+              {NONPROFIT_INQUIRY_CTA}
+            </Link>
+          </div>
+        </Container>
+      </Section>
 
       <VideoTestimonialsSection />
 

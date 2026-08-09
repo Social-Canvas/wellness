@@ -9,6 +9,8 @@ import {
   MEMBERSHIP_SECTION_COPY,
   NONPROFIT_INQUIRY_CTA,
   NONPROFIT_INQUIRY_HREF,
+  NONPROFIT_LANDING_HREF,
+  NONPROFIT_LEARN_MORE_CTA,
   NONPROFIT_MEMBERSHIP_BENEFITS,
   NONPROFIT_MISSION_BODY,
   NONPROFIT_MISSION_EYEBROW,
@@ -225,7 +227,7 @@ function NonprofitPartnershipOverview() {
         </p>
       </section>
 
-      <div className="mt-7 flex justify-center">
+      <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
           href={NONPROFIT_INQUIRY_HREF}
           className={cn(
@@ -234,6 +236,15 @@ function NonprofitPartnershipOverview() {
           )}
         >
           {NONPROFIT_INQUIRY_CTA}
+        </Link>
+        <Link
+          href={NONPROFIT_LANDING_HREF}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          )}
+        >
+          {NONPROFIT_LEARN_MORE_CTA}
         </Link>
       </div>
     </div>

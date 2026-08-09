@@ -117,7 +117,7 @@ test("essential dashboard links remain accessible", () => {
 
 test("Programs and Shop remain accessible", () => {
   const secondary = getSecondaryNavItems(false).map((item) => item.label)
-  assert.deepEqual(secondary, ["Programs", "Shop", "Blog", "About"])
+  assert.deepEqual(secondary, ["Programs", "For Nonprofits", "Shop", "Blog", "About"])
   const more = getMoreNavItems(false).map((item) => item.label)
   assert.ok(more.includes("Programs"))
   assert.ok(more.includes("Shop"))

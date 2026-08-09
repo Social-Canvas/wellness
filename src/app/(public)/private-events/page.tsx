@@ -9,7 +9,7 @@ import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 
 export const metadata: Metadata = {
-  title: `Private Events — ${ELEVATE_BRAND.name}`,
+  title: `Private Events | ${ELEVATE_BRAND.name}`,
   description:
     "Enquire about private breathwork, sound healing, and bespoke Elevate events.",
 }

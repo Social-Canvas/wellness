@@ -36,7 +36,7 @@ export const RETREAT_ENQUIRY_NO_PURCHASE =
   "Submitting this form does not reserve a place or create a purchase." as const
 
 export const RETREAT_ENQUIRY_SUCCESS_HEADING =
-  "Thank you — your retreat enquiry has been received" as const
+  "Thank you. Your retreat enquiry has been received" as const
 
 export const RETREAT_ENQUIRY_SUCCESS_BODY =
   "The Elevate team will review your interest and follow up when suitable retreat information is available." as const

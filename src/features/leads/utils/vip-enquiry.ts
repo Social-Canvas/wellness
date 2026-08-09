@@ -36,13 +36,13 @@ export const VIP_ENQUIRY_NO_PURCHASE =
   "Submitting an enquiry does not create a coaching agreement or purchase." as const
 
 export const VIP_ENQUIRY_SUCCESS_HEADING =
-  "Thank you — your VIP Coaching enquiry has been received" as const
+  "Thank you. Your VIP Coaching enquiry has been received" as const
 
 export const VIP_ENQUIRY_SUCCESS_BODY =
   "The Elevate team will review your enquiry and follow up regarding fit, availability and next steps." as const
 
 export const VIP_ENQUIRY_MESSAGE_LABEL =
-  "What would you like support with? — optional" as const
+  "What would you like support with? (optional)" as const
 
 export function buildVipEnquiryMetadata(): Record<string, string | null> {
   return {

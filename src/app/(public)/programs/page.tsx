@@ -45,9 +45,9 @@ import { getEffectiveMembership } from "@/server/services/membership.service"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: `Programs & Memberships — ${ELEVATE_BRAND.name}`,
+  title: `Programs & Memberships | ${ELEVATE_BRAND.name}`,
   description:
-    "Reset Plan entry offer, Elevate Core, Gold, and Platinum memberships — a progressive breathwork and nervous system healing journey.",
+    "Reset Plan entry offer, Elevate Core, Gold, and Platinum memberships: a progressive breathwork and nervous system healing journey.",
 }
 
 const PROGRAMS_NAV = [
@@ -201,7 +201,7 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
             align="center"
             eyebrow="The Elevate journey"
             title="Progressive nervous system transformation"
-            subtitle={`A structured path — ${BREATHWORK_ROADMAP.framework} — designed for long-term regulation, not isolated courses.`}
+            subtitle={`A structured path (${BREATHWORK_ROADMAP.framework}) designed for long-term regulation, not isolated courses.`}
           />
 
           <nav
@@ -319,7 +319,7 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
               contained={false}
               eyebrow="Premium 1:1"
               title="VIP Coaching with Dr. Pattani"
-              description="The 7-Step PATTANI Protocol — advanced diagnostics, one-on-one coaching, and personalized healing strategies for high-touch transformation."
+              description="The 7-Step PATTANI Protocol: advanced diagnostics, one-on-one coaching, and personalized healing strategies for high-touch transformation."
               features={[...VIP_COACHING_CTA_FEATURES]}
               price="By enquiry"
               priceNote="customized high-touch program"
@@ -334,7 +334,7 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
               variant="green"
               eyebrow="Live & in person"
               title="Retreats & Private Events"
-              description="Immersive breathwork, sound healing, and functional medicine retreats — enquire for upcoming dates and private event formats."
+              description="Immersive breathwork, sound healing, and functional medicine retreats. Enquire for upcoming dates and private event formats."
               features={[...RETREATS_CTA_FEATURES]}
               price="Enquire"
               priceNote="upcoming dates shared on enquiry"
