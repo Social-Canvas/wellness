@@ -24,13 +24,12 @@ export const RETREAT_ENQUIRY_NEXT_STEPS = [
   "The team contacts you when a suitable retreat is available",
 ] as const
 
-export const RETREAT_ENQUIRY_FORM_HEADING =
-  "Enquire about an Elevate retreat" as const
+export const RETREAT_ENQUIRY_FORM_HEADING = "Ask for more information" as const
 
 export const RETREAT_ENQUIRY_FORM_SUPPORT =
-  "Tell us what you are looking for, and the Elevate team will share suitable upcoming opportunities." as const
+  "Tell us what you are looking for. The Elevate team will follow up when suitable information is available." as const
 
-export const RETREAT_ENQUIRY_CTA = "Enquire about retreats" as const
+export const RETREAT_ENQUIRY_CTA = "Ask for more information" as const
 
 export const RETREAT_ENQUIRY_NO_PURCHASE =
   "Submitting this form does not reserve a place or create a purchase." as const
@@ -41,6 +40,17 @@ export const RETREAT_ENQUIRY_SUCCESS_HEADING =
 export const RETREAT_ENQUIRY_SUCCESS_BODY =
   "The Elevate team will review your interest and follow up when suitable retreat information is available." as const
 
+export const RETREAT_INTEREST_OPTIONS = [
+  { value: "", label: "Select an option" },
+  { value: "rishikesh-2027", label: "Rishikesh 2027" },
+  { value: "future-retreats", label: "Future retreats" },
+  { value: "private-event", label: "Private event" },
+] as const
+
+export type RetreatInterestValue =
+  (typeof RETREAT_INTEREST_OPTIONS)[number]["value"]
+
+/** @deprecated Prefer RETREAT_INTEREST_OPTIONS on the landing form. */
 export const RETREAT_PREFERRED_TIMING_OPTIONS = [
   { value: "", label: "No preference" },
   { value: "spring", label: "Spring" },
@@ -55,10 +65,23 @@ export type RetreatPreferredTiming =
 
 export function composeRetreatEnquiryMessage(input: {
   message?: string | null
+  interest?: string | null
+  location?: string | null
   preferredTiming?: string | null
   attendeeCount?: string | null
 }): string | null {
   const lines: string[] = []
+
+  if (input.interest?.trim()) {
+    const interestLabel =
+      RETREAT_INTEREST_OPTIONS.find((option) => option.value === input.interest)
+        ?.label ?? input.interest.trim()
+    lines.push(`Interest: ${interestLabel}`)
+  }
+
+  if (input.location?.trim()) {
+    lines.push(`Location: ${input.location.trim()}`)
+  }
 
   if (input.preferredTiming?.trim()) {
     const timingLabel =
@@ -84,11 +107,15 @@ export function composeRetreatEnquiryMessage(input: {
 }
 
 export function buildRetreatEnquiryMetadata(input: {
+  interest?: string | null
+  location?: string | null
   preferredTiming?: string | null
   attendeeCount?: string | null
 }): Record<string, string | null> {
   return {
     intent: RETREAT_ENQUIRY_INTENT,
+    interest: input.interest?.trim() || null,
+    location: input.location?.trim() || null,
     preferredTiming: input.preferredTiming?.trim() || null,
     attendeeCount: input.attendeeCount?.trim() || null,
   }

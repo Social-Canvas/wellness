@@ -102,17 +102,16 @@ function nonprofitEnquiryPageSource(): string {
   )
 }
 
-// 1. Retreat page uses the approved two-column layout
-test("1. Retreat page uses the approved two-column layout", () => {
-  const page = retreatEnquiryPageSource()
-  const shell = shellSource()
-  assert.match(page, /EnquiryPageShell/)
-  assert.match(page, /stickySummary/)
-  assert.match(shell, /max-w-6xl/)
-  assert.match(shell, /0\.42fr/)
-  assert.match(shell, /0\.58fr/)
-  assert.match(shell, /min-\[900px\]:grid-cols-/)
-  assert.match(retreatPageSource(), /RetreatEnquiryPage/)
+// 1. Retreat page renders the editorial landing (not the old enquiry shell alone)
+test("1. Retreat page renders the editorial landing layout", () => {
+  const route = retreatPageSource()
+  const landing = readSrc("features/retreats/components/RetreatsLandingPage.tsx")
+  assert.match(route, /RetreatsLandingPage/)
+  assert.match(landing, /LeadEnquiryForm/)
+  assert.match(landing, /variant="retreat"/)
+  assert.match(landing, /past\.heading/)
+  assert.match(landing, /id=\{upcoming\.id\}/)
+  assert.match(landing, /id=\{enquiry\.id\}/)
 })
 
 // 2. VIP page uses the approved two-column layout
@@ -127,16 +126,14 @@ test("2. VIP page uses the approved two-column layout", () => {
   assert.match(vipPageSource(), /VipEnquiryPage/)
 })
 
-// 3. Retreat image is no longer rendered as a tiny detached thumbnail
-test("3. Retreat image is no longer rendered as a tiny detached thumbnail", () => {
-  const page = retreatEnquiryPageSource()
+// 3. Retreat landing uses approved retreat imagery without tiny thumbnails
+test("3. Retreat landing uses approved retreat imagery", () => {
+  const landing = readSrc("features/retreats/components/RetreatsLandingPage.tsx")
   const route = retreatPageSource()
-  assert.match(page, /EnquiryVisual/)
-  assert.match(page, /BRAND_IMAGES\.retreatRiver/)
+  assert.match(landing, /BRAND_IMAGES\.retreatRiver/)
+  assert.match(landing, /BRAND_IMAGES\.retreatSpiritual/)
   assert.doesNotMatch(route, /LeadPageShell/)
-  assert.doesNotMatch(visualSource(), /aspect-\[4\/5\]/)
-  assert.match(visualSource(), /aspect-\[5\/4\]/)
-  assert.match(visualSource(), /w-full/)
+  assert.match(landing, /aspect-\[4\/5\]/)
 })
 
 // 4. VIP image is no longer rendered as a tiny detached thumbnail
@@ -168,27 +165,22 @@ test("5. Both images use responsive sizing and meaningful alt text", () => {
   )
 })
 
-// 6. Retreat copy and CTA render correctly
-test("6. Retreat copy and CTA render correctly", () => {
-  const page = retreatEnquiryPageSource()
+// 6. Retreat landing form CTA and copy render correctly
+test("6. Retreat landing form CTA and copy render correctly", () => {
   const form = formSource()
-  assert.equal(RETREAT_ENQUIRY_EYEBROW, "ELEVATE RETREATS")
-  assert.equal(RETREAT_ENQUIRY_HEADING, "Step away. Reset deeply.")
-  assert.match(RETREAT_ENQUIRY_DESCRIPTION, /nervous-system restoration/)
-  assert.equal(RETREAT_ENQUIRY_SUMMARY_HEADING, "Retreat interest")
-  assert.equal(RETREAT_ENQUIRY_SUMMARY_BENEFITS.length, 5)
-  assert.equal(RETREAT_ENQUIRY_NEXT_STEPS.length, 3)
-  assert.equal(RETREAT_ENQUIRY_FORM_HEADING, "Enquire about an Elevate retreat")
-  assert.equal(RETREAT_ENQUIRY_CTA, "Enquire about retreats")
+  const constants = readSrc("features/retreats/constants/retreats-page.ts")
+  assert.equal(RETREAT_ENQUIRY_FORM_HEADING, "Ask for more information")
+  assert.equal(RETREAT_ENQUIRY_CTA, "Ask for more information")
   assert.equal(
     RETREAT_ENQUIRY_NO_PURCHASE,
     "Submitting this form does not reserve a place or create a purchase."
   )
-  assert.match(page, /RETREAT_ENQUIRY_EYEBROW/)
-  assert.match(page, /RETREAT_ENQUIRY_HEADING/)
   assert.match(form, /RETREAT_ENQUIRY_CTA/)
-  assert.doesNotMatch(RETREAT_ENQUIRY_DESCRIPTION, /\d{4}/)
-  assert.doesNotMatch(RETREAT_ENQUIRY_NEXT_STEPS.join(" "), /within \d+/)
+  assert.match(form, /RETREAT_INTEREST_OPTIONS/)
+  assert.match(constants, /Step away\. Reconnect\. Return renewed\./)
+  assert.match(constants, /Rishikesh 2027/)
+  assert.match(constants, /March to April 2027/)
+  assert.doesNotMatch(constants, /\u2014/)
 })
 
 // 7. VIP copy and CTA render correctly
@@ -272,18 +264,19 @@ test("10. Existing form submission behavior remains intact", () => {
   assert.match(service, /metadata: toJsonMetadata/)
   const message = composeRetreatEnquiryMessage({
     message: "Looking for a weekend reset",
-    preferredTiming: "summer",
-    attendeeCount: "2",
+    interest: "rishikesh-2027",
+    location: "London",
   })
-  assert.match(message ?? "", /Preferred timing: Summer/)
-  assert.match(message ?? "", /Number of attendees: 2/)
+  assert.match(message ?? "", /Interest: Rishikesh 2027/)
+  assert.match(message ?? "", /Location: London/)
   assert.match(message ?? "", /Looking for a weekend reset/)
   const metadata = buildRetreatEnquiryMetadata({
-    preferredTiming: "summer",
-    attendeeCount: "2",
+    interest: "rishikesh-2027",
+    location: "London",
   })
   assert.equal(metadata.intent, "retreat")
-  assert.equal(metadata.preferredTiming, "summer")
+  assert.equal(metadata.interest, "rishikesh-2027")
+  assert.equal(metadata.location, "London")
   assert.equal(buildVipEnquiryMetadata().intent, "vip")
 })
 
@@ -354,12 +347,12 @@ test("15. Privacy link is present", () => {
 
 // 16. Mobile layout stacks without overflow
 test("16. Mobile layout stacks without overflow", () => {
+  const landing = readSrc("features/retreats/components/RetreatsLandingPage.tsx")
   const shell = shellSource()
   assert.match(shell, /overflow-x-hidden/)
   assert.match(shell, /grid-cols-1/)
-  assert.match(shell, /min-w-0/)
-  assert.match(shell, /px-4/)
-  assert.match(retreatEnquiryPageSource(), /EnquiryVisual/)
+  assert.match(landing, /grid-cols-1/)
+  assert.match(landing, /min-\[768px\]:grid-cols-2/)
   assert.match(vipEnquiryPageSource(), /EnquiryVisual/)
 })
 

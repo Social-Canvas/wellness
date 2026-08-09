@@ -24,7 +24,7 @@ import {
   RETREAT_ENQUIRY_SOURCE,
   RETREAT_ENQUIRY_SUCCESS_BODY,
   RETREAT_ENQUIRY_SUCCESS_HEADING,
-  RETREAT_PREFERRED_TIMING_OPTIONS,
+  RETREAT_INTEREST_OPTIONS,
   buildRetreatEnquiryMetadata,
   composeRetreatEnquiryMessage,
 } from "@/features/leads/utils/retreat-enquiry"
@@ -50,17 +50,17 @@ const leadEnquiryFormSchema = z.object({
     .max(40, "Phone number is too long.")
     .optional()
     .nullable(),
+  location: z
+    .string()
+    .trim()
+    .max(120, "Location is too long.")
+    .optional()
+    .nullable(),
+  interest: z.string().trim().max(80).optional().nullable(),
   message: z
     .string()
     .trim()
     .max(4000, "Message is too long.")
-    .optional()
-    .nullable(),
-  preferredTiming: z.string().trim().max(80).optional().nullable(),
-  attendeeCount: z
-    .string()
-    .trim()
-    .max(20, "Attendee count is too long.")
     .optional()
     .nullable(),
 })
@@ -142,9 +142,9 @@ function LeadEnquiryForm({
       name: "",
       email: "",
       phone: "",
+      location: "",
+      interest: "",
       message: "",
-      preferredTiming: "",
-      attendeeCount: "",
     },
   })
 
@@ -153,8 +153,8 @@ function LeadEnquiryForm({
       "name",
       "email",
       "phone",
-      "preferredTiming",
-      "attendeeCount",
+      "location",
+      "interest",
       "message",
     ]
     const first = order.find((key) => errors[key])
@@ -173,23 +173,23 @@ function LeadEnquiryForm({
 
     startTransition(async () => {
       try {
-        const preferredTiming =
-          variant === "retreat" ? values.preferredTiming?.trim() || null : null
-        const attendeeCount =
-          variant === "retreat" ? values.attendeeCount?.trim() || null : null
+        const interest =
+          variant === "retreat" ? values.interest?.trim() || null : null
+        const location =
+          variant === "retreat" ? values.location?.trim() || null : null
 
         const message =
           variant === "retreat"
             ? composeRetreatEnquiryMessage({
                 message: values.message,
-                preferredTiming,
-                attendeeCount,
+                interest,
+                location,
               })
             : values.message?.trim() || null
 
         const metadata =
           variant === "retreat"
-            ? buildRetreatEnquiryMetadata({ preferredTiming, attendeeCount })
+            ? buildRetreatEnquiryMetadata({ interest, location })
             : buildVipEnquiryMetadata()
 
         const result = await submitLeadAction({
@@ -232,8 +232,8 @@ function LeadEnquiryForm({
   const nameErrorId = `${formId}-name-error`
   const emailErrorId = `${formId}-email-error`
   const phoneErrorId = `${formId}-phone-error`
-  const timingErrorId = `${formId}-timing-error`
-  const attendeesErrorId = `${formId}-attendees-error`
+  const locationErrorId = `${formId}-location-error`
+  const interestErrorId = `${formId}-interest-error`
   const messageErrorId = `${formId}-message-error`
   const serverErrorId = `${formId}-server-error`
 
@@ -303,48 +303,48 @@ function LeadEnquiryForm({
         {config.showExtraFields ? (
           <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor={`${formId}-timing`}>
-                Preferred timing{" "}
+              <Label htmlFor={`${formId}-location`}>
+                Location{" "}
+                <span className="font-normal text-ink-soft">(optional)</span>
+              </Label>
+              <Input
+                id={`${formId}-location`}
+                autoComplete="address-level2"
+                aria-invalid={errors.location ? true : undefined}
+                aria-describedby={
+                  errors.location ? locationErrorId : undefined
+                }
+                {...register("location")}
+              />
+              <FieldError
+                id={locationErrorId}
+                message={errors.location?.message}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor={`${formId}-interest`}>
+                What are you interested in?{" "}
                 <span className="font-normal text-ink-soft">(optional)</span>
               </Label>
               <select
-                id={`${formId}-timing`}
+                id={`${formId}-interest`}
                 className="min-h-11 w-full rounded-[var(--radius-input)] border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                aria-invalid={errors.preferredTiming ? true : undefined}
+                aria-invalid={errors.interest ? true : undefined}
                 aria-describedby={
-                  errors.preferredTiming ? timingErrorId : undefined
+                  errors.interest ? interestErrorId : undefined
                 }
-                {...register("preferredTiming")}
+                {...register("interest")}
               >
-                {RETREAT_PREFERRED_TIMING_OPTIONS.map((option) => (
+                {RETREAT_INTEREST_OPTIONS.map((option) => (
                   <option key={option.value || "none"} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
               <FieldError
-                id={timingErrorId}
-                message={errors.preferredTiming?.message}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor={`${formId}-attendees`}>
-                Number of attendees{" "}
-                <span className="font-normal text-ink-soft">(optional)</span>
-              </Label>
-              <Input
-                id={`${formId}-attendees`}
-                inputMode="numeric"
-                aria-invalid={errors.attendeeCount ? true : undefined}
-                aria-describedby={
-                  errors.attendeeCount ? attendeesErrorId : undefined
-                }
-                {...register("attendeeCount")}
-              />
-              <FieldError
-                id={attendeesErrorId}
-                message={errors.attendeeCount?.message}
+                id={interestErrorId}
+                message={errors.interest?.message}
               />
             </div>
           </div>

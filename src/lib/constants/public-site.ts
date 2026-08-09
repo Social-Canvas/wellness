@@ -6,6 +6,7 @@ export const PUBLIC_TICKER_MESSAGE =
 export const PUBLIC_NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Programs", href: "/programs" },
+  { label: "Retreats", href: "/retreats" },
   { label: "For Nonprofits", href: "/nonprofits" },
   { label: "Shop", href: "/shop" },
   { label: "Blog", href: "/blog" },
