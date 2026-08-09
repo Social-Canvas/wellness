@@ -23,9 +23,18 @@ import {
   type InsertedLead,
   type LeadInsertRow,
 } from "@/features/leads/services/enquiry-submission.core"
+import {
+  isInvalidLeadTypeEnumError,
+  isMissingLeadsSchemaError,
+} from "@/features/leads/utils/leads-schema-errors"
+import { insertLeadWithSchemaFallback } from "@/features/leads/utils/legacy-lead-insert"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/types/database/supabase"
-import { logger, safeErrorMessage } from "@/server/utils/logger"
+import {
+  logger,
+  providerErrorFields,
+  safeErrorMessage,
+} from "@/server/utils/logger"
 import {
   sendEnquiryAdminNotification,
   sendEnquiryVisitorAcknowledgement,
@@ -64,21 +73,54 @@ export type SubmitLeadOptions = {
 
 async function defaultInsertLead(row: LeadInsertRow): Promise<InsertedLead | null> {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from("leads")
-    .insert(row)
-    .select("id, created_at")
-    .single()
 
-  if (error || !data) {
+  const result = await insertLeadWithSchemaFallback(
+    row,
+    async (payload) => {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert(payload as LeadInsertRow)
+        .select("id, created_at")
+        .single()
+      return { data, error }
+    },
+    {
+      isMissingSchemaError: isMissingLeadsSchemaError,
+      isInvalidLeadTypeEnum: isInvalidLeadTypeEnumError,
+    },
+    {
+      onLegacyColumnFallback: (error) => {
+        logger.warn(
+          "Lead insert falling back to legacy columns (hardening migration not applied).",
+          {
+            leadType: row.lead_type,
+            ...providerErrorFields(error),
+          }
+        )
+      },
+      onLeadTypeEnumFallback: (error) => {
+        logger.warn(
+          "Lead insert remapping hardening-only lead_type via metadata (enum not applied).",
+          {
+            leadType: row.lead_type,
+            ...providerErrorFields(error),
+          }
+        )
+      },
+    }
+  )
+
+  if (!result.data) {
     logger.error("Lead insert failed.", {
       leadType: row.lead_type,
-      error: error?.message ?? "missing_row",
+      usedLegacyColumns: result.usedLegacyColumns,
+      usedLeadTypeFallback: result.usedLeadTypeFallback,
+      ...providerErrorFields(result.error),
     })
     return null
   }
 
-  return data
+  return result.data
 }
 
 async function defaultPersistNotificationStatuses(input: {
@@ -99,9 +141,20 @@ async function defaultPersistNotificationStatuses(input: {
       .eq("id", input.leadId)
 
     if (error) {
+      if (isMissingLeadsSchemaError(error)) {
+        logger.warn(
+          "Skipping lead notification status update; hardening columns not available.",
+          {
+            leadId: input.leadId,
+            ...providerErrorFields(error),
+          }
+        )
+        return
+      }
+
       logger.error("Failed to update lead notification statuses.", {
         leadId: input.leadId,
-        error: error.message,
+        ...providerErrorFields(error),
       })
     }
   } catch (error) {

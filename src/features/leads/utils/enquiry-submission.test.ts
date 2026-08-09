@@ -122,7 +122,8 @@ test("service uses admin client and nonprofit canonical type", () => {
   const service = readSrc("features/leads/services/leads.service.ts")
   assert.match(service, /createAdminClient/)
   assert.match(service, /leadType: "nonprofit"/)
-  assert.doesNotMatch(service, /leadType: "private_event"/)
+  assert.match(service, /insertLeadWithSchemaFallback/)
+  assert.match(service, /providerErrorFields/)
   assert.match(service, /submitEnquiryCore/)
 
   const forms = [
@@ -136,6 +137,20 @@ test("service uses admin client and nonprofit canonical type", () => {
   }
 
   assert.equal(ENQUIRY_HONEYPOT_FIELD, "companyUrl")
+})
+
+test("lead insert path falls back when hardening columns are missing", () => {
+  const service = readSrc("features/leads/services/leads.service.ts")
+  const legacyUtil = readSrc("features/leads/utils/legacy-lead-insert.ts")
+  assert.match(service, /insertLeadWithSchemaFallback/)
+  assert.match(legacyUtil, /buildLegacyLeadInsertPayload/)
+  assert.match(legacyUtil, /buildLegacyLeadTypeFallbackPayload/)
+  assert.match(legacyUtil, /canonical_type/)
+  assert.match(legacyUtil, /enquiry_type/)
+  assert.match(
+    service,
+    /Skipping lead notification status update; hardening columns not available/
+  )
 })
 
 test("admin notification escapes user HTML via layout helper", () => {

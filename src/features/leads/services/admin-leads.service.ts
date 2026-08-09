@@ -19,6 +19,10 @@ import {
   isMissingLeadsSchemaError,
   LEADS_SCHEMA_NOT_READY_MESSAGE,
 } from "@/features/leads/utils/leads-schema-errors"
+import {
+  isHardeningOnlyLeadType,
+  resolveLegacyLeadType,
+} from "@/features/leads/utils/legacy-lead-insert"
 import { createAdminClient } from "@/lib/supabase/admin"
 import {
   logger,
@@ -146,7 +150,7 @@ function mapLegacyListItem(row: LegacyListRow): LeadListItem {
   return {
     id: row.id,
     createdAt: row.created_at,
-    leadType: row.lead_type as LeadType,
+    leadType: resolveLegacyLeadType(row.lead_type, metadata) as LeadType,
     name: row.name,
     email: row.email,
     phone: row.phone,
@@ -328,7 +332,13 @@ export async function listLeads(
       .order("created_at", { ascending: false })
       .limit(200)
 
-    if (filters.type && filters.type !== "all") {
+    // Hardening-only enums may be stored as private_event + metadata.
+    // Avoid filtering those at SQL level; resolve + filter in memory.
+    if (
+      filters.type &&
+      filters.type !== "all" &&
+      !isHardeningOnlyLeadType(filters.type)
+    ) {
       legacyQuery = legacyQuery.eq("lead_type", filters.type)
     }
 
@@ -346,6 +356,10 @@ export async function listLeads(
     }
 
     let leads = ((legacy.data ?? []) as LegacyListRow[]).map(mapLegacyListItem)
+
+    if (filters.type && filters.type !== "all") {
+      leads = leads.filter((lead) => lead.leadType === filters.type)
+    }
 
     if (filters.status && filters.status !== "all") {
       leads = leads.filter((lead) => lead.status === filters.status)

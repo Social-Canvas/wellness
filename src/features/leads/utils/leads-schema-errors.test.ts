@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import {
+  isInvalidLeadTypeEnumError,
   isMissingLeadsSchemaError,
   LEADS_SCHEMA_NOT_READY_MESSAGE,
 } from "./leads-schema-errors.ts"
@@ -16,11 +17,22 @@ test("isMissingLeadsSchemaError detects PostgREST missing column code", () => {
   )
 })
 
+test("isMissingLeadsSchemaError detects estimated_participants schema cache miss", () => {
+  assert.equal(
+    isMissingLeadsSchemaError({
+      code: "PGRST204",
+      message:
+        "Could not find the 'estimated_participants' column of 'leads' in the schema cache",
+    }),
+    true
+  )
+})
+
 test("isMissingLeadsSchemaError detects Postgres undefined_column", () => {
   assert.equal(
     isMissingLeadsSchemaError({
       code: "42703",
-      message: 'column leads.status does not exist',
+      message: "column leads.status does not exist",
     }),
     true
   )
@@ -38,6 +50,36 @@ test("isMissingLeadsSchemaError ignores unrelated provider errors", () => {
     isMissingLeadsSchemaError({
       code: "",
       message: "",
+    }),
+    false
+  )
+})
+
+test("isInvalidLeadTypeEnumError detects Postgres enum rejection for nonprofit", () => {
+  assert.equal(
+    isInvalidLeadTypeEnumError({
+      code: "22P02",
+      message: 'invalid input value for enum lead_type: "nonprofit"',
+    }),
+    true
+  )
+})
+
+test("isInvalidLeadTypeEnumError detects contact enum rejection", () => {
+  assert.equal(
+    isInvalidLeadTypeEnumError({
+      code: "22P02",
+      message: 'invalid input value for enum lead_type: "contact"',
+    }),
+    true
+  )
+})
+
+test("isInvalidLeadTypeEnumError ignores unrelated enum errors", () => {
+  assert.equal(
+    isInvalidLeadTypeEnumError({
+      code: "22P02",
+      message: 'invalid input value for enum ghl_sync_status: "bogus"',
     }),
     false
   )
