@@ -63,7 +63,7 @@ function CtaBand({
     </p>
   ) : (
     <>
-      <div className="mt-10 font-display text-[2.125rem] font-semibold leading-none text-white min-[768px]:text-[2.375rem] min-[1024px]:text-[2.5rem]">
+      <div className="mt-10 font-display text-[1.625rem] font-medium leading-none text-white min-[768px]:text-[1.75rem] min-[1024px]:text-[1.875rem]">
         {price}
       </div>
       {priceNote ? (
