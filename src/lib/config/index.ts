@@ -6,6 +6,7 @@ export {
   isAuthCallbackErrorCode,
   mapAuthCallbackProviderError,
   normalizeAppOrigin,
+  resolveAuthRequestOrigin,
   resolveCanonicalAppUrl,
   type AuthCallbackErrorCode,
 } from "./app-url"

@@ -6,6 +6,7 @@ import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 import {
   getCanonicalAppUrl,
   mapAuthCallbackProviderError,
+  resolveAuthRequestOrigin,
   type AuthCallbackErrorCode,
 } from "@/lib/config/app-url"
 import { env } from "@/lib/config/env"
@@ -32,12 +33,17 @@ function verificationFailedUrl(
   return url
 }
 
-function safeOrigin(request: NextRequest): string {
-  try {
-    return getCanonicalAppUrl()
-  } catch {
-    return request.nextUrl.origin
-  }
+export function resolveAuthCallbackOrigin(request: NextRequest): string {
+  return resolveAuthRequestOrigin({
+    requestOrigin: request.nextUrl.origin,
+    configuredAppUrl: (() => {
+      try {
+        return getCanonicalAppUrl()
+      } catch {
+        return null
+      }
+    })(),
+  })
 }
 
 type CookieToSet = {
@@ -47,13 +53,12 @@ type CookieToSet = {
 }
 
 /**
- * Supabase Auth email confirmation / invite / recovery exchange.
- * Does not grant membership — entitlements remain webhook/outbox owned.
- * Never logs auth codes, tokens, or full callback query strings.
+ * Server-side Auth confirm for PKCE `code` and SSR `token_hash` links.
+ * Does not grant membership. Never logs tokens.
  */
 export async function GET(request: NextRequest) {
   const requestUrl = request.nextUrl
-  const origin = safeOrigin(request)
+  const origin = resolveAuthCallbackOrigin(request)
   const code = requestUrl.searchParams.get("code")
   const tokenHash = requestUrl.searchParams.get("token_hash")
   const typeParam = requestUrl.searchParams.get("type")
@@ -69,7 +74,7 @@ export async function GET(request: NextRequest) {
       errorCode: providerErrorCode,
       errorDescription: providerErrorDescription,
     })
-    logger.warn("Auth callback received provider error params.", {
+    logger.warn("Auth confirm received provider error params.", {
       reason,
       providerError: providerError ?? undefined,
       providerErrorCode: providerErrorCode ?? undefined,
@@ -130,7 +135,7 @@ export async function GET(request: NextRequest) {
       const reason = mapAuthCallbackProviderError({
         exchangeMessage: exchangeErrorMessage,
       })
-      logger.warn("Auth callback exchange failed.", {
+      logger.warn("Auth confirm exchange failed.", {
         reason,
         error: exchangeErrorMessage,
       })
@@ -173,7 +178,7 @@ export async function GET(request: NextRequest) {
     })
     return redirectResponse
   } catch (error) {
-    logger.error("Auth callback threw unexpectedly.", {
+    logger.error("Auth confirm threw unexpectedly.", {
       error: safeErrorMessage(error),
     })
     return NextResponse.redirect(

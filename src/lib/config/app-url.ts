@@ -177,3 +177,26 @@ export function isAuthCallbackErrorCode(
 ): value is AuthCallbackErrorCode {
   return authErrorCodeSchema.safeParse(value).success
 }
+
+/**
+ * Prefer the live request origin when configured APP_URL is localhost but the
+ * request is on a real host (misconfigured Vercel Production env).
+ */
+export function resolveAuthRequestOrigin(input: {
+  requestOrigin: string
+  configuredAppUrl?: string | null
+}): string {
+  const configured = normalizeAppOrigin(input.configuredAppUrl)
+  if (!configured) {
+    return input.requestOrigin
+  }
+
+  if (
+    /localhost|127\.0\.0\.1/i.test(configured) &&
+    !/localhost|127\.0\.0\.1/i.test(input.requestOrigin)
+  ) {
+    return input.requestOrigin
+  }
+
+  return configured
+}

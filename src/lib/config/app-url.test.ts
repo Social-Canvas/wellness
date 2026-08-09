@@ -7,6 +7,7 @@ import {
   isAuthCallbackErrorCode,
   mapAuthCallbackProviderError,
   normalizeAppOrigin,
+  resolveAuthRequestOrigin,
   resolveCanonicalAppUrl,
 } from "./app-url.ts"
 
@@ -98,4 +99,14 @@ test("auth callback error messages never leak tokens or project refs", () => {
     assert.equal(isAuthCallbackErrorCode(code), true)
     assert.doesNotMatch(message, /token|atgvuqj|supabase\.co|stack|eyJ/i)
   }
+})
+
+test("misconfigured localhost APP_URL yields request origin on production hosts", () => {
+  assert.equal(
+    resolveAuthRequestOrigin({
+      requestOrigin: "https://wellness-topaz-chi.vercel.app",
+      configuredAppUrl: "http://localhost:3000",
+    }),
+    "https://wellness-topaz-chi.vercel.app"
+  )
 })
