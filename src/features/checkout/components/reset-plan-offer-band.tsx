@@ -7,10 +7,7 @@ import {
   RESET_PLAN_PRICE_NOTE,
 } from "@/features/checkout/utils/reset-plan-offer-state"
 import { BRAND_IMAGES } from "@/lib/brand/images"
-import {
-  RESET_PLAN,
-  RESET_PLAN_CTA_FEATURES,
-} from "@/lib/constants/elevate-brand"
+import { RESET_PLAN } from "@/lib/constants/elevate-brand"
 
 type ResetPlanOfferBandProps = {
   contained?: boolean
@@ -18,7 +15,7 @@ type ResetPlanOfferBandProps = {
 
 /**
  * Server Component: entitlement-aware Reset Plan storefront card.
- * Access state is resolved only on the server — never from the browser.
+ * Access state is resolved only on the server, never from the browser.
  */
 export async function ResetPlanOfferBand({
   contained = false,
@@ -43,10 +40,11 @@ export async function ResetPlanOfferBand({
   return (
     <CtaBand
       contained={contained}
+      layout="editorial"
+      statusVariant={offer.showPrice ? "price" : "access"}
       eyebrow="Start here"
       title={RESET_PLAN.name}
       description={RESET_PLAN.description}
-      features={[...RESET_PLAN_CTA_FEATURES]}
       price={offer.price}
       priceNote={offer.priceNote ?? undefined}
       action={{ label: offer.ctaLabel, href: offer.ctaHref }}

@@ -108,9 +108,10 @@ export const RESET_PLAN = {
   name: "Reset Plan",
   priceLabel: "$47",
   description:
-    "Your front-door entry into Elevate: a focused reset to calm the nervous system, release hypervigilance, and begin the Ground phase of your healing journey.",
+    "A focused 7-day experience with guided breathwork and practical tools to help you reset, reconnect, and build a calmer foundation.",
 } as const
 
+/** Retained for VIP/retreats-style bands; Reset Plan card no longer renders these. */
 export const RESET_PLAN_CTA_FEATURES = [
   "7-day nervous system reset",
   "Guided breathwork foundations",
