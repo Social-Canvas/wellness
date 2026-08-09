@@ -9,6 +9,7 @@ import {
 } from "@/features/auth/services/auth.service"
 import { requireLockedCertificateName } from "@/features/auth/utils/require-locked-certificate-name"
 import { AdminShell } from "@/features/admin/components"
+import { countNewLeads } from "@/features/leads/services/admin-leads.service"
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -60,8 +61,15 @@ export default async function AdminLayout({
     redirect("/dashboard")
   }
 
+  const newLeadsResult = await countNewLeads()
+  const newLeadsCount = newLeadsResult.success ? newLeadsResult.data : 0
+
   return (
-    <AdminShell user={userResult.data} profile={profileResult.data}>
+    <AdminShell
+      user={userResult.data}
+      profile={profileResult.data}
+      newLeadsCount={newLeadsCount}
+    >
       {children}
     </AdminShell>
   )

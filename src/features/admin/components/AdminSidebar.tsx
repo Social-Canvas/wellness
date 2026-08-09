@@ -21,10 +21,15 @@ const ADMIN_NAV_ITEMS = [
 
 interface AdminSidebarProps {
   mobileOpen: boolean
+  newLeadsCount?: number
   onNavigate?: () => void
 }
 
-export function AdminSidebar({ mobileOpen, onNavigate }: AdminSidebarProps) {
+export function AdminSidebar({
+  mobileOpen,
+  newLeadsCount = 0,
+  onNavigate,
+}: AdminSidebarProps) {
   return (
     <>
       <div
@@ -54,6 +59,7 @@ export function AdminSidebar({ mobileOpen, onNavigate }: AdminSidebarProps) {
               key={item.href}
               href={item.href}
               label={item.label}
+              badgeCount={item.href === "/admin/leads" ? newLeadsCount : undefined}
               onNavigate={onNavigate}
             />
           ))}

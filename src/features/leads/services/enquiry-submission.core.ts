@@ -206,12 +206,17 @@ export async function submitEnquiryCore(
       }
     }
 
+    // Missing ENQUIRY_NOTIFICATION_TO yields admin "skipped" — still success for the visitor.
     const lastError =
-      adminResult.status === "sent"
-        ? visitorResult.status === "failed" || visitorResult.status === "skipped"
-          ? visitorResult.errorSummary ?? null
-          : null
-        : adminResult.errorSummary ?? "admin_notification_not_sent"
+      adminResult.status === "failed"
+        ? (adminResult.errorSummary ?? "admin_notification_failed")
+        : visitorResult.status === "failed"
+          ? (visitorResult.errorSummary ?? "visitor_ack_failed")
+          : adminResult.status === "skipped"
+            ? (adminResult.errorSummary ?? null)
+            : visitorResult.status === "skipped"
+              ? (visitorResult.errorSummary ?? null)
+              : null
 
     await deps.updateNotificationStatuses({
       leadId: data.id,
