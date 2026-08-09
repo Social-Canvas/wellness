@@ -141,6 +141,22 @@ export function getBlogArticleBrandImage(slug: string): BrandImageAsset {
   return BRAND_IMAGES[imageKey]
 }
 
+/** Prefer migrated cover under /blog; fall back to brand map for sample posts. */
+export function resolveBlogArticleCoverImage(article: {
+  slug: string
+  title: string
+  coverImage?: string
+}): BrandImageAsset {
+  if (article.coverImage) {
+    return {
+      src: article.coverImage,
+      alt: `Cover image for ${article.title}`,
+      objectPosition: "center center",
+    }
+  }
+  return getBlogArticleBrandImage(article.slug)
+}
+
 export function resolveProductCoverImage(
   slug: string,
   coverImageUrl: string | null | undefined

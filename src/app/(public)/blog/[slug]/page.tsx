@@ -7,10 +7,12 @@ import { Container, Section } from "@/components/layout"
 import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
 import {
-  getSampleBlogArticle,
-  SAMPLE_BLOG_ARTICLES,
-} from "@/content/blog/sample-articles"
-import { getBlogArticleBrandImage } from "@/lib/brand/images"
+  formatBlogPublishedDate,
+  getAllBlogArticles,
+  getBlogArticle,
+} from "@/content/blog"
+import { resolveBlogArticleCoverImage } from "@/lib/brand/images"
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { cn } from "@/lib/utils"
 
 interface BlogArticlePageProps {
@@ -18,39 +20,52 @@ interface BlogArticlePageProps {
 }
 
 export function generateStaticParams() {
-  return SAMPLE_BLOG_ARTICLES.map((article) => ({ slug: article.slug }))
+  return getAllBlogArticles().map((article) => ({ slug: article.slug }))
 }
 
 export async function generateMetadata({
   params,
 }: BlogArticlePageProps): Promise<Metadata> {
   const { slug } = await params
-  const article = getSampleBlogArticle(slug)
+  const article = getBlogArticle(slug)
 
   if (!article) {
     return { title: "Article" }
   }
 
+  const canonical = `/blog/${article.slug}`
+
   return {
-    title: article.title,
+    title: `${article.title} | ${ELEVATE_BRAND.name}`,
     description: article.excerpt,
+    alternates: { canonical },
+    openGraph: {
+      title: article.title,
+      description: article.excerpt,
+      type: "article",
+      url: canonical,
+      images: article.coverImage ? [{ url: article.coverImage }] : undefined,
+      publishedTime: article.publishedAt,
+    },
   }
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params
-  const article = getSampleBlogArticle(slug)
+  const article = getBlogArticle(slug)
 
   if (!article) {
     notFound()
   }
+
+  const published = formatBlogPublishedDate(article.publishedAt)
 
   return (
     <main>
       <Section padding="default">
         <Container size="prose">
           <div className="mb-4">
-            <BackButton fallbackHref="/blog" label="← Back to blog" />
+            <BackButton fallbackHref="/blog" label="Back to blog" />
           </div>
 
           <article className="mx-auto max-w-[46.25rem]">
@@ -61,11 +76,12 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
               {article.title}
             </h1>
             <p className="mt-3.5 mb-6 text-sm text-ink-soft">
-              By {article.author} · {article.readTime}
+              By {article.author}
+              {published ? ` · ${published}` : null} · {article.readTime}
             </p>
 
             <BrandImage
-              image={getBlogArticleBrandImage(article.slug)}
+              image={resolveBlogArticleCoverImage(article)}
               containerClassName="mb-6 aspect-[16/8] min-h-[220px] w-full overflow-hidden rounded-[14px] border border-line"
               sizes="(max-width: 860px) 100vw, 740px"
             />
@@ -79,6 +95,19 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
                   >
                     {block.text}
                   </h2>
+                )
+              }
+
+              if (block.type === "list") {
+                return (
+                  <ul
+                    key={`list-${index}`}
+                    className="mb-4 list-disc space-y-2 pl-5 text-[17px] leading-[1.75] text-ink-soft"
+                  >
+                    {block.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
                 )
               }
 

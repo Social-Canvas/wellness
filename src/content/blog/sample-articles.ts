@@ -1,18 +1,12 @@
-export type SampleBlogArticle = {
-  slug: string
-  category: string
-  title: string
-  excerpt: string
-  readTime: string
-  author: string
-  content: Array<
-    | { type: "paragraph"; text: string }
-    | { type: "heading"; text: string }
-    | { type: "cta"; title: string; description: string; href: string; label: string }
-  >
-}
+import type { BlogArticle } from "./types"
 
-export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
+export type { BlogArticle, BlogContentBlock, BlogCategoryFilter } from "./types"
+export { BLOG_CATEGORY_FILTERS } from "./types"
+
+/** @deprecated Prefer BlogArticle from ./types. */
+export type SampleBlogArticle = BlogArticle
+
+export const SAMPLE_BLOG_ARTICLES: BlogArticle[] = [
   {
     slug: "fatigue",
     category: "Energy",
@@ -80,7 +74,8 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
       {
         type: "cta",
         title: "Want guided support?",
-        description: "Membership includes weekly content on gut, hormones, and nervous system care.",
+        description:
+          "Membership includes weekly content on gut, hormones, and nervous system care.",
         href: "/programs",
         label: "View membership plans",
       },
@@ -112,7 +107,8 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
       {
         type: "cta",
         title: "Try a free taster",
-        description: "Sample a guided session before you choose a membership or program.",
+        description:
+          "Sample a guided session before you choose a membership or program.",
         href: "/free-taster",
         label: "Get the free taster",
       },
@@ -120,6 +116,6 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
   },
 ]
 
-export function getSampleBlogArticle(slug: string): SampleBlogArticle | undefined {
+export function getSampleBlogArticle(slug: string): BlogArticle | undefined {
   return SAMPLE_BLOG_ARTICLES.find((article) => article.slug === slug)
 }
