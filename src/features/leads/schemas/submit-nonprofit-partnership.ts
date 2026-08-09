@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { ENQUIRY_HONEYPOT_FIELD } from "@/features/leads/schemas/submit-lead"
 import {
   NONPROFIT_ACCESS_AUDIENCE_OPTIONS,
   NONPROFIT_PARTICIPANT_RANGE_OPTIONS,
@@ -87,6 +88,8 @@ export const submitNonprofitPartnershipSchema = z.object({
     .max(2000, "Message is too long.")
     .optional()
     .or(z.literal("")),
+  /** Anti-spam honeypot — must be empty for real humans. */
+  [ENQUIRY_HONEYPOT_FIELD]: z.string().max(200).optional().nullable(),
 })
 
 export type SubmitNonprofitPartnershipInput = z.infer<

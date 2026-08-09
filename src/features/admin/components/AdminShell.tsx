@@ -11,10 +11,16 @@ import { AdminSidebar } from "./AdminSidebar"
 interface AdminShellProps {
   user: AuthSessionUser
   profile: ProfileView
+  newLeadsCount?: number
   children: ReactNode
 }
 
-export function AdminShell({ user, profile, children }: AdminShellProps) {
+export function AdminShell({
+  user,
+  profile,
+  newLeadsCount = 0,
+  children,
+}: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   function closeMobileNav() {
@@ -24,7 +30,11 @@ export function AdminShell({ user, profile, children }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-cream">
       <div className="flex min-h-screen">
-        <AdminSidebar mobileOpen={mobileOpen} onNavigate={closeMobileNav} />
+        <AdminSidebar
+          mobileOpen={mobileOpen}
+          newLeadsCount={newLeadsCount}
+          onNavigate={closeMobileNav}
+        />
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <AdminHeader

@@ -30,7 +30,7 @@ function redactContextValue(value: unknown, key?: string): unknown {
   }
 
   if (value instanceof Error) {
-    return { name: value.name, message: value.message }
+    return providerFieldsFromUnknown(value)
   }
 
   if (Array.isArray(value)) {
@@ -44,7 +44,47 @@ function redactContextValue(value: unknown, key?: string): unknown {
   return value
 }
 
+function isErrorLike(value: unknown): value is Error & Record<string, unknown> {
+  return value instanceof Error
+}
+
+function providerFieldsFromUnknown(error: unknown): LogContext {
+  if (!error || typeof error !== "object") {
+    return { message: safeErrorMessage(error) }
+  }
+
+  const record = error as Record<string, unknown>
+  const message =
+    typeof record.message === "string" && record.message.trim().length > 0
+      ? record.message
+      : error instanceof Error && error.message.trim().length > 0
+        ? error.message
+        : "Unknown error"
+
+  return {
+    message,
+    ...(typeof record.code === "string" && record.code
+      ? { code: record.code }
+      : {}),
+    ...(typeof record.details === "string" && record.details
+      ? { details: record.details }
+      : {}),
+    ...(typeof record.hint === "string" && record.hint
+      ? { hint: record.hint }
+      : {}),
+    ...(typeof record.name === "string" && record.name
+      ? { name: record.name }
+      : {}),
+  }
+}
+
 function redactContext(context: LogContext): LogContext {
+  // PostgREST / Auth errors often put `message` on Error as non-enumerable.
+  // Object.entries alone can yield a misleading empty-looking context.
+  if (isErrorLike(context)) {
+    return redactContext(providerFieldsFromUnknown(context))
+  }
+
   const redacted: LogContext = {}
 
   for (const [key, value] of Object.entries(context)) {
@@ -80,14 +120,37 @@ function writeLog(level: LogLevel, message: string, context?: LogContext): void 
 
 export function safeErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    return error.message
+    return error.message || "Unknown error"
   }
 
   if (typeof error === "string") {
     return error
   }
 
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>
+    if (typeof record.message === "string" && record.message.trim()) {
+      return record.message
+    }
+  }
+
   return "Unknown error"
+}
+
+/** Plain, enumerable fields from Supabase/PostgREST-style errors for logging. */
+export function providerErrorFields(error: unknown): {
+  message: string
+  code: string | null
+  details: string | null
+  hint: string | null
+} {
+  const fields = providerFieldsFromUnknown(error)
+  return {
+    message: typeof fields.message === "string" ? fields.message : "Unknown error",
+    code: typeof fields.code === "string" ? fields.code : null,
+    details: typeof fields.details === "string" ? fields.details : null,
+    hint: typeof fields.hint === "string" ? fields.hint : null,
+  }
 }
 
 export const logger = {

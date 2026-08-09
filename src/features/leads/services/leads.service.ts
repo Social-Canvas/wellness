@@ -2,7 +2,8 @@ import "server-only"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import {
-  submitLeadSchema,
+  ENQUIRY_HONEYPOT_FIELD,
+  isHoneypotTriggered,
   type SubmitLeadInput,
 } from "@/features/leads/schemas/submit-lead"
 import {
@@ -16,8 +17,31 @@ import {
   nonprofitEnquirySource,
   type NonprofitAccessAudience,
 } from "@/features/leads/utils/nonprofit-enquiry"
-import { createClient } from "@/lib/supabase/server"
-import type { Database, Json } from "@/types/database/supabase"
+import {
+  submitEnquiryCore,
+  type EnquirySubmissionDeps,
+  type InsertedLead,
+  type LeadInsertRow,
+} from "@/features/leads/services/enquiry-submission.core"
+import {
+  isInvalidLeadTypeEnumError,
+  isMissingLeadsSchemaError,
+} from "@/features/leads/utils/leads-schema-errors"
+import { insertLeadWithSchemaFallback } from "@/features/leads/utils/legacy-lead-insert"
+import { createAdminClient } from "@/lib/supabase/admin"
+import type { Database } from "@/types/database/supabase"
+import {
+  logger,
+  providerErrorFields,
+  safeErrorMessage,
+} from "@/server/utils/logger"
+import {
+  sendEnquiryAdminNotification,
+  sendEnquiryVisitorAcknowledgement,
+} from "@/server/integrations/resend/enquiry-email.service"
+
+type LeadNotificationStatus =
+  Database["public"]["Enums"]["lead_notification_status"]
 
 function success<T>(data: T): ActionResult<T> {
   return { success: true, data }
@@ -35,57 +59,149 @@ function firstValidationMessage(error: { issues: { message: string }[] }): strin
   return error.issues[0]?.message ?? "Invalid input."
 }
 
-function mapDatabaseError(): ActionResult<never> {
-  return failure(
-    "provider_error",
-    "Unable to submit your request right now. Please try again."
-  )
+function honeypotSuccess(): ActionResult<{ id: string }> {
+  return success({ id: crypto.randomUUID() })
 }
 
-function toJsonMetadata(
-  value: Record<string, unknown> | null | undefined
-): Json {
-  if (!value) {
-    return {}
-  }
-  return value as Json
+export type SubmitLeadOptions = {
+  clientIp?: string | null
+  insertLead?: (row: LeadInsertRow) => Promise<InsertedLead | null>
+  updateNotificationStatuses?: EnquirySubmissionDeps["updateNotificationStatuses"]
+  sendAdminNotification?: EnquirySubmissionDeps["sendAdminNotification"]
+  sendVisitorAcknowledgement?: EnquirySubmissionDeps["sendVisitorAcknowledgement"]
 }
 
-export async function submitLead(
-  input: SubmitLeadInput
-): Promise<ActionResult<{ id: string }>> {
-  const parsed = submitLeadSchema.safeParse(input)
+async function defaultInsertLead(row: LeadInsertRow): Promise<InsertedLead | null> {
+  const supabase = createAdminClient()
 
-  if (!parsed.success) {
-    return validationFailure(firstValidationMessage(parsed.error))
-  }
-
-  const row: Database["public"]["Tables"]["leads"]["Insert"] = {
-    lead_type: parsed.data.leadType,
-    name: parsed.data.name,
-    email: parsed.data.email,
-    phone: parsed.data.phone ?? null,
-    message: parsed.data.message ?? null,
-    source: parsed.data.source ?? null,
-    metadata: toJsonMetadata(parsed.data.metadata ?? undefined),
-  }
-
-  try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from("leads")
-      .insert(row)
-      .select("id")
-      .single()
-
-    if (error || !data) {
-      return mapDatabaseError()
+  const result = await insertLeadWithSchemaFallback(
+    row,
+    async (payload) => {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert(payload as LeadInsertRow)
+        .select("id, created_at")
+        .single()
+      return { data, error }
+    },
+    {
+      isMissingSchemaError: isMissingLeadsSchemaError,
+      isInvalidLeadTypeEnum: isInvalidLeadTypeEnumError,
+    },
+    {
+      onLegacyColumnFallback: (error) => {
+        logger.warn(
+          "Lead insert falling back to legacy columns (hardening migration not applied).",
+          {
+            leadType: row.lead_type,
+            ...providerErrorFields(error),
+          }
+        )
+      },
+      onLeadTypeEnumFallback: (error) => {
+        logger.warn(
+          "Lead insert remapping hardening-only lead_type via metadata (enum not applied).",
+          {
+            leadType: row.lead_type,
+            ...providerErrorFields(error),
+          }
+        )
+      },
     }
+  )
 
-    return success({ id: data.id })
-  } catch {
-    return failure("unknown_error", "Something went wrong. Please try again.")
+  if (!result.data) {
+    logger.error("Lead insert failed.", {
+      leadType: row.lead_type,
+      usedLegacyColumns: result.usedLegacyColumns,
+      usedLeadTypeFallback: result.usedLeadTypeFallback,
+      ...providerErrorFields(result.error),
+    })
+    return null
   }
+
+  return result.data
+}
+
+async function defaultPersistNotificationStatuses(input: {
+  leadId: string
+  notificationStatus: LeadNotificationStatus
+  visitorAckStatus: LeadNotificationStatus
+  lastNotificationError: string | null
+}): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const { error } = await supabase
+      .from("leads")
+      .update({
+        notification_status: input.notificationStatus,
+        visitor_ack_status: input.visitorAckStatus,
+        last_notification_error: input.lastNotificationError,
+      })
+      .eq("id", input.leadId)
+
+    if (error) {
+      if (isMissingLeadsSchemaError(error)) {
+        logger.warn(
+          "Skipping lead notification status update; hardening columns not available.",
+          {
+            leadId: input.leadId,
+            ...providerErrorFields(error),
+          }
+        )
+        return
+      }
+
+      logger.error("Failed to update lead notification statuses.", {
+        leadId: input.leadId,
+        ...providerErrorFields(error),
+      })
+    }
+  } catch (error) {
+    logger.error("Unexpected error updating lead notification statuses.", {
+      leadId: input.leadId,
+      error: safeErrorMessage(error),
+    })
+  }
+}
+
+function buildDeps(options: SubmitLeadOptions): EnquirySubmissionDeps {
+  return {
+    clientIp: options.clientIp,
+    insertLead: options.insertLead ?? defaultInsertLead,
+    updateNotificationStatuses:
+      options.updateNotificationStatuses ?? defaultPersistNotificationStatuses,
+    sendAdminNotification:
+      options.sendAdminNotification ?? sendEnquiryAdminNotification,
+    sendVisitorAcknowledgement:
+      options.sendVisitorAcknowledgement ?? sendEnquiryVisitorAcknowledgement,
+    onHoneypot: (info) => {
+      logger.info("Enquiry honeypot triggered; skipping persistence.", info)
+    },
+    onInsertError: (info) => {
+      logger.error("Lead insert failed.", info)
+    },
+    onUnexpectedError: (info) => {
+      logger.error("Unexpected lead submission error.", info)
+    },
+    onAdminNotifyError: (info) => {
+      logger.error("Enquiry admin notification threw after insert.", info)
+    },
+    onVisitorAckError: (info) => {
+      logger.error("Enquiry visitor acknowledgement threw after insert.", info)
+    },
+  }
+}
+
+/**
+ * Central enquiry submission path:
+ * validate → honeypot → rate limit → durable insert → notify (non-blocking).
+ */
+export async function submitLead(
+  input: SubmitLeadInput,
+  options: SubmitLeadOptions = {}
+): Promise<ActionResult<{ id: string }>> {
+  return submitEnquiryCore(input, buildDeps(options))
 }
 
 /**
@@ -93,12 +209,18 @@ export async function submitLead(
  * Does not assign a public pricing plan or create an organization.
  */
 export async function submitNonprofitPartnership(
-  input: SubmitNonprofitPartnershipInput
+  input: SubmitNonprofitPartnershipInput,
+  options: SubmitLeadOptions = {}
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = submitNonprofitPartnershipSchema.safeParse(input)
 
   if (!parsed.success) {
     return validationFailure(firstValidationMessage(parsed.error))
+  }
+
+  if (isHoneypotTriggered(parsed.data[ENQUIRY_HONEYPOT_FIELD])) {
+    logger.info("Nonprofit enquiry honeypot triggered; skipping persistence.")
+    return honeypotSuccess()
   }
 
   const data = normalizeNonprofitPartnershipInput(parsed.data)
@@ -121,13 +243,19 @@ export async function submitNonprofitPartnership(
     message: data.message,
   })
 
-  return submitLead({
-    leadType: "private_event",
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    message,
-    source: nonprofitEnquirySource(),
-    metadata,
-  })
+  return submitLead(
+    {
+      leadType: "nonprofit",
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      message,
+      source: nonprofitEnquirySource(),
+      organizationName: data.organizationName,
+      estimatedParticipants: data.estimatedParticipants,
+      metadata,
+      [ENQUIRY_HONEYPOT_FIELD]: "",
+    },
+    options
+  )
 }
