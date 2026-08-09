@@ -250,7 +250,12 @@ test("signed-out public header is unaffected", () => {
   const publicNavbar = readSource("src/components/layout/public-navbar.tsx")
   const navbar = readSource("src/components/layout/navbar.tsx")
   assert.match(publicNavbar, /PublicNavbar/)
-  assert.match(navbar, /sticky top-0/)
+  assert.match(
+    navbar,
+    /sticky top-0 z-40 border-b border-line bg-\[rgba\(246,250,249,0\.96\)\] backdrop-blur-\[10px\]/
+  )
+  // Do not add `relative` beside sticky — twMerge drops sticky when relative wins.
+  assert.doesNotMatch(navbar, /["']relative["']/)
   assert.doesNotMatch(publicNavbar, /DashboardUserMenu|DashboardMoreMenu/)
   assert.doesNotMatch(navbar, /DashboardUserMenu|getMoreNavItems/)
 })
