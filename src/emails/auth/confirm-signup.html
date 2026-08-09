@@ -1,14 +1,3 @@
-{{ .ConfirmationURL }}
-
-<!--
-  Elevate Auth — Confirm signup
-  Paste into Supabase Dashboard → Authentication → Email Templates → Confirm signup
-
-  Variables (Supabase Go templates):
-  - {{ .ConfirmationURL }}
-  - {{ .SiteURL }}
-  - {{ .Email }}
--->
 <!doctype html>
 <html lang="en">
   <head>
@@ -16,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Confirm your Elevate account</title>
   </head>
+  <!--
+    Elevate Auth — Confirm signup
+    Paste into Supabase Dashboard → Authentication → Email Templates → Confirm signup
+
+    Variables (Supabase Go templates):
+    - {{ .ConfirmationURL }}
+    - {{ .SiteURL }}
+    - {{ .Email }}
+    - {{ .RedirectTo }}
+    - {{ .TokenHash }}
+
+    Use ConfirmationURL only (hosted verify → app /auth/callback).
+    Do not mix TokenHash custom routes unless the app route matches.
+  -->
   <body style="margin:0;padding:0;background:#f6faf9;font-family:Arial,sans-serif;">
     <span style="display:none !important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">Confirm your Elevate Health Solutions account.</span>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6faf9;padding:24px 12px;">

@@ -6,17 +6,19 @@ import { cache } from "react"
 import {
   forgotPasswordSchema,
   loginSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
   signupSchema,
   updateProfileSchema,
   type ForgotPasswordInput,
   type LoginInput,
+  type ResendVerificationInput,
   type ResetPasswordInput,
   type SignupInput,
   type UpdateProfileInput,
 } from "@/features/auth/schemas"
 import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
-import { env } from "@/lib/config"
+import { buildAuthCallbackUrl } from "@/lib/config/app-url"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
@@ -373,7 +375,7 @@ export async function signUp(
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
+        emailRedirectTo: buildAuthCallbackUrl("/dashboard"),
         data: {
           // Temporary transport only — locked into profiles via set_certificate_name_once.
           // Never read as the live certificate source after profile lock.
@@ -522,7 +524,7 @@ export async function forgotPassword(
   try {
     const supabase = await createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
+      redirectTo: buildAuthCallbackUrl("/reset-password"),
     })
 
     if (error?.status === 429) {
@@ -532,6 +534,49 @@ export async function forgotPassword(
     return success(null)
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")
+  }
+}
+
+/**
+ * Resend signup confirmation. Always returns a generic success to avoid
+ * account enumeration. Rate limits surface only when Supabase returns 429.
+ */
+export async function resendVerificationEmail(
+  input: ResendVerificationInput
+): Promise<ActionResult<null>> {
+  const parsed = resendVerificationSchema.safeParse(input)
+
+  if (!parsed.success) {
+    return validationFailure(firstValidationMessage(parsed.error))
+  }
+
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: parsed.data.email,
+      options: {
+        emailRedirectTo: buildAuthCallbackUrl("/dashboard"),
+      },
+    })
+
+    if (error?.status === 429) {
+      return failure("rate_limited", "Too many requests. Please try again later.")
+    }
+
+    // Do not reveal whether the email exists, is already confirmed, or failed.
+    if (error) {
+      logger.warn("[auth] Resend verification completed with provider message.", {
+        error: safeErrorMessage(error),
+      })
+    }
+
+    return success(null)
+  } catch (caughtError) {
+    logger.error("[auth] Resend verification threw unexpectedly.", {
+      error: safeErrorMessage(caughtError),
+    })
+    return success(null)
   }
 }
 

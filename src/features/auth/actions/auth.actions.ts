@@ -6,12 +6,14 @@ import { redirect } from "next/navigation"
 import type {
   ForgotPasswordInput,
   LoginInput,
+  ResendVerificationInput,
   ResetPasswordInput,
   SignupInput,
   UpdateProfileInput,
 } from "@/features/auth/schemas"
 import {
   forgotPassword,
+  resendVerificationEmail,
   resetPassword,
   signIn,
   signOut,
@@ -68,6 +70,12 @@ export async function forgotPasswordAction(
   input: ForgotPasswordInput
 ): Promise<ActionResult<null>> {
   return forgotPassword(input)
+}
+
+export async function resendVerificationAction(
+  input: ResendVerificationInput
+): Promise<ActionResult<null>> {
+  return resendVerificationEmail(input)
 }
 
 export async function resetPasswordAction(

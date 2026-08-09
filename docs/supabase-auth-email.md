@@ -21,7 +21,8 @@ Use Resend SMTP so Auth mail uses the same verified Elevate domain as transactio
 
 1. Confirm the Elevate sender domain is **Verified** in Resend.
 2. Supabase → Authentication → SMTP Settings → enable custom SMTP with the table above.
-3. Send a test Auth email only to an allowlisted operator inbox.
+3. Disable click-tracking / link rewriting on Auth messages (Resend / ESP). Auth links must stay on `*.supabase.co/auth/v1/verify`.
+4. Send a test Auth email only to an allowlisted operator inbox.
 
 ## Branded templates (tracked in repo)
 
@@ -39,31 +40,41 @@ Subjects (suggested):
 - Reset: `Reset your Elevate password`
 - Invite: `You're invited to Elevate`
 
+Use `{{ .ConfirmationURL }}` only (hosted verify → app `/auth/callback`). Do not paste a leading bare `ConfirmationURL` outside the HTML document.
+
 ## Site URL and redirect allowlist
 
 Set in Supabase → Authentication → URL Configuration:
 
 | Setting | Production value |
 |---|---|
-| Site URL | Exact production origin of `NEXT_PUBLIC_APP_URL` (no trailing slash) |
+| Site URL | Exact production origin of `NEXT_PUBLIC_APP_URL` (no trailing slash), currently `https://wellness-topaz-chi.vercel.app` |
 | Redirect URLs | `${NEXT_PUBLIC_APP_URL}/auth/callback` |
 | | `${NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard` |
 | | `${NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password` |
+| | `${NEXT_PUBLIC_APP_URL}/auth/callback?next=/certificate-name` |
 | | `${NEXT_PUBLIC_APP_URL}/reset-password` (legacy fallback) |
+| Local | `http://localhost:3000/**` and matching `/auth/callback` paths |
 | Preview (optional) | Matching Vercel preview origins + `/auth/callback` paths |
 
 App behavior:
 
+- Canonical origin comes from `getCanonicalAppUrl()` / `buildAuthCallbackUrl()` (`src/lib/config/app-url.ts`)
 - Signup confirmation uses `emailRedirectTo` → `/auth/callback?next=/dashboard`
 - Password reset uses `redirectTo` → `/auth/callback?next=/reset-password`
-- `/auth/callback` exchanges the code server-side, never logs tokens, and **does not** grant membership
+- Resend verification uses the same signup redirect
+- `/auth/callback` exchanges `code` or `token_hash`+`type`, never logs tokens, and **does not** grant membership
+- Success → `/verified` (then certificate-name gate or dashboard). Recovery → `/reset-password`
+- Failure → `/verification-failed` with friendly copy + resend
 
 ## Verification checklist
 
 - [ ] Resend domain verified
 - [ ] Custom SMTP enabled with Resend
 - [ ] Auth templates updated from repo files
-- [ ] Site URL = production app origin
+- [ ] Site URL = production app origin (not localhost)
 - [ ] Redirect allowlist includes `/auth/callback` variants
+- [ ] `NEXT_PUBLIC_APP_URL` production value is HTTPS, no trailing slash
 - [ ] Confirm / reset / invite land on success or clear error UI
 - [ ] No membership access granted from Auth callback alone
+- [ ] Confirm Email remains enabled (`mailer_autoconfirm=false`)

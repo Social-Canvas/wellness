@@ -60,6 +60,8 @@ export const SAFE_AUTH_RETURN_PATHS = [
   "/dashboard/downloads",
   "/dashboard/library",
   "/dashboard/account",
+  "/reset-password",
+  "/verified",
   INTEGRATION_JOURNAL_SHOP_PATH,
   `/shop/${CLEAN_LIVING_RECIPES_SLUG}`,
   "/shop",

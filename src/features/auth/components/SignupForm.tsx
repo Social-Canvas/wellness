@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
 import { signUpAction } from "@/features/auth/actions/auth.actions"
+import { ResendVerificationForm } from "@/features/auth/components/ResendVerificationForm"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
 import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
 
@@ -20,6 +21,9 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
   const confirmHelpId = useId()
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<
+    string | null
+  >(null)
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -72,6 +76,7 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
     }
 
     if (result.data.requiresEmailConfirmation) {
+      setPendingVerificationEmail(result.data.email)
       setFormSuccess(
         `Check your email to confirm your account at ${result.data.email}.`
       )
@@ -80,6 +85,33 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
     }
 
     router.push(redirectTo)
+  }
+
+  if (pendingVerificationEmail) {
+    return (
+      <Card className="mx-auto w-full max-w-[400px]">
+        <CardHeader className="text-center">
+          <CardTitle className="font-display text-[23px] font-medium">
+            Confirm your email
+          </CardTitle>
+          <CardDescription>
+            We sent a confirmation link to {pendingVerificationEmail}. Click it
+            once to activate your account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {formSuccess ? (
+            <p
+              role="status"
+              className="rounded-[var(--radius-input)] border border-green/20 bg-green-soft px-3 py-2 text-sm text-green-deep"
+            >
+              {formSuccess}
+            </p>
+          ) : null}
+          <ResendVerificationForm initialEmail={pendingVerificationEmail} />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -98,15 +130,6 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
               className="rounded-[var(--radius-input)] border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
             >
               {formError}
-            </p>
-          ) : null}
-
-          {formSuccess ? (
-            <p
-              role="status"
-              className="rounded-[var(--radius-input)] border border-green/20 bg-green-soft px-3 py-2 text-sm text-green-deep"
-            >
-              {formSuccess}
             </p>
           ) : null}
 
