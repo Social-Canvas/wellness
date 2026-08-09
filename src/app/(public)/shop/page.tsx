@@ -38,7 +38,7 @@ export default async function ShopPage() {
           </p>
         </div>
         <BrandImage
-          image={BRAND_IMAGES.productCookbook}
+          image={BRAND_IMAGES.nutritionIngredients}
           containerClassName="aspect-[16/11] w-full min-h-[240px]"
           sizes="(max-width: 860px) 100vw, 45vw"
         />

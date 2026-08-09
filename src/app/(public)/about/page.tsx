@@ -85,10 +85,14 @@ export default function AboutPage() {
                 7-Step PATTANI Protocol.
               </p>
               <div className="mt-5 flex flex-wrap gap-2.5">
-                {CREDENTIALS.map((credential) => (
+                {CREDENTIALS.map((credential, index) => (
                   <span
                     key={credential}
-                    className="rounded-[30px] bg-green-soft px-4 py-1.5 text-[13px] font-semibold text-green-deep"
+                    className={
+                      index < 2
+                        ? "rounded-[30px] border border-green/40 bg-green-soft px-4 py-1.5 text-[13px] font-semibold text-green-deep"
+                        : "rounded-[30px] bg-cream px-4 py-1.5 text-[13px] font-semibold text-ink-soft"
+                    }
                   >
                     {credential}
                   </span>

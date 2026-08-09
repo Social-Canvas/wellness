@@ -103,8 +103,16 @@ function Footer({ isAuthenticated }: FooterProps) {
           </nav>
         </div>
 
-        <div className="mt-[30px] border-t border-[rgba(255,255,255,0.12)] pt-[18px] text-[12.5px] text-[#8FA3A1]">
-          {PUBLIC_LEGAL_DISCLAIMER}
+        <div className="mt-[30px] flex flex-wrap items-center justify-between gap-3 border-t border-[rgba(255,255,255,0.12)] pt-[18px] text-[12.5px] text-[#8FA3A1]">
+          <p>{PUBLIC_LEGAL_DISCLAIMER}</p>
+          <nav aria-label="Legal" className="flex flex-wrap gap-4">
+            <Link
+              href="/privacy"
+              className="font-semibold text-[#C2D2D0] transition-colors hover:text-white"
+            >
+              Privacy Policy
+            </Link>
+          </nav>
         </div>
       </Container>
     </footer>

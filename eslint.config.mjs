@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local smoke/screenshot browser profiles (not app source).
+    ".tmp-*/**",
+    "tmp/**",
     // Node-runner test files use `.ts` import extensions for the native TS
     // runner and are not part of the app build/type-check.
     "**/*.test.ts",

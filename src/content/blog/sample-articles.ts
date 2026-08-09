@@ -24,12 +24,12 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
     content: [
       {
         type: "paragraph",
-        text: "If you are tired no matter how much you sleep, the answer is rarely rest more. Here is what to look at instead. In functional medicine, we do not start with the symptom — we start with the question: why is this happening at all? That single shift changes everything about how you heal.",
+        text: "If you are tired no matter how much you sleep, the answer is rarely rest more. Here is what to look at instead. In functional medicine, we do not start with the symptom. We start with the question: why is this happening at all? That single shift changes everything about how you heal.",
       },
       { type: "heading", text: "It starts deeper than you think" },
       {
         type: "paragraph",
-        text: "Most conventional visits name a symptom and match it to a prescription. For slow, draining issues — fatigue, brain fog, anxious nights — that often misses the upstream cause entirely.",
+        text: "Most conventional visits name a symptom and match it to a prescription. For slow, draining issues like fatigue, brain fog, and anxious nights, that often misses the upstream cause entirely.",
       },
       {
         type: "paragraph",
@@ -43,7 +43,7 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
       { type: "heading", text: "Where to begin" },
       {
         type: "paragraph",
-        text: "Pick one foundation and give it two gentle weeks. Notice what shifts, then build from there — ideally with guidance so you are not guessing alone.",
+        text: "Pick one foundation and give it two gentle weeks. Notice what shifts, then build from there, ideally with guidance so you are not guessing alone.",
       },
       {
         type: "cta",
@@ -97,7 +97,7 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
     content: [
       {
         type: "paragraph",
-        text: "Cortisol is not the enemy — it helps you wake up, focus, and respond to real challenges. The problem is when your stress response stays switched on long after the moment has passed.",
+        text: "Cortisol is not the enemy. It helps you wake up, focus, and respond to real challenges. The problem is when your stress response stays switched on long after the moment has passed.",
       },
       { type: "heading", text: "Signs your stress response is stuck" },
       {
@@ -107,7 +107,7 @@ export const SAMPLE_BLOG_ARTICLES: SampleBlogArticle[] = [
       { type: "heading", text: "How to begin unwinding" },
       {
         type: "paragraph",
-        text: "Short breathwork, morning light, and predictable sleep anchors are simple tools that compound. The goal is not to eliminate stress — it is to recover from it faster.",
+        text: "Short breathwork, morning light, and predictable sleep anchors are simple tools that compound. The goal is not to eliminate stress. It is to recover from it faster.",
       },
       {
         type: "cta",

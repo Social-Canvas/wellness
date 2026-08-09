@@ -38,6 +38,7 @@ const MARKETING_COPY_FILES = [
   "app/(public)/programs/page.tsx",
   "components/layout/public-navbar.tsx",
   "components/layout/footer.tsx",
+  "content/blog/sample-articles.ts",
 ] as const
 
 const EXPECTED_PUBLIC_NAV = [
@@ -165,6 +166,9 @@ test("10. Footer includes For Nonprofits once via public nav links", () => {
     (publicSite.match(/label: "For Nonprofits"/g) ?? []).length,
     1
   )
+  assert.match(footer, /href="\/privacy"/)
+  assert.match(footer, /Privacy Policy/)
+  assert.match(footer, /aria-label="Legal"/)
 })
 
 test("11. Sitemap includes /nonprofits", () => {

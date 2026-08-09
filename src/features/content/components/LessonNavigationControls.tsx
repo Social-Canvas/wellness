@@ -206,7 +206,7 @@ function PrimaryActionBlock({
           />
           {emphasizeComplete ? (
             <p className="text-xs text-ink-soft">
-              Video finished — mark complete when you are ready to continue.
+              Video finished. Mark complete when you are ready to continue.
             </p>
           ) : null}
           {state.status === "error" ? (
