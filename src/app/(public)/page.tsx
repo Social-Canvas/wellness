@@ -172,24 +172,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <VideoTestimonialsSection />
 
       <FaqAccordion eyebrow="Questions, answered" title="Before you begin" items={FAQ_ITEMS} />
-
-      <Section variant="soft" padding="default">
-        <Container className="text-center">
-          <h2 className="font-display text-[clamp(1.5rem,3.2vw,2.125rem)] font-medium text-ink">
-            Begin with a free guided session
-          </h2>
-          <p className="mx-auto mt-3 max-w-[480px] text-base text-ink-soft">
-            Sample Elevate breathwork before you choose a membership or program. No
-            commitment required.
-          </p>
-          <Link
-            href="/free-taster"
-            className={cn(buttonVariants({ variant: "default", size: "default" }), "mt-6")}
-          >
-            Request free taster
-          </Link>
-        </Container>
-      </Section>
     </main>
   )
 }
