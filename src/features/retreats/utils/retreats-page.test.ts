@@ -56,7 +56,7 @@ test("4. Bali appears as a past retreat", () => {
   const bali = RETREATS_PAGE.past.items.find((item) => item.title === "Bali")
   assert.ok(bali)
   assert.equal(bali?.label, "Past Retreat")
-  assert.equal(bali?.imageKey, null)
+  assert.equal(bali?.imageKey, "founderTempleMeditation")
 })
 
 test("5. No invented Bali details are rendered", () => {

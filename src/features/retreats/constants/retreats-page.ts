@@ -43,8 +43,8 @@ export const RETREATS_PAGE = {
         label: "Past Retreat",
         description:
           "An immersive retreat experience centered on stepping away from daily demands, creating space for reflection, connection, and renewal.",
-        /** No confirmed Bali retreat photograph; use neutral branded treatment. */
-        imageKey: null,
+        /** Same asset as the homepage hero banner. */
+        imageKey: "founderTempleMeditation" as const,
       },
     ],
   },
