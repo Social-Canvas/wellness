@@ -22,6 +22,9 @@ export function normalizeAppOrigin(raw: string | null | undefined): string | nul
     if (
       parsed.protocol === "http:" &&
       (parsed.hostname.endsWith(".vercel.app") ||
+        parsed.hostname === "elevate-healthsolutions.com" ||
+        parsed.hostname.endsWith(".elevate-healthsolutions.com") ||
+        // Legacy unhyphenated hostname (pre-launch typo) — still force HTTPS.
         parsed.hostname === "elevatehealthsolutions.com" ||
         parsed.hostname.endsWith(".elevatehealthsolutions.com"))
     ) {

@@ -4,7 +4,9 @@ import { getAllBlogArticles } from "@/content/blog"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elevatehealthsolutions.com"
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "https://elevate-healthsolutions.com"
   ).replace(/\/$/, "")
 
   const paths = [

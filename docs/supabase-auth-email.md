@@ -48,7 +48,7 @@ Set in Supabase → Authentication → URL Configuration:
 
 | Setting | Production value |
 |---|---|
-| Site URL | Exact production origin of `NEXT_PUBLIC_APP_URL` (no trailing slash), currently `https://wellness-topaz-chi.vercel.app` |
+| Site URL | Exact production origin of `NEXT_PUBLIC_APP_URL` (no trailing slash): `https://elevate-healthsolutions.com` |
 | Redirect URLs | `${NEXT_PUBLIC_APP_URL}/auth/callback` |
 | | `${NEXT_PUBLIC_APP_URL}/auth/callback?**` |
 | | `${NEXT_PUBLIC_APP_URL}/auth/confirm` |

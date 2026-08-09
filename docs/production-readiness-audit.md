@@ -18,7 +18,7 @@ Audit date: 2026-07-12 · Scope: read-only codebase + config review (no secret v
 Add all 15 keys below to the Vercel project (Production **and** Preview, using different Stripe/Mux/Supabase projects per environment per TDD §19.1). `.env.local` currently defines the same 15 keys as `.env.example` — no drift there, but that only reflects local dev, not Vercel.
 
 ### 2. `NEXT_PUBLIC_APP_URL`
-Currently used for: password-reset redirect, Stripe checkout success/cancel URLs, billing portal return URL, certificate verification links, and Mux upload CORS origin (`cors_origin: env.NEXT_PUBLIC_APP_URL`). Must be set to the exact production origin (e.g. `https://app.elevatehealthsolutions.com`, no trailing slash) in Vercel Production env — a mismatch here breaks Stripe redirects and Mux direct-upload CORS.
+Currently used for: password-reset redirect, Stripe checkout success/cancel URLs, billing portal return URL, certificate verification links, and Mux upload CORS origin (`cors_origin: env.NEXT_PUBLIC_APP_URL`). Must be set to the exact production origin (`https://elevate-healthsolutions.com`, no trailing slash) in Vercel Production env — a mismatch here breaks Stripe redirects and Mux direct-upload CORS.
 
 ### 3. Supabase Site URL & redirect allowlist
 - `supabase.auth.signUp()` is called **without** `emailRedirectTo` (`src/features/auth/services/auth.service.ts:352`), so the confirmation email link falls back to the Supabase project's **Site URL** setting. This must be changed from `localhost:3000` (Supabase default) to the production `NEXT_PUBLIC_APP_URL` in Supabase Dashboard → Authentication → URL Configuration.
