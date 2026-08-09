@@ -4,14 +4,15 @@ import Link from "next/link"
 import {
   FaqAccordion,
   HeroSection,
-  OfferCardsSection,
   StepsGrid,
   type HeroAction,
 } from "@/components/marketing"
 import { Container, Section } from "@/components/layout"
 import { buttonVariants } from "@/components/ui/button"
-import { ResetPlanOfferBand } from "@/features/checkout/components"
-import { buildCheckoutConsentUrl } from "@/features/checkout/utils/checkout-urls"
+import {
+  HomepageMembershipOffers,
+  ResetPlanOfferBand,
+} from "@/features/checkout/components"
 import {
   HOMEPAGE_NONPROFIT_SECTION,
   NONPROFIT_EXPLORE_CTA,
@@ -19,8 +20,9 @@ import {
   NONPROFIT_INQUIRY_HREF,
   NONPROFIT_LANDING_HREF,
 } from "@/features/checkout/utils/membership-audience"
+import { parseBillingParam } from "@/features/checkout/utils/membership-billing"
 import { VideoTestimonialsSection } from "@/features/marketing-testimonials"
-import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
+import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
@@ -72,31 +74,6 @@ const JOURNEY_STEPS = [
   },
 ]
 
-const MEMBERSHIP_IMAGES = [
-  BRAND_IMAGES.meditationSession,
-  BRAND_IMAGES.heroBreathwork,
-  BRAND_IMAGES.coachingVirtual,
-] as const
-
-const MEMBERSHIP_CARDS = ELEVATE_MEMBERSHIPS.map((tier, index) => ({
-  category: "Membership",
-  title: tier.name,
-  description: tier.whoItIsFor,
-  price: (
-    <>
-      {tier.priceLabel}{" "}
-      <small className="font-body text-xs font-normal text-ink-soft">/ month</small>
-    </>
-  ),
-  href: buildCheckoutConsentUrl({
-    type: "membership",
-    planSlug: tier.slug,
-    interval: "monthly",
-  }),
-  ctaLabel: `Join ${tier.name}`,
-  image: MEMBERSHIP_IMAGES[index] ?? BRAND_IMAGES.meditationSession,
-}))
-
 const FAQ_ITEMS = [
   {
     question: "Is this medical care?",
@@ -125,7 +102,16 @@ const FAQ_ITEMS = [
   },
 ]
 
-export default function HomePage() {
+type HomePageProps = {
+  searchParams: Promise<{
+    billing?: string | string[]
+  }>
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams
+  const initialBilling = parseBillingParam(params.billing)
+
   return (
     <main>
       <HeroSection
@@ -150,11 +136,8 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <OfferCardsSection
-        id="memberships"
-        eyebrow="Memberships"
-        title="Elevate Core, Gold & Platinum"
-        cards={MEMBERSHIP_CARDS}
+      <HomepageMembershipOffers
+        initialBilling={initialBilling}
         footerCta={{ label: "View all programs & sessions", href: "/programs" }}
       />
 

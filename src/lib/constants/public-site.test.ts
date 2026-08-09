@@ -146,16 +146,21 @@ test("8. Programs nonprofit panel remains with learn-more link", () => {
 
 test("9. Homepage nonprofit discovery CTA", () => {
   const home = readSrc("app/(public)/page.tsx")
+  const membershipOffers = readSrc(
+    "features/checkout/components/homepage-membership-offers.tsx"
+  )
   assert.match(home, /HOMEPAGE_NONPROFIT_SECTION/)
   assert.match(home, /NONPROFIT_EXPLORE_CTA/)
   assert.match(home, /NONPROFIT_LANDING_HREF/)
+  assert.match(home, /HomepageMembershipOffers/)
   assert.equal(HOMEPAGE_NONPROFIT_SECTION.eyebrow, "FOR NONPROFITS")
-  const membershipIdx = home.indexOf('id="memberships"')
+  const membershipIdx = home.indexOf("<HomepageMembershipOffers")
   const nonprofitIdx = home.indexOf('id="for-nonprofits"')
   const testimonialsIdx = home.indexOf("<VideoTestimonialsSection")
   assert.ok(membershipIdx >= 0)
   assert.ok(nonprofitIdx > membershipIdx)
   assert.ok(testimonialsIdx > nonprofitIdx)
+  assert.match(membershipOffers, /id="memberships"/)
 })
 
 test("10. Footer includes For Nonprofits once via public nav links", () => {

@@ -1,4 +1,5 @@
 export { CheckoutConsentForm } from "./checkout-consent-form"
+export { HomepageMembershipOffers } from "./homepage-membership-offers"
 export { MembershipAudienceTabs } from "./membership-audience-tabs"
 export {
   MembershipBillingSync,

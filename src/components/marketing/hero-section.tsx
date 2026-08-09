@@ -46,14 +46,11 @@ function HeroSection({
             <Badge variant="eyebrow">{eyebrow}</Badge>
 
             <h1 className="mt-3.5 font-display text-[clamp(2rem,4.4vw,3.25rem)] font-medium tracking-tight text-ink">
-              {title}
+              <span className="block">{title}</span>
               {highlightedTitle ? (
-                <>
-                  {" "}
-                  <em className="font-display italic text-blue">
-                    {highlightedTitle}
-                  </em>
-                </>
+                <span className="mt-1 block font-display not-italic text-blue">
+                  {highlightedTitle}
+                </span>
               ) : null}
             </h1>
 
