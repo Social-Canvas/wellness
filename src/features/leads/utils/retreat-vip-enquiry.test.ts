@@ -352,6 +352,7 @@ test("16. Mobile layout stacks without overflow", () => {
   assert.match(shell, /overflow-x-hidden/)
   assert.match(shell, /grid-cols-1/)
   assert.match(landing, /grid-cols-1/)
+  assert.match(landing, /min-w-0/)
   assert.match(landing, /min-\[768px\]:grid-cols-2/)
   assert.match(vipEnquiryPageSource(), /EnquiryVisual/)
 })

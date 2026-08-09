@@ -60,6 +60,11 @@ export const BRAND_IMAGES = {
     alt: "Spiritual purification ritual with flowing water in a lush natural setting",
     objectPosition: "center 30%",
   },
+  sedonaRetreatLandscape: {
+    src: "/brand/sedona-retreat-landscape.jpg",
+    alt: "Sedona red rock formations under a clear sky",
+    objectPosition: "center center",
+  },
   nutritionIngredients: {
     src: "/brand/nutrition-ingredients.png",
     alt: "Fresh whole-food ingredients arranged for clean, nourishing meals",

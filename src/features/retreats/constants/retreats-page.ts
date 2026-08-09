@@ -1,19 +1,20 @@
 /**
  * Approved copy for the public Retreats landing page.
- * Do not invent dates, venues, pricing, inclusions, or testimonials.
+ * Timeless editorial storytelling. Do not invent dates, venues, pricing,
+ * itineraries, or inclusions. Do not surface historical booking details.
  */
 
 export const RETREATS_PAGE = {
-  metaTitle: "Retreats & Private Events",
+  metaTitle: "Retreats",
   metaDescription:
-    "Explore past Elevate retreats in Bali and Sedona and learn about the upcoming Rishikesh retreat planned for March to April 2027.",
+    "Explore Elevate retreat experiences and the upcoming Rishikesh retreat planned for March to April 2027.",
 
   hero: {
-    eyebrow: "Retreats & Private Events",
+    eyebrow: "ELEVATE RETREATS",
     heading: "Step away. Reconnect. Return renewed.",
-    body: "Elevate retreats create space to slow down, reconnect with yourself, and experience restorative practices in intentional settings.",
+    body: "Elevate retreats create intentional space to slow down, reconnect with yourself, and experience restorative practices in meaningful settings.",
     primaryCta: {
-      label: "Explore upcoming retreat",
+      label: "Explore retreats",
       href: "#rishikesh-2027",
     },
     secondaryCta: {
@@ -22,55 +23,80 @@ export const RETREATS_PAGE = {
     },
   },
 
-  philosophy: {
-    heading: "An intentional pause",
-    body: "Each Elevate retreat is shaped around breathwork, reflection, and restorative practices in settings chosen for calm and connection. Details are shared as each experience is finalized.",
-  },
-
   past: {
+    id: "past-retreats",
     heading: "Past Retreats",
-    supporting: "A look back at previous Elevate retreat experiences.",
-    placeholderDetail: "Highlights and retreat details coming soon.",
+    supporting:
+      "Previous Elevate experiences have brought together restorative practices, reflection, nature, and meaningful connection.",
     items: [
-      {
-        id: "bali",
-        title: "Bali",
-        label: "Past Retreat",
-        /** Confidently Bali-associated brand image (Balinese temple meditation). */
-        imageKey: "founderTempleMeditation" as const,
-      },
       {
         id: "sedona",
         title: "Sedona",
         label: "Past Retreat",
-        /** No Sedona-specific asset yet; use neutral branded treatment. */
+        description:
+          "A restorative retreat experience surrounded by Sedona's remarkable landscape, with space for breathwork, meditation, reflection, nature, and connection.",
+        imageKey: "sedonaRetreatLandscape" as const,
+      },
+      {
+        id: "bali",
+        title: "Bali",
+        label: "Past Retreat",
+        description:
+          "An immersive retreat experience centered on stepping away from daily demands, creating space for reflection, connection, and renewal.",
+        /** No confirmed Bali retreat photograph; use neutral branded treatment. */
         imageKey: null,
+      },
+    ],
+  },
+
+  expect: {
+    id: "what-to-expect",
+    heading: "What to expect from an Elevate retreat",
+    intro:
+      "Each retreat is thoughtfully shaped around its setting and community, while creating space for restorative practices and meaningful connection.",
+    items: [
+      {
+        title: "Guided breathwork and meditation",
+        description: "Practices that help you slow down and return to presence.",
+      },
+      {
+        title: "Time for reflection and reconnection",
+        description: "Space to step away from noise and listen inward.",
+      },
+      {
+        title: "Restorative experiences",
+        description: "Gentle rhythm designed for recovery and renewal.",
+      },
+      {
+        title: "Connection with nature",
+        description: "Settings chosen for calm, beauty, and grounded presence.",
+      },
+      {
+        title: "Nourishing moments and intentional rest",
+        description: "Room to restore through simple, supportive care.",
+      },
+      {
+        title: "Community and shared experience",
+        description: "Meaningful connection with others on a similar path.",
       },
     ],
   },
 
   upcoming: {
     id: "rishikesh-2027",
-    eyebrow: "Upcoming",
+    eyebrow: "UPCOMING",
     heading: "Rishikesh 2027",
     timing: "March to April 2027",
     intro:
-      "Elevate is preparing an upcoming retreat experience in Rishikesh for March to April 2027. Additional details, dates, and registration information will be shared as plans are finalized.",
+      "A new Elevate retreat experience is being planned for Rishikesh in 2027. Additional details, dates, and registration information will be shared as plans are finalized.",
     ctaLabel: "Ask for more information",
     ctaHref: "#ask-for-more-information",
   },
 
   enquiry: {
     id: "ask-for-more-information",
-    heading: "Interested in Rishikesh?",
+    heading: "Interested in an upcoming retreat?",
     supporting:
-      "Share your details and we will keep you informed as retreat dates and registration information become available.",
-  },
-
-  finalCta: {
-    heading: "Private events",
-    body: "Looking for a private group experience? Share your interest and the Elevate team will follow up with suitable options.",
-    ctaLabel: "Ask for more information",
-    ctaHref: "#ask-for-more-information",
+      "Share your details and we'll keep you informed as upcoming retreat plans and registration information become available.",
   },
 } as const

@@ -20,6 +20,7 @@ import {
   RETREAT_ENQUIRY_FORM_HEADING,
   RETREAT_ENQUIRY_FORM_SUPPORT,
   RETREAT_ENQUIRY_INTENT,
+  RETREAT_ENQUIRY_INTEREST_LABEL,
   RETREAT_ENQUIRY_NO_PURCHASE,
   RETREAT_ENQUIRY_SOURCE,
   RETREAT_ENQUIRY_SUCCESS_BODY,
@@ -324,7 +325,7 @@ function LeadEnquiryForm({
 
             <div className="space-y-1.5">
               <Label htmlFor={`${formId}-interest`}>
-                What are you interested in?{" "}
+                {RETREAT_ENQUIRY_INTEREST_LABEL}{" "}
                 <span className="font-normal text-ink-soft">(optional)</span>
               </Label>
               <select

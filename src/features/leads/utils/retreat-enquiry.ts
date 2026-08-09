@@ -27,9 +27,11 @@ export const RETREAT_ENQUIRY_NEXT_STEPS = [
 export const RETREAT_ENQUIRY_FORM_HEADING = "Ask for more information" as const
 
 export const RETREAT_ENQUIRY_FORM_SUPPORT =
-  "Tell us what you are looking for. The Elevate team will follow up when suitable information is available." as const
+  "Share your details and we'll keep you informed as upcoming retreat plans and registration information become available." as const
 
 export const RETREAT_ENQUIRY_CTA = "Ask for more information" as const
+
+export const RETREAT_ENQUIRY_INTEREST_LABEL = "I'm interested in:" as const
 
 export const RETREAT_ENQUIRY_NO_PURCHASE =
   "Submitting this form does not reserve a place or create a purchase." as const
@@ -44,7 +46,7 @@ export const RETREAT_INTEREST_OPTIONS = [
   { value: "", label: "Select an option" },
   { value: "rishikesh-2027", label: "Rishikesh 2027" },
   { value: "future-retreats", label: "Future retreats" },
-  { value: "private-event", label: "Private event" },
+  { value: "private-event", label: "Private events" },
 ] as const
 
 export type RetreatInterestValue =
