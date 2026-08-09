@@ -127,7 +127,7 @@ export const RETREATS_PRIVATE_EVENTS = {
   description:
     "Immersive in-person experiences combining breathwork, reflection, and restorative practices for individuals and private groups.",
   supportingText: "Upcoming dates and private events",
-  ctaLabel: "Enquire now",
+  ctaLabel: "Explore retreats",
   ctaHref: "/retreats",
 } as const
 

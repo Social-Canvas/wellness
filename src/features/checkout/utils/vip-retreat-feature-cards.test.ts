@@ -102,12 +102,12 @@ test("Retreats card does not render the old four benefit bullets", () => {
   assert.deepEqual([...RETREATS_CTA_FEATURES], [...RETREAT_OLD_BULLETS])
 })
 
-test("Retreat card uses Enquire now at /retreats without By enquiry", () => {
+test("Retreat card uses Explore retreats at /retreats without By enquiry", () => {
   assert.equal(
     RETREATS_PRIVATE_EVENTS.supportingText,
     "Upcoming dates and private events"
   )
-  assert.equal(RETREATS_PRIVATE_EVENTS.ctaLabel, "Enquire now")
+  assert.equal(RETREATS_PRIVATE_EVENTS.ctaLabel, "Explore retreats")
   assert.equal(RETREATS_PRIVATE_EVENTS.ctaHref, "/retreats")
   assert.equal("priceLabel" in RETREATS_PRIVATE_EVENTS, false)
 
