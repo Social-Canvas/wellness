@@ -62,15 +62,20 @@ test("editorial CtaBand hides feature lists and stacks action under status", () 
 
   assert.match(cta, /layout\?\: "default" \| "editorial"/)
   assert.match(cta, /isEditorial/)
-  assert.match(cta, /mt-auto/)
+  // Compact single stack — no mt-auto forcing price/CTA to card bottom.
+  assert.doesNotMatch(cta, /mt-auto/)
   assert.match(cta, /max-w-\[440px\]/)
-  assert.match(cta, /max-w-\[280px\]/)
+  assert.match(cta, /max-w-\[300px\]/)
+  assert.match(cta, /text-5xl/)
+  assert.match(cta, /text-\[2\.5rem\]/)
+  assert.match(cta, /justify-center/)
   assert.match(cta, /order-1/)
   assert.match(cta, /order-2/)
   assert.match(cta, /0\.45fr/)
   assert.match(cta, /0\.55fr/)
-  // Features render only when not editorial.
-  assert.match(cta, /!isEditorial && features\.length > 0/)
+  // Default layout still renders features; editorial path does not map them.
+  assert.match(cta, /features\.length > 0/)
+  assert.match(cta, /editorialStatusBlock/)
 })
 
 test("owner Access active uses Continue Reset Plan and canonical course href", () => {
