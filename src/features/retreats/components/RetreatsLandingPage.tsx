@@ -2,6 +2,8 @@ import { BrandImage } from "@/components/media"
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { buttonVariants } from "@/components/ui/button"
 import { LeadEnquiryForm } from "@/features/leads/components/LeadEnquiryForm"
+import { RetreatGalleryCarousel } from "@/features/retreats/components/RetreatGalleryCarousel"
+import { RETREAT_GALLERIES } from "@/features/retreats/constants/retreat-galleries"
 import { RETREATS_PAGE } from "@/features/retreats/constants/retreats-page"
 import { BRAND_IMAGES } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
@@ -10,41 +12,24 @@ type RetreatsLandingPageProps = {
   isAuthenticated: boolean
 }
 
-function NeutralBrandPanel() {
-  return (
-    <div
-      className="flex aspect-[4/3] w-full items-end bg-gradient-to-br from-cream via-green-soft/50 to-green/20 px-6 py-6"
-      aria-hidden
-    >
-      <span className="font-body text-[11px] font-bold uppercase tracking-[0.14em] text-green-deep">
-        Elevate Health
-      </span>
-    </div>
-  )
-}
-
 function PastRetreatCard({
   title,
   label,
   description,
-  imageKey,
+  galleryKey,
 }: {
   title: string
   label: string
   description: string
-  imageKey: (typeof RETREATS_PAGE.past.items)[number]["imageKey"]
+  galleryKey: (typeof RETREATS_PAGE.past.items)[number]["galleryKey"]
 }) {
   return (
     <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-[18px] border border-line bg-surface">
-      {imageKey ? (
-        <BrandImage
-          image={BRAND_IMAGES[imageKey]}
-          containerClassName="relative aspect-[4/3] w-full"
-          sizes="(max-width: 767px) 100vw, 40vw"
-        />
-      ) : (
-        <NeutralBrandPanel />
-      )}
+      <RetreatGalleryCarousel
+        label={title}
+        images={RETREAT_GALLERIES[galleryKey]}
+        sizes="(max-width: 767px) 100vw, 40vw"
+      />
       <div className="flex flex-1 flex-col px-6 py-6 min-[768px]:px-7 min-[768px]:py-7">
         <span className="font-body text-[11.5px] font-bold uppercase tracking-[0.12em] text-green-deep">
           {label}
@@ -198,7 +183,7 @@ function RetreatsLandingPage({ isAuthenticated }: RetreatsLandingPageProps) {
                 title={item.title}
                 label={item.label}
                 description={item.description}
-                imageKey={item.imageKey}
+                galleryKey={item.galleryKey}
               />
             ))}
           </div>

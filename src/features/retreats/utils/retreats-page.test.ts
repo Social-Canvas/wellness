@@ -5,6 +5,10 @@ import { test } from "node:test"
 import { fileURLToPath } from "node:url"
 
 import { RETREATS_PRIVATE_EVENTS } from "../../../lib/constants/elevate-brand.ts"
+import {
+  BALI_RETREAT_GALLERY,
+  SEDONA_RETREAT_GALLERY,
+} from "../constants/retreat-galleries.ts"
 import { RETREATS_PAGE } from "../constants/retreats-page.ts"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../../..")
@@ -17,7 +21,9 @@ const EM_DASH = "\u2014"
 
 const PUBLIC_RETREAT_SOURCES = [
   "src/features/retreats/constants/retreats-page.ts",
+  "src/features/retreats/constants/retreat-galleries.ts",
   "src/features/retreats/components/RetreatsLandingPage.tsx",
+  "src/features/retreats/components/RetreatGalleryCarousel.tsx",
   "src/features/leads/utils/retreat-enquiry.ts",
   "src/app/(public)/retreats/page.tsx",
 ] as const
@@ -40,7 +46,7 @@ test("2. Sedona appears as a past retreat", () => {
   const sedona = RETREATS_PAGE.past.items.find((item) => item.title === "Sedona")
   assert.ok(sedona)
   assert.equal(sedona?.label, "Past Retreat")
-  assert.equal(sedona?.imageKey, "sedonaRetreatLandscape")
+  assert.equal(sedona?.galleryKey, "sedona")
 })
 
 test("3. Sedona has no public date or logistics", () => {
@@ -56,7 +62,7 @@ test("4. Bali appears as a past retreat", () => {
   const bali = RETREATS_PAGE.past.items.find((item) => item.title === "Bali")
   assert.ok(bali)
   assert.equal(bali?.label, "Past Retreat")
-  assert.equal(bali?.imageKey, "founderTempleMeditation")
+  assert.equal(bali?.galleryKey, "bali")
 })
 
 test("5. No invented Bali details are rendered", () => {
@@ -98,8 +104,17 @@ test("8. Rishikesh appears as upcoming", () => {
   assert.equal(RETREATS_PAGE.upcoming.eyebrow, "UPCOMING")
 })
 
-test("9. March to April 2027 is displayed", () => {
-  assert.equal(RETREATS_PAGE.upcoming.timing, "March to April 2027")
+test("9. March or April 2027 timing is displayed without a date span", () => {
+  assert.equal(
+    RETREATS_PAGE.upcoming.timing,
+    "Planned for sometime in March or April 2027"
+  )
+  assert.match(RETREATS_PAGE.metaDescription, /March or April 2027/)
+  assert.doesNotMatch(RETREATS_PAGE.upcoming.timing, /March to April|March–April|March-April/)
+  assert.doesNotMatch(
+    RETREATS_PAGE.metaDescription,
+    /March to April|March–April|March-April/
+  )
 })
 
 test("10. No exact Rishikesh date, price, or booking CTA", () => {
@@ -210,4 +225,37 @@ test("Enquiry uses the existing safe lead backend", () => {
   const service = read("src/features/leads/services/leads.service.ts")
   assert.match(form, /submitLeadAction/)
   assert.match(service, /\.from\("leads"\)/)
+})
+
+test("Past retreats use authentic Sedona and Bali galleries", () => {
+  const landing = read("src/features/retreats/components/RetreatsLandingPage.tsx")
+  const carousel = read(
+    "src/features/retreats/components/RetreatGalleryCarousel.tsx"
+  )
+  assert.match(landing, /RetreatGalleryCarousel/)
+  assert.match(landing, /RETREAT_GALLERIES/)
+  assert.doesNotMatch(landing, /founderTempleMeditation/)
+  assert.equal(SEDONA_RETREAT_GALLERY[0]?.src.includes("/sedona/"), true)
+  assert.equal(BALI_RETREAT_GALLERY[0]?.src.includes("/bali/"), true)
+  assert.equal(
+    SEDONA_RETREAT_GALLERY[0]?.src,
+    "/brand/retreats/sedona/cathedral-rock.jpg"
+  )
+  assert.equal(
+    BALI_RETREAT_GALLERY[0]?.src,
+    "/brand/retreats/bali/meditation-lotus-waterfall.jpg"
+  )
+  assert.match(carousel, /prefers-reduced-motion/)
+  assert.match(carousel, /ArrowLeft|ArrowRight/)
+  assert.match(carousel, /onPointerDown/)
+  assert.doesNotMatch(carousel, /setInterval|autoplay/i)
+  assert.match(carousel, /aspect-\[4\/3\]/)
+})
+
+test("Retreats metadata exposes OG description with March or April 2027", () => {
+  const page = read("src/app/(public)/retreats/page.tsx")
+  assert.match(page, /openGraph/)
+  assert.match(page, /RETREATS_PAGE\.metaDescription/)
+  assert.doesNotMatch(page, /application\/ld\+json/)
+  assert.doesNotMatch(page, /March to April|March–April|March-April/)
 })

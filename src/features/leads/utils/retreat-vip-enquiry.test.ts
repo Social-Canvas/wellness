@@ -132,6 +132,8 @@ test("3. Retreat landing uses approved retreat imagery", () => {
   const route = retreatPageSource()
   assert.match(landing, /BRAND_IMAGES\.retreatRiver/)
   assert.match(landing, /BRAND_IMAGES\.retreatSpiritual/)
+  assert.match(landing, /RetreatGalleryCarousel/)
+  assert.doesNotMatch(landing, /founderTempleMeditation/)
   assert.doesNotMatch(route, /LeadPageShell/)
   assert.match(landing, /aspect-\[4\/5\]/)
 })
@@ -179,7 +181,8 @@ test("6. Retreat landing form CTA and copy render correctly", () => {
   assert.match(form, /RETREAT_INTEREST_OPTIONS/)
   assert.match(constants, /Step away\. Reconnect\. Return renewed\./)
   assert.match(constants, /Rishikesh 2027/)
-  assert.match(constants, /March to April 2027/)
+  assert.match(constants, /Planned for sometime in March or April 2027/)
+  assert.doesNotMatch(constants, /March to April 2027|March–April 2027|March-April 2027/)
   assert.doesNotMatch(constants, /\u2014/)
 })
 
@@ -267,7 +270,7 @@ test("10. Existing form submission behavior remains intact", () => {
     interest: "rishikesh-2027",
     location: "London",
   })
-  assert.match(message ?? "", /Interest: Rishikesh 2027/)
+  assert.match(message ?? "", /Interest: Rishikesh 2027 \(March or April 2027\)/)
   assert.match(message ?? "", /Location: London/)
   assert.match(message ?? "", /Looking for a weekend reset/)
   const metadata = buildRetreatEnquiryMetadata({

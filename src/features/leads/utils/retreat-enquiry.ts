@@ -44,7 +44,10 @@ export const RETREAT_ENQUIRY_SUCCESS_BODY =
 
 export const RETREAT_INTEREST_OPTIONS = [
   { value: "", label: "Select an option" },
-  { value: "rishikesh-2027", label: "Rishikesh 2027" },
+  {
+    value: "rishikesh-2027",
+    label: "Rishikesh 2027 (March or April 2027)",
+  },
   { value: "future-retreats", label: "Future retreats" },
   { value: "private-event", label: "Private events" },
 ] as const

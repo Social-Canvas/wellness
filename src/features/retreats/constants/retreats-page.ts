@@ -4,10 +4,12 @@
  * itineraries, or inclusions. Do not surface historical booking details.
  */
 
+import type { RetreatGalleryKey } from "./retreat-galleries"
+
 export const RETREATS_PAGE = {
   metaTitle: "Retreats",
   metaDescription:
-    "Explore Elevate retreat experiences and the upcoming Rishikesh retreat planned for March to April 2027.",
+    "Explore Elevate retreat experiences and the upcoming Rishikesh retreat planned for March or April 2027.",
 
   hero: {
     eyebrow: "ELEVATE RETREATS",
@@ -35,7 +37,7 @@ export const RETREATS_PAGE = {
         label: "Past Retreat",
         description:
           "A restorative retreat experience surrounded by Sedona's remarkable landscape, with space for breathwork, meditation, reflection, nature, and connection.",
-        imageKey: "sedonaRetreatLandscape" as const,
+        galleryKey: "sedona" as RetreatGalleryKey,
       },
       {
         id: "bali",
@@ -43,8 +45,7 @@ export const RETREATS_PAGE = {
         label: "Past Retreat",
         description:
           "An immersive retreat experience centered on stepping away from daily demands, creating space for reflection, connection, and renewal.",
-        /** Same asset as the homepage hero banner. */
-        imageKey: "founderTempleMeditation" as const,
+        galleryKey: "bali" as RetreatGalleryKey,
       },
     ],
   },
@@ -86,7 +87,7 @@ export const RETREATS_PAGE = {
     id: "rishikesh-2027",
     eyebrow: "UPCOMING",
     heading: "Rishikesh 2027",
-    timing: "March to April 2027",
+    timing: "Planned for sometime in March or April 2027",
     intro:
       "A new Elevate retreat experience is being planned for Rishikesh in 2027. Additional details, dates, and registration information will be shared as plans are finalized.",
     ctaLabel: "Ask for more information",
