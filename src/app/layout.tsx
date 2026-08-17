@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Mulish, Poppins } from "next/font/google";
-import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand";
-import { BRAND_LOGO_MARK } from "@/lib/brand/logo";
-import { getCanonicalAppUrl } from "@/lib/config/app-url";
+import { JsonLdScript } from "@/components/seo/json-ld-script";
+import {
+  SITE_SEO,
+  getPublicMetadataOrigin,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo/site-seo";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -18,12 +22,42 @@ const mulish = Mulish({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getCanonicalAppUrl()),
-  title: ELEVATE_BRAND.name,
-  description: ELEVATE_BRAND.tagline,
-  icons: {
-    icon: BRAND_LOGO_MARK.src,
-    apple: BRAND_LOGO_MARK.src,
+  metadataBase: new URL(getPublicMetadataOrigin()),
+  title: {
+    default: SITE_SEO.homeTitle,
+    template: `%s | ${SITE_SEO.siteName}`,
+  },
+  description: SITE_SEO.homeDescription,
+  applicationName: SITE_SEO.siteName,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_SEO.siteName,
+    locale: "en_US",
+    url: getPublicMetadataOrigin(),
+    title: SITE_SEO.homeTitle,
+    description: SITE_SEO.homeDescription,
+    images: [
+      {
+        url: SITE_SEO.ogImage.path,
+        width: SITE_SEO.ogImage.width,
+        height: SITE_SEO.ogImage.height,
+        alt: SITE_SEO.ogImage.alt,
+      },
+    ],
+  },
+  twitter: {
+    card: SITE_SEO.twitterCard,
+    title: SITE_SEO.homeTitle,
+    description: SITE_SEO.homeDescription,
+    images: [
+      {
+        url: SITE_SEO.ogImage.path,
+        alt: SITE_SEO.ogImage.alt,
+      },
+    ],
   },
 };
 
@@ -37,7 +71,11 @@ export default function RootLayout({
       lang="en"
       className={`${poppins.variable} ${mulish.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-body">{children}</body>
+      <body className="min-h-full flex flex-col font-body">
+        <JsonLdScript data={organizationJsonLd()} />
+        <JsonLdScript data={websiteJsonLd()} />
+        {children}
+      </body>
     </html>
   );
 }

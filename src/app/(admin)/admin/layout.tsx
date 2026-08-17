@@ -14,6 +14,7 @@ import { countNewLeads } from "@/features/leads/services/admin-leads.service"
 export const metadata: Metadata = {
   title: "Admin",
   description: "Platform administration.",
+  robots: { index: false, follow: false },
 }
 
 export default async function AdminLayout({

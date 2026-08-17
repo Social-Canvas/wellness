@@ -27,7 +27,6 @@ import { isConfiguredStripePriceId } from "@/server/integrations/stripe/mode"
 import { buildLiveBreathworkOfferView } from "@/features/checkout/utils/live-breathwork-offer-state"
 import {
   BREATHWORK_ROADMAP,
-  ELEVATE_BRAND,
   ELEVATE_PROGRAM_OFFERS,
   RESET_PLAN,
   RETREATS_PRIVATE_EVENTS,
@@ -42,13 +41,15 @@ import {
   listTrialOpenLiveSessions,
 } from "@/features/live-sessions/services/live-sessions.service"
 import { getEffectiveMembership } from "@/server/services/membership.service"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
 
-export const metadata: Metadata = {
-  title: `Programs & Memberships | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Programs & Memberships",
   description:
     "Reset Plan entry offer, Elevate Core, Gold, and Platinum memberships: a progressive breathwork and nervous system healing journey.",
-}
+  path: "/programs",
+})
 
 const PROGRAMS_NAV = [
   { label: "Start here", href: "#reset-plan" },

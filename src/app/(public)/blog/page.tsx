@@ -3,14 +3,14 @@ import type { Metadata } from "next"
 import { BlogArticleGrid } from "@/components/marketing/blog-article-grid"
 import { Container, Section, SectionHeader } from "@/components/layout"
 import { getAllBlogArticles } from "@/content/blog"
-import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 
-export const metadata: Metadata = {
-  title: `Insights | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Insights",
   description:
     "Evidence-informed articles on nervous system regulation, functional medicine, breathwork, and root-cause healing.",
-  alternates: { canonical: "/blog" },
-}
+  path: "/blog",
+})
 
 export default function BlogPage() {
   const articles = getAllBlogArticles()

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { TrialLiveSessionCard } from "@/features/live-sessions/components/LiveSessionCards"
@@ -17,12 +18,14 @@ import {
   isLiveBreathworkTrialPriceApproved,
 } from "@/lib/constants/live-breathwork-trial"
 import { getEffectiveMembership } from "@/server/services/membership.service"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 
-export const metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Live Breathwork Trial",
   description:
     "One-time Live Breathwork trial for a selected upcoming Elevate session.",
-}
+  path: "/live-breathwork",
+})
 
 function cardModeFromState(
   state: LiveBreathworkOfferState

@@ -176,9 +176,14 @@ test("10. Footer includes For Nonprofits once via public nav links", () => {
   assert.match(footer, /aria-label="Legal"/)
 })
 
-test("11. Sitemap includes /nonprofits", () => {
+test("11. Sitemap includes /nonprofits and excludes free-taster", () => {
   const sitemap = readSrc("app/sitemap.ts")
+  const robots = readSrc("app/robots.ts")
   assert.match(sitemap, /\/nonprofits/)
+  assert.match(sitemap, /getPublicMetadataOrigin/)
+  assert.doesNotMatch(sitemap, /\/free-taster/)
+  assert.match(robots, /sitemap\.xml/)
+  assert.match(robots, /\/admin\//)
 })
 
 test("12. Public app-owned marketing copy has no em dash", () => {

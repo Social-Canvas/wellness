@@ -37,7 +37,8 @@ function stripComments(source: string): string {
 test("1. Retreats page renders", () => {
   const page = read("src/app/(public)/retreats/page.tsx")
   assert.match(page, /RetreatsLandingPage/)
-  assert.match(page, /canonical: "\/retreats"/)
+  assert.match(page, /path: "\/retreats"/)
+  assert.match(page, /buildPublicPageMetadata/)
   assert.doesNotMatch(page, /RetreatEnquiryPage/)
   assert.equal(RETREATS_PAGE.metaTitle, "Retreats")
 })
@@ -254,7 +255,7 @@ test("Past retreats use authentic Sedona and Bali galleries", () => {
 
 test("Retreats metadata exposes OG description with March or April 2027", () => {
   const page = read("src/app/(public)/retreats/page.tsx")
-  assert.match(page, /openGraph/)
+  assert.match(page, /buildPublicPageMetadata/)
   assert.match(page, /RETREATS_PAGE\.metaDescription/)
   assert.doesNotMatch(page, /application\/ld\+json/)
   assert.doesNotMatch(page, /March to April|March–April|March-April/)

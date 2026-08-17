@@ -24,13 +24,15 @@ import { parseBillingParam } from "@/features/checkout/utils/membership-billing"
 import { VideoTestimonialsSection } from "@/features/marketing-testimonials"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
+import { SITE_SEO, buildPublicPageMetadata } from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
 
-export const metadata: Metadata = {
-  title: `${ELEVATE_BRAND.name} | Functional Medicine & Breathwork`,
-  description:
-    "Science + soul for nervous system regulation, functional medicine, and root-cause healing with Dr. Deepa Pattani.",
-}
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: SITE_SEO.homeTitle,
+  description: SITE_SEO.homeDescription,
+  path: "/",
+  absoluteTitle: true,
+})
 
 const HERO_EYEBROW = ELEVATE_BRAND.philosophy
 

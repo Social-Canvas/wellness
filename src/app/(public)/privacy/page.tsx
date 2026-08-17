@@ -3,11 +3,13 @@ import Link from "next/link"
 
 import { Container, Section } from "@/components/layout"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 
-export const metadata: Metadata = {
-  title: `Privacy Policy | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Privacy Policy",
   description: `How ${ELEVATE_BRAND.name} collects and uses information submitted through our website.`,
-}
+  path: "/privacy",
+})
 
 export default function PrivacyPolicyPage() {
   return (

@@ -18,7 +18,8 @@ import {
   NONPROFIT_SUPPORTING_NOTE,
   buildNonprofitMembershipBenefits,
 } from "@/features/checkout/utils/membership-audience"
-import { ELEVATE_BRAND, ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
+import { ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
 
 const platinumFeatures =
@@ -26,14 +27,12 @@ const platinumFeatures =
 
 const partnershipBenefits = buildNonprofitMembershipBenefits(platinumFeatures)
 
-export const metadata: Metadata = {
-  title: `Nonprofit Partnerships | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Nonprofit Partnerships",
   description:
     "Explore Elevate nonprofit partnerships that provide sponsored access to programs, live sessions, recorded resources, and supportive wellness experiences.",
-  alternates: {
-    canonical: "/nonprofits",
-  },
-}
+  path: "/nonprofits",
+})
 
 export default function NonprofitsLandingPage() {
   const benefits =

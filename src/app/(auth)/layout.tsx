@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/layout/brand-logo"
 
 export const metadata: Metadata = {
   title: "Account",
+  robots: { index: false, follow: false },
 }
 
 export default function AuthLayout({ children }: { children: ReactNode }) {

@@ -5,12 +5,14 @@ import { Container, Section } from "@/components/layout"
 import { BrandImage } from "@/components/media"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
+import { JsonLdScript } from "@/components/seo/json-ld-script"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import {
   PUBLIC_FACEBOOK_GROUP_LINK,
   PUBLIC_SOCIAL_PROFILE_LINKS,
 } from "@/lib/constants/social-links"
 import { BRAND_IMAGES } from "@/lib/brand/images"
+import { buildPublicPageMetadata, personJsonLd } from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
 
 const ABOUT_SOCIAL_LINK_LABELS = {
@@ -20,11 +22,12 @@ const ABOUT_SOCIAL_LINK_LABELS = {
   facebookCommunity: "Facebook community",
 } as const
 
-export const metadata: Metadata = {
-  title: `About | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "About",
   description:
     "Meet Dr. Deepa Pattani, Doctor of Pharmacy, functional medicine specialist, and founder of Elevate Health Solutions.",
-}
+  path: "/about",
+})
 
 const CREDENTIALS = [
   "Doctor of Pharmacy",
@@ -58,6 +61,7 @@ const APPROACH_PILLARS = [
 export default function AboutPage() {
   return (
     <main>
+      <JsonLdScript data={personJsonLd()} />
       <Section padding="default">
         <Container>
           <div className="grid items-center gap-12 min-[861px]:grid-cols-[1.05fr_0.95fr]">

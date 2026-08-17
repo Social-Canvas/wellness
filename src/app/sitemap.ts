@@ -1,13 +1,10 @@
 import type { MetadataRoute } from "next"
 
 import { getAllBlogArticles } from "@/content/blog"
+import { getPublicMetadataOrigin } from "@/lib/seo/site-seo"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "https://elevate-healthsolutions.com"
-  ).replace(/\/$/, "")
+  const baseUrl = getPublicMetadataOrigin()
 
   const paths = [
     "/",
@@ -24,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ] as const
 
   const staticEntries = paths.map((path) => ({
-    url: `${baseUrl}${path}`,
+    url: `${baseUrl}${path === "/" ? "" : path}`,
     lastModified: new Date(),
     changeFrequency:
       path === "/" || path === "/nonprofits"

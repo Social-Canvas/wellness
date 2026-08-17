@@ -6,15 +6,16 @@ import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import { ShopProductGrid } from "@/features/shop/components"
 import { listShopCatalogProducts } from "@/features/shop/services/shop.service"
 import {
-  ELEVATE_BRAND,
   ELEVATE_SHOP_COPY,
 } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 
-export const metadata: Metadata = {
-  title: `Shop | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Shop",
   description: ELEVATE_SHOP_COPY.description,
-}
+  path: "/shop",
+})
 
 export default async function ShopPage() {
   const profileResult = await getCurrentProfile()

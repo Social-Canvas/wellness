@@ -14,6 +14,7 @@ import { DashboardShell } from "@/features/dashboard/components"
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "Your member dashboard.",
+  robots: { index: false, follow: false },
 }
 
 export default async function DashboardLayout({

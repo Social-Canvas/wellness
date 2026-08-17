@@ -22,6 +22,36 @@ export function getBlogArticle(slug: string): BlogArticle | undefined {
   return getAllBlogArticles().find((article) => article.slug === slug)
 }
 
+function firstParagraphText(article: BlogArticle): string | null {
+  const block = article.content.find((item) => item.type === "paragraph")
+  if (!block || block.type !== "paragraph") {
+    return null
+  }
+  const text = block.text.trim()
+  return text || null
+}
+
+/** SEO/social description: stored excerpt when present, otherwise the opening paragraph. */
+export function getBlogArticleSeoDescription(article: BlogArticle): string {
+  const excerpt = article.excerpt.replace(/^[:\s]+/, "").trim()
+  if (excerpt) {
+    return excerpt
+  }
+
+  const opening = firstParagraphText(article)
+  if (opening) {
+    if (opening.length <= 220) {
+      return opening
+    }
+    const cut = opening.slice(0, 217)
+    const lastSpace = cut.lastIndexOf(" ")
+    const clipped = cut.slice(0, lastSpace > 140 ? lastSpace : 217).trim()
+    return `${clipped}...`
+  }
+
+  return article.title
+}
+
 export function getBlogArticlesByCategory(
   category: BlogCategoryFilter
 ): BlogArticle[] {

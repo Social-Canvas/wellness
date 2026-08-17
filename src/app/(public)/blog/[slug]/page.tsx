@@ -6,13 +6,19 @@ import { BackButton } from "@/components/layout"
 import { Container, Section } from "@/components/layout"
 import { BrandImage } from "@/components/media"
 import { buttonVariants } from "@/components/ui/button"
+import { JsonLdScript } from "@/components/seo/json-ld-script"
 import {
   formatBlogPublishedDate,
   getAllBlogArticles,
   getBlogArticle,
+  getBlogArticleSeoDescription,
 } from "@/content/blog"
 import { resolveBlogArticleCoverImage } from "@/lib/brand/images"
-import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
+import {
+  SITE_SEO,
+  articleJsonLd,
+  buildPublicPageMetadata,
+} from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
 
 interface BlogArticlePageProps {
@@ -34,20 +40,28 @@ export async function generateMetadata({
   }
 
   const canonical = `/blog/${article.slug}`
+  const description = getBlogArticleSeoDescription(article)
+  const cover = resolveBlogArticleCoverImage(article)
+  const image = article.coverImage
+    ? { url: cover.src, alt: cover.alt }
+    : {
+        url: SITE_SEO.ogImage.path,
+        width: SITE_SEO.ogImage.width,
+        height: SITE_SEO.ogImage.height,
+        alt: SITE_SEO.ogImage.alt,
+      }
 
-  return {
-    title: `${article.title} | ${ELEVATE_BRAND.name}`,
-    description: article.excerpt,
-    alternates: { canonical },
-    openGraph: {
-      title: article.title,
-      description: article.excerpt,
-      type: "article",
-      url: canonical,
-      images: article.coverImage ? [{ url: article.coverImage }] : undefined,
-      publishedTime: article.publishedAt,
-    },
-  }
+  return buildPublicPageMetadata({
+    title: article.title,
+    description,
+    path: canonical,
+    ogType: "article",
+    publishedTime: article.publishedAt
+      ? `${article.publishedAt}T12:00:00.000Z`
+      : undefined,
+    authors: [article.author],
+    image,
+  })
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
@@ -59,9 +73,20 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
   }
 
   const published = formatBlogPublishedDate(article.publishedAt)
+  const cover = resolveBlogArticleCoverImage(article)
 
   return (
     <main>
+      <JsonLdScript
+        data={articleJsonLd({
+          title: article.title,
+          description: getBlogArticleSeoDescription(article),
+          path: `/blog/${article.slug}`,
+          publishedAt: article.publishedAt,
+          author: article.author,
+          imagePath: article.coverImage ?? SITE_SEO.ogImage.path,
+        })}
+      />
       <Section padding="default">
         <Container size="prose">
           <div className="mb-4">
@@ -81,7 +106,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
             </p>
 
             <BrandImage
-              image={resolveBlogArticleCoverImage(article)}
+              image={cover}
               containerClassName="mb-6 aspect-[16/8] min-h-[220px] w-full overflow-hidden rounded-[14px] border border-line"
               sizes="(max-width: 860px) 100vw, 740px"
             />

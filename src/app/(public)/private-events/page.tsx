@@ -5,14 +5,15 @@ import { LeadPageShell } from "@/features/leads/components/LeadPageShell"
 import { NonprofitPartnershipEnquiryPage } from "@/features/leads/components/NonprofitPartnershipEnquiryPage"
 import { NONPROFIT_ENQUIRY_INTENT } from "@/features/leads/utils/nonprofit-enquiry"
 import { getCurrentUser } from "@/features/auth/services/auth.service"
-import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import { BRAND_IMAGES } from "@/lib/brand/images"
+import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 
-export const metadata: Metadata = {
-  title: `Private Events | ${ELEVATE_BRAND.name}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Private Events",
   description:
     "Enquire about private breathwork, sound healing, and bespoke Elevate events.",
-}
+  path: "/private-events",
+})
 
 type PrivateEventsPageProps = {
   searchParams: Promise<{
