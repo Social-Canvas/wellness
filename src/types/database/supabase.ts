@@ -415,6 +415,59 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_consents: {
+        Row: {
+          consented_at: string
+          created_at: string
+          email: string
+          id: string
+          kit_last_sync_error: string | null
+          kit_subscriber_id: number | null
+          kit_sync_status: Database["public"]["Enums"]["kit_sync_status"]
+          source: string
+          status: Database["public"]["Enums"]["marketing_consent_status"]
+          unsubscribed_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          consented_at?: string
+          created_at?: string
+          email: string
+          id?: string
+          kit_last_sync_error?: string | null
+          kit_subscriber_id?: number | null
+          kit_sync_status?: Database["public"]["Enums"]["kit_sync_status"]
+          source: string
+          status?: Database["public"]["Enums"]["marketing_consent_status"]
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          consented_at?: string
+          created_at?: string
+          email?: string
+          id?: string
+          kit_last_sync_error?: string | null
+          kit_subscriber_id?: number | null
+          kit_sync_status?: Database["public"]["Enums"]["kit_sync_status"]
+          source?: string
+          status?: Database["public"]["Enums"]["marketing_consent_status"]
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           created_at: string
@@ -1514,6 +1567,7 @@ export type Database = {
       certificate_name_set_source: "signup" | "onboarding" | "admin_correction"
       content_type: "course" | "module" | "lesson" | "video"
       ghl_sync_status: "pending" | "synced" | "failed"
+      kit_sync_status: "pending" | "synced" | "failed" | "skipped"
       integration_job_status: "pending" | "processing" | "completed" | "failed"
       integration_job_type:
         | "ghl_sync"
@@ -1530,6 +1584,7 @@ export type Database = {
         | "contact"
       lead_status: "new" | "contacted" | "qualified" | "closed"
       lead_notification_status: "pending" | "sent" | "failed" | "skipped"
+      marketing_consent_status: "active" | "unsubscribed"
       live_class_access:
         | "public"
         | "authenticated"
@@ -1719,6 +1774,7 @@ export const Constants = {
       certificate_name_set_source: ["signup", "onboarding", "admin_correction"],
       content_type: ["course", "module", "lesson", "video"],
       ghl_sync_status: ["pending", "synced", "failed"],
+      kit_sync_status: ["pending", "synced", "failed", "skipped"],
       integration_job_status: ["pending", "processing", "completed", "failed"],
       integration_job_type: [
         "ghl_sync",
@@ -1737,6 +1793,7 @@ export const Constants = {
       ],
       lead_status: ["new", "contacted", "qualified", "closed"],
       lead_notification_status: ["pending", "sent", "failed", "skipped"],
+      marketing_consent_status: ["active", "unsubscribed"],
       live_class_access: [
         "public",
         "authenticated",

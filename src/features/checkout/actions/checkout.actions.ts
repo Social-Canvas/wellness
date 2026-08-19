@@ -7,6 +7,8 @@ import type { ActionResult } from "@/features/auth/services/auth.service"
 import { createCheckoutSession } from "@/features/billing/services/billing.service"
 import { createProductCheckoutSession } from "@/features/shop/services/shop.service"
 
+import { recordCheckoutMarketingConsent } from "@/server/services/marketing-consent.service"
+
 import { checkoutConsentSchema } from "../schemas/consent"
 import { resolveCheckoutConsentContext } from "../services/checkout.service"
 
@@ -41,6 +43,22 @@ export async function proceedToCheckoutAction(
 
   if (!contextResult.success) {
     return contextResult
+  }
+
+  if (parsed.data.marketingOptIn) {
+    try {
+      await recordCheckoutMarketingConsent({
+        email: parsed.data.email,
+        userId: profileResult.data.id,
+        fullName: parsed.data.fullName,
+        source:
+          parsed.data.type === "membership"
+            ? "checkout_membership"
+            : "checkout_product",
+      })
+    } catch {
+      // Marketing consent and Kit sync must never block checkout.
+    }
   }
 
   if (parsed.data.type === "membership") {

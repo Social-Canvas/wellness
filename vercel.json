@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/transactional-email",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/kit-consent-sync",
+      "schedule": "*/30 * * * *"
     }
   ]
 }
