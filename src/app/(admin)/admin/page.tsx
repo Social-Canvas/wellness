@@ -1,40 +1,54 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
+import type { Metadata } from "next"
 
-export default function AdminPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-display text-[28px] font-medium text-ink">
-          Dashboard
-        </h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Overview and quick links for platform management.
-        </p>
-      </div>
+import {
+  SalesOverviewDashboard,
+  SalesOverviewToolbar,
+} from "@/features/admin-sales/components"
+import { getSalesOverview } from "@/features/admin-sales/services/sales-overview.service"
+import { parseSalesOverviewSearchParams } from "@/features/admin-sales/utils/parse-search-params"
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg font-medium">
-            Admin overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-ink-soft">
-          <p>
-            This is a placeholder for the admin home. Plans, courses, products,
-            members, and other management tools will be added in upcoming
-            sprints.
+export const metadata: Metadata = {
+  title: "Admin · Sales & Membership",
+  robots: { index: false, follow: false },
+}
+
+type AdminPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const params = await searchParams
+  const query = parseSalesOverviewSearchParams(params)
+  const result = await getSalesOverview(query)
+
+  if (!result.success) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-display text-[28px] font-medium text-ink">
+            Sales &amp; Membership Overview
+          </h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Business numbers for Elevate sales and memberships.
           </p>
-        </CardContent>
-      </Card>
-
-      <div className="rounded-2xl border border-dashed border-line bg-cream2/50 px-6 py-10 text-center">
-        <p className="font-display text-lg font-medium text-ink">
-          No admin data yet
-        </p>
-        <p className="mt-2 text-sm text-ink-soft">
-          Use the sidebar to navigate sections as they are implemented.
-        </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-surface px-6 py-6">
+          <p className="text-sm text-destructive">{result.error.message}</p>
+        </div>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <SalesOverviewDashboard
+      snapshot={result.data}
+      toolbar={
+        <SalesOverviewToolbar
+          snapshot={result.data}
+          from={query.from}
+          to={query.to}
+        />
+      }
+    />
   )
 }
