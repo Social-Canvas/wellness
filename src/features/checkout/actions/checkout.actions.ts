@@ -1,7 +1,5 @@
 "use server"
 
-import { redirect } from "next/navigation"
-
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import { createCheckoutSession } from "@/features/billing/services/billing.service"
@@ -12,9 +10,19 @@ import { recordCheckoutMarketingConsent } from "@/server/services/marketing-cons
 import { checkoutConsentSchema } from "../schemas/consent"
 import { resolveCheckoutConsentContext } from "../services/checkout.service"
 
+export type CheckoutRedirectPayload = {
+  url: string
+  analytics: {
+    itemId: string
+    itemName: string
+    value: number | null
+    currency: string | null
+  }
+}
+
 export async function proceedToCheckoutAction(
   input: unknown
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<CheckoutRedirectPayload>> {
   const parsed = checkoutConsentSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -81,7 +89,21 @@ export async function proceedToCheckoutAction(
       return checkoutResult
     }
 
-    redirect(checkoutResult.data.url)
+    return {
+      success: true,
+      data: {
+        url: checkoutResult.data.url,
+        analytics: {
+          itemId: contextResult.data.itemId,
+          itemName: contextResult.data.itemName,
+          value:
+            contextResult.data.valueCents === null
+              ? null
+              : contextResult.data.valueCents / 100,
+          currency: contextResult.data.currency,
+        },
+      },
+    }
   }
 
   if (!contextResult.data.productId) {
@@ -102,5 +124,19 @@ export async function proceedToCheckoutAction(
     return checkoutResult
   }
 
-  redirect(checkoutResult.data.url)
+  return {
+    success: true,
+    data: {
+      url: checkoutResult.data.url,
+      analytics: {
+        itemId: contextResult.data.itemId,
+        itemName: contextResult.data.itemName,
+        value:
+          contextResult.data.valueCents === null
+            ? null
+            : contextResult.data.valueCents / 100,
+        currency: contextResult.data.currency,
+      },
+    },
+  }
 }

@@ -8,7 +8,7 @@ import {
   resetEnquiryRateLimitStateForTests,
 } from "./enquiry-rate-limit.ts"
 
-test("enquiry rate limit allows submissions under the cap", () => {
+test("enquiry rate limit allows submissions under the email burst cap", () => {
   resetEnquiryRateLimitStateForTests()
   const email = "person@example.com"
   const ip = "203.0.113.10"
@@ -22,7 +22,7 @@ test("enquiry rate limit allows submissions under the cap", () => {
   assert.equal(isEnquiryRateLimited(email, ip), true)
 })
 
-test("enquiry rate limit is scoped by email and ip", () => {
+test("enquiry burst is keyed independently by email and ip", () => {
   resetEnquiryRateLimitStateForTests()
   const email = "person@example.com"
 
@@ -31,11 +31,19 @@ test("enquiry rate limit is scoped by email and ip", () => {
   }
 
   assert.equal(isEnquiryRateLimited(email, "203.0.113.1"), true)
-  assert.equal(isEnquiryRateLimited(email, "203.0.113.2"), false)
+  assert.equal(isEnquiryRateLimited(email, "203.0.113.2"), true)
   assert.equal(isEnquiryRateLimited("other@example.com", "203.0.113.1"), false)
+
+  for (let i = 0; i < ENQUIRY_RATE_LIMIT.maxIpBurst; i += 1) {
+    recordEnquiryAttempt(`burst${i}@example.com`, "203.0.113.8")
+  }
+  assert.equal(
+    isEnquiryRateLimited("fresh@example.com", "203.0.113.8"),
+    true
+  )
 })
 
-test("enquiry rate limit window resets after expiry", () => {
+test("enquiry burst window resets after 15 minutes", () => {
   resetEnquiryRateLimitStateForTests()
   const email = "person@example.com"
   const ip = "203.0.113.9"

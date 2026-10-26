@@ -18,6 +18,12 @@ export type LeadType = (typeof LEAD_TYPES)[number]
  */
 export const ENQUIRY_HONEYPOT_FIELD = "companyUrl" as const
 
+export function isHoneypotTriggered(
+  value: string | null | undefined
+): boolean {
+  return Boolean(value?.trim())
+}
+
 export const submitLeadSchema = z.object({
   leadType: z.enum(LEAD_TYPES),
   name: z.string().trim().min(1, "Name is required.").max(120, "Name is too long."),
@@ -57,12 +63,7 @@ export const submitLeadSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),
   /** Anti-spam honeypot — must be empty for real humans. */
   [ENQUIRY_HONEYPOT_FIELD]: z.string().max(200).optional().nullable(),
+  turnstileToken: z.string().max(4000).optional().nullable(),
 })
 
 export type SubmitLeadInput = z.infer<typeof submitLeadSchema>
-
-export function isHoneypotTriggered(
-  value: string | null | undefined
-): boolean {
-  return Boolean(value?.trim())
-}

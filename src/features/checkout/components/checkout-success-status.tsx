@@ -6,6 +6,8 @@ import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
 import { pollCheckoutFulfillmentAction } from "@/features/checkout/actions/checkout-success.actions"
+import type { CheckoutPurchaseAnalytics } from "@/features/checkout/utils/checkout-success-state"
+import { trackPurchaseOnce } from "@/lib/analytics/client"
 import { cn } from "@/lib/utils"
 
 const POLL_INTERVAL_MS = 2000
@@ -19,6 +21,7 @@ type CheckoutSuccessStatusProps = {
   destinationHref: string | null
   destinationLabel: string | null
   autoRedirect: boolean
+  purchaseAnalytics: CheckoutPurchaseAnalytics | null
 }
 
 export function CheckoutSuccessStatus({
@@ -29,12 +32,14 @@ export function CheckoutSuccessStatus({
   destinationHref,
   destinationLabel,
   autoRedirect,
+  purchaseAnalytics,
 }: CheckoutSuccessStatusProps) {
   const router = useRouter()
   const [state, setState] = useState(initialState)
   const [message, setMessage] = useState(initialMessage)
   const [href, setHref] = useState(destinationHref)
   const [label, setLabel] = useState(destinationLabel)
+  const [analytics, setAnalytics] = useState(purchaseAnalytics)
   const [timedOut, setTimedOut] = useState(false)
   const [isPending, startTransition] = useTransition()
   const startedAt = useRef(0)
@@ -43,6 +48,19 @@ export function CheckoutSuccessStatus({
   useEffect(() => {
     startedAt.current = Date.now()
   }, [])
+
+  useEffect(() => {
+    if (state !== "fulfilled" || !analytics?.transactionId) {
+      return
+    }
+    trackPurchaseOnce({
+      transactionId: analytics.transactionId,
+      itemId: analytics.itemId,
+      itemName: analytics.itemName,
+      value: analytics.value,
+      currency: analytics.currency,
+    })
+  }, [state, analytics])
 
   useEffect(() => {
     if (state === "fulfilled" && autoRedirect && href && !redirected.current) {
@@ -80,6 +98,7 @@ export function CheckoutSuccessStatus({
           setState("fulfilled")
           setMessage("Payment successful. Your access is ready.")
           setHref(result.data.destinationHref)
+          setAnalytics(result.data.purchaseAnalytics)
           if (result.data.destinationHref) {
             setLabel(label ?? "Continue")
           }

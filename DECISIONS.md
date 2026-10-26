@@ -331,3 +331,27 @@ Format:
 **Alternatives considered:** Env-only `STRIPE_PRICE_*` registry; fake paid orders for testers; granting a membership plan solely to unlock the course.
 
 **Status:** Accepted
+
+---
+
+## 2026-10-25 — GTM-only analytics, no standalone GA4
+
+**Decision:** Insert Google Tag Manager container `GTM-54JKK6HG` once in the App Router root layout (script + noscript). Push `signup`, `lead`, `begin_checkout`, and `purchase` through a typed `dataLayer` helper. Fire `purchase` only after local paid fulfillment is confirmed, and dedupe by Stripe checkout session id.
+
+**Reason:** Client analytics is owned by one GTM container that already includes GA4. A second gtag/GA4 snippet would double-count. Success-URL-only purchase events are spoofable and race the webhook.
+
+**Alternatives considered:** Direct GA4 gtag; server-side Measurement Protocol; firing purchase from the Stripe success URL before webhook confirmation.
+
+**Status:** Accepted
+
+---
+
+## 2026-10-25 — Layered bot protection with review flags, no production bulk writes
+
+**Decision:** Keep honeypot + Zod + in-memory burst fallback; persist public-form rate limits in `public.public_form_rate_limits` (hashed email AND hashed IP, append-only, service-role RLS). Lead/retreat: 3 email / 15 min and 3 email / 24 h; 5 IP / 15 min and 5 IP / 1 h. Signup and auth-email forms get the same helper with slightly looser 24 h caps. Optional Cloudflare Turnstile (skip when `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` unset). Reject the Sep 2026 `/retreats` spam fingerprint at submit time (10-character alphanumeric name/location with a digit and no spaces; ~55-character letters+digits user-typed body with no spaces; strip `Interest:` / `Location:` prefixes). Non-destructive `suspected_bot` columns with an admin review UI and dry-run report. Do not auto-UPDATE existing production rows.
+
+**Reason:** Phase 0 origin audit: **0** high-confidence bot accounts; **44 / 44** retreat leads are external public-form spam, not internal tests. In-memory 5/15-min limits were bypassed on Vercel serverless, and a 15-minute window would not have stopped 6–7 repeats of the same email over days. Unique one-off emails still need fingerprint + Turnstile. Unconfirmed signups are more consistent with email confirmation plus deliverability. Bulk flagging accounts would have a high false-positive cost.
+
+**Alternatives considered:** Always-on Turnstile; auto-flagging unconfirmed Gmail accounts; deleting suspected rows; counting `leads` rows only (misses IP, blocked attempts, and signup); treating inactivity as bot evidence; blocking every 10-letter name (too many false positives).
+
+**Status:** Accepted

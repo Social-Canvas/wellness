@@ -6,6 +6,7 @@ import { useState } from "react"
 
 import { Button, Card, CardContent, Input, Label } from "@/components/ui"
 import { proceedToCheckoutAction } from "@/features/checkout/actions/checkout.actions"
+import { redirectToCheckout } from "@/lib/analytics/client"
 import {
   CHECKOUT_COUPON_NOTE,
   EDUCATIONAL_DISCLAIMER,
@@ -66,7 +67,14 @@ export function CheckoutConsentForm({
       }
 
       setError(result.error.message)
+      return
     }
+
+    if (result.data.url.startsWith("http")) {
+      redirectToCheckout(result.data.url, result.data.analytics)
+      return
+    }
+    window.location.assign(result.data.url)
   }
 
   return (

@@ -12,6 +12,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Recorded Sessions", href: "/admin/recorded-sessions" },
   { label: "Products", href: "/admin/products" },
   { label: "Members", href: "/admin/members" },
+  { label: "Bot review", href: "/admin/bots" },
   { label: "Nonprofits", href: "/dashboard/nonprofit" },
   { label: "Certificates", href: "/admin/certificates" },
   { label: "Bookings", href: "/admin/bookings" },

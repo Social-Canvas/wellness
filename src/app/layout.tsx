@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Mulish, Poppins } from "next/font/google";
+import {
+  GoogleTagManagerNoscript,
+  GoogleTagManagerScript,
+} from "@/components/analytics/google-tag-manager";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
+import { TurnstileConfigProvider } from "@/features/bot-protection/components/turnstile-config";
+import { getTurnstileConfig } from "@/features/bot-protection/utils/turnstile";
 import {
   SITE_SEO,
   getPublicMetadataOrigin,
@@ -66,15 +72,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const turnstileSiteKey = getTurnstileConfig().siteKey
+
   return (
     <html
       lang="en"
       className={`${poppins.variable} ${mulish.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body">
+        <GoogleTagManagerNoscript />
+        <GoogleTagManagerScript />
         <JsonLdScript data={organizationJsonLd()} />
         <JsonLdScript data={websiteJsonLd()} />
-        {children}
+        <TurnstileConfigProvider siteKey={turnstileSiteKey}>
+          {children}
+        </TurnstileConfigProvider>
       </body>
     </html>
   );

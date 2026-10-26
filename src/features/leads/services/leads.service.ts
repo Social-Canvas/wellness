@@ -28,6 +28,8 @@ import {
   isMissingLeadsSchemaError,
 } from "@/features/leads/utils/leads-schema-errors"
 import { insertLeadWithSchemaFallback } from "@/features/leads/utils/legacy-lead-insert"
+import { consumePublicFormRateLimit } from "@/features/bot-protection/services/public-form-rate-limit.service"
+import { LEAD_RATE_LIMIT_POLICY } from "@/features/bot-protection/utils/durable-rate-limit"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/types/database/supabase"
 import {
@@ -165,9 +167,21 @@ async function defaultPersistNotificationStatuses(input: {
   }
 }
 
+async function defaultConsumeLeadRateLimit(
+  email: string,
+  ip: string
+): Promise<"ok" | "limited"> {
+  return consumePublicFormRateLimit({
+    policy: LEAD_RATE_LIMIT_POLICY,
+    email,
+    ip,
+  })
+}
+
 function buildDeps(options: SubmitLeadOptions): EnquirySubmissionDeps {
   return {
     clientIp: options.clientIp,
+    consumeRateLimit: defaultConsumeLeadRateLimit,
     insertLead: options.insertLead ?? defaultInsertLead,
     updateNotificationStatuses:
       options.updateNotificationStatuses ?? defaultPersistNotificationStatuses,
@@ -177,6 +191,12 @@ function buildDeps(options: SubmitLeadOptions): EnquirySubmissionDeps {
       options.sendVisitorAcknowledgement ?? sendEnquiryVisitorAcknowledgement,
     onHoneypot: (info) => {
       logger.info("Enquiry honeypot triggered; skipping persistence.", info)
+    },
+    onSpamFingerprint: (info) => {
+      logger.info("Enquiry spam fingerprint rejected.", {
+        leadType: info.leadType,
+        reasons: info.reasons,
+      })
     },
     onInsertError: (info) => {
       logger.error("Lead insert failed.", info)
@@ -195,7 +215,7 @@ function buildDeps(options: SubmitLeadOptions): EnquirySubmissionDeps {
 
 /**
  * Central enquiry submission path:
- * validate → honeypot → rate limit → durable insert → notify (non-blocking).
+ * validate → honeypot → rate limit → spam fingerprint → durable insert → notify (non-blocking).
  */
 export async function submitLead(
   input: SubmitLeadInput,

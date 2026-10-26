@@ -17,6 +17,10 @@ import {
   type SignupInput,
   type UpdateProfileInput,
 } from "@/features/auth/schemas"
+import {
+  HONEYPOT_FIELD,
+  isHoneypotTriggered,
+} from "@/features/bot-protection/utils/honeypot"
 import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
 import { buildAuthCallbackUrl } from "@/lib/config/app-url"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -367,6 +371,14 @@ export async function signUp(
 
   if (!parsed.success) {
     return validationFailure(firstValidationMessage(parsed.error))
+  }
+
+  if (isHoneypotTriggered(parsed.data[HONEYPOT_FIELD])) {
+    logger.info("[auth] Signup honeypot triggered; skipping account creation.")
+    return success({
+      requiresEmailConfirmation: true,
+      email: parsed.data.email,
+    })
   }
 
   try {

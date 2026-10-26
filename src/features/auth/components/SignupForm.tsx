@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useId, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
@@ -10,6 +10,10 @@ import { signUpAction } from "@/features/auth/actions/auth.actions"
 import { ResendVerificationForm } from "@/features/auth/components/ResendVerificationForm"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
 import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
+import { HoneypotField } from "@/features/bot-protection/components/honeypot-field"
+import { TurnstileField } from "@/features/bot-protection/components/turnstile-field"
+import { HONEYPOT_FIELD } from "@/features/bot-protection/utils/honeypot"
+import { trackSignup } from "@/lib/analytics/client"
 
 interface SignupFormProps {
   redirectTo?: string
@@ -33,6 +37,8 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
       confirmPassword: "",
       certificateName: "",
       confirmCertificateName: undefined as unknown as true,
+      [HONEYPOT_FIELD]: "",
+      turnstileToken: "",
     },
   })
 
@@ -40,8 +46,16 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
     register,
     handleSubmit,
     setFocus,
+    setValue,
     formState: { errors, isSubmitting },
   } = form
+
+  const handleTurnstileToken = useCallback(
+    (token: string) => {
+      setValue("turnstileToken", token, { shouldValidate: false })
+    },
+    [setValue]
+  )
 
   useEffect(() => {
     if (errors.certificateName) {
@@ -74,6 +88,8 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
       setFormError(result.error.message)
       return
     }
+
+    trackSignup()
 
     if (result.data.requiresEmailConfirmation) {
       setPendingVerificationEmail(result.data.email)
@@ -123,7 +139,8 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
         <CardDescription>Start your membership journey today.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form className="relative space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <HoneypotField id="signup-company-url" inputProps={register(HONEYPOT_FIELD)} />
           {formError ? (
             <p
               role="alert"
@@ -229,6 +246,8 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
               </p>
             ) : null}
           </div>
+
+          <TurnstileField onTokenChange={handleTurnstileToken} />
 
           <Button type="submit" size="block" disabled={isSubmitting}>
             {isSubmitting ? "Creating account…" : "Create account"}
