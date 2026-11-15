@@ -266,7 +266,12 @@ Env validation is skipped unless `NODE_ENV=production` or `SKIP_ENV_VALIDATION=f
 
 ### Database
 
-Postgres lives in **Supabase** (not Vercel). Migrations: `supabase/migrations/`. Apply with Supabase CLI or Dashboard SQL. This branch adds `20261025180000_bot_review_flags.sql` (non-destructive flags + privileged-column trigger) and `20261025190000_public_form_rate_limits.sql` (append-only hashed email/IP rate-limit events, service-role only).
+Postgres lives in **Supabase** (not Vercel). Migrations: `supabase/migrations/`. Apply with Supabase CLI or Dashboard SQL. None of these were applied from this pass. This branch adds:
+
+- `20261025180000_bot_review_flags.sql` — non-destructive review columns and a privileged-column trigger
+- `20261025190000_public_form_rate_limits.sql` — hashed email and IP rate-limit events, service-role only
+- `20261115120000_site_content_and_media.sql` — `site_content`, `media_assets`, and the public `site-media` image bucket
+- `20261115121000_flag_retreat_spam_leads.sql` — flags the 9–13 Sep 2026 `retreats_page` leads only. It does not delete rows and does not flag accounts.
 
 ### Stripe webhooks
 
@@ -358,12 +363,12 @@ Live lookup for `elevate-healthsolutions.com` on 2026-10-25:
 | Item | Status | Manual action |
 |---|---|---|
 | Microsoft/Outlook receiving | MX points at Outlook; mailbox existence **not verified from DNS** | In M365, confirm `hello@elevate-healthsolutions.com` is a mailbox or alias |
-| SPF | Single root SPF exists. It does **not** include Microsoft (`spf.protection.outlook.com`) or Resend/Amazon SES. `-all` is a hard fail for those senders | **Do not add a second SPF TXT.** Merge includes into the existing record after confirming Resend’s current include (typically `include:amazonses.com`) |
-| DKIM | Microsoft selectors present; Resend `resend._domainkey` present | Confirm Resend Dashboard domain = Verified |
+| SPF | Single root SPF exists. It does **not** include Microsoft (`spf.protection.outlook.com`). `-all` fails other senders | **Do not add a second SPF TXT.** Do not put `include:amazonses.com` on the apex. Follow `docs/EMAIL_DELIVERABILITY.md`. |
+| DKIM | Microsoft selectors present; Resend `resend._domainkey` present | Confirm Resend Dashboard domain = Verified. Do not overwrite the existing key if it matches. |
 | DMARC | `p=none` only | **Do not add a second DMARC.** Tighten `p=` later after SPF/DKIM align |
-| Resend sending auth | DKIM yes, SPF no | Merge SPF; keep From on the verified domain |
+| Resend sending auth | DKIM present; `send` return-path absent | Copy the Resend Records tab onto `send`, or use the CNAMEs Resend shows. Keep From as `no-reply@` until verified. |
 | Kit sending auth | No Kit DKIM observed | Add Kit records only if Kit sending is enabled |
-| Supabase Auth SMTP | Code expects custom SMTP via Resend (`docs/supabase-auth-email.md`) | Confirm in Supabase Dashboard. 207 unconfirmed users may be undelivered Auth mail |
+| Supabase Auth SMTP | Code expects custom SMTP via Resend (`docs/supabase-auth-email.md`) | Confirm in Supabase Dashboard. 364 of 446 accounts were unconfirmed on 15 Nov 2026. |
 
 ### `hello@elevate-healthsolutions.com` as Resend From
 
@@ -435,16 +440,16 @@ Purchase is **not** fired from the success URL alone.
 
 ## 12. Manual production steps still needed
 
-1. Merge this branch after review. **Do not deploy from this agent.**
-2. Apply migrations `20261025180000_bot_review_flags.sql` and `20261025190000_public_form_rate_limits.sql` on production Supabase.
-3. Grant Super Admin to Ritika emails using the SQL/Members path above (human step).
-4. Invite `elevate.ritika@gmail.com` to Vercel, Supabase, GitHub, Stripe, Resend, GoDaddy, M365 as needed.
-5. Confirm `hello@` mailbox; merge SPF (one record); verify Resend domain; then set `TRANSACTIONAL_EMAIL_FROM`.
+1. Review this branch. Merge and deploy only after that review. This pass did not deploy.
+2. Apply the four migrations listed in section 4, in filename order, on production Supabase. Create the `site-media` bucket only through that migration.
+3. Do not create or promote `ritika.bizz@gmail.com` or `elevate.ritika@gmail.com`. Both already exist and are already `super_admin`.
+4. Invite `elevate.ritika@gmail.com` to Vercel, Supabase, GitHub, Stripe, Resend, GoDaddy, and Microsoft 365. Do not send passwords or API keys.
+5. Confirm the `hello@` mailbox, then follow `docs/EMAIL_DELIVERABILITY.md`. Do not change DNS or the From address before that.
 6. Confirm Supabase Auth custom SMTP and templates (`docs/supabase-auth-email.md`).
-7. Add Cloudflare Turnstile keys to Vercel Production (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
-8. Confirm GTM-54JKK6HG in the client’s GTM account has GA4 tags for `signup`, `lead`, `begin_checkout`, `purchase`.
-9. Point/confirm Stripe + Mux production webhooks at the production origin.
-10. Use Admin → Bot review dry-run; flag the 44 fingerprint-matching retreat leads individually after human review. Do not bulk-update. Do not flag unconfirmed accounts from inactivity alone.
+7. Add Cloudflare Turnstile keys to Vercel Production (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`) if the enquiry challenge should be on.
+8. Confirm GTM-54JKK6HG in the client's GTM account has GA4 tags for `signup`, `lead`, `begin_checkout`, and `purchase`.
+9. Confirm Stripe and Mux production webhooks point at the production origin.
+10. The retreat-lead migration is the only automatic flag. Review those rows in Admin → Bot review. Do not flag accounts because they never confirmed or never bought.
 
 ---
 
