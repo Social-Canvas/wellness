@@ -1,4 +1,5 @@
 import { HOMEPAGE_VIDEO_TESTIMONIALS } from "../data/testimonials"
+import type { HomepageVideoTestimonial } from "../types"
 import { getCarouselTestimonials } from "../utils/testimonials"
 import { VideoTestimonialsCarousel } from "./video-testimonials-carousel"
 
@@ -10,12 +11,19 @@ import { VideoTestimonialsCarousel } from "./video-testimonials-carousel"
  */
 export function VideoTestimonialsSection({
   className,
+  testimonials: testimonialItems,
+  section,
 }: {
   className?: string
+  testimonials?: readonly HomepageVideoTestimonial[]
+  section?: { eyebrow: string; title: string; subtitle: string }
 }) {
-  const testimonials = getCarouselTestimonials(HOMEPAGE_VIDEO_TESTIMONIALS, {
-    includeDraftPlaceholders: true,
-  })
+  const testimonials = getCarouselTestimonials(
+    testimonialItems ?? HOMEPAGE_VIDEO_TESTIMONIALS,
+    {
+      includeDraftPlaceholders: true,
+    }
+  )
 
   if (testimonials.length === 0) {
     return null
@@ -25,6 +33,7 @@ export function VideoTestimonialsSection({
     <VideoTestimonialsCarousel
       testimonials={testimonials}
       className={className}
+      section={section}
     />
   )
 }

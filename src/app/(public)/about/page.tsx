@@ -6,6 +6,8 @@ import { BrandImage } from "@/components/media"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { JsonLdScript } from "@/components/seo/json-ld-script"
+import { readPressLines, readSiteLines, readSiteParagraphs, readSiteText, readSiteAlt } from "@/features/site-content/resolve"
+import { loadSiteContent } from "@/features/site-content/services/site-content.service"
 import { ELEVATE_BRAND } from "@/lib/constants/elevate-brand"
 import {
   PUBLIC_FACEBOOK_GROUP_LINK,
@@ -22,23 +24,18 @@ const ABOUT_SOCIAL_LINK_LABELS = {
   facebookCommunity: "Facebook community",
 } as const
 
-export const metadata: Metadata = buildPublicPageMetadata({
-  title: "About",
-  description:
-    "Meet Dr. Deepa Pattani, Doctor of Pharmacy, functional medicine specialist, and founder of Elevate Health Solutions.",
-  path: "/about",
-})
-
-const CREDENTIALS = [
-  "Doctor of Pharmacy",
-  "Certified Functional Medicine Specialist",
-  "Board-Certified Breathwork Practitioner",
-  "Reiki & Sound Healing Facilitator",
-  "LDN Compounder",
-  "CBD Specialist",
-]
-
-const PRESS = ["Forbes", "Authority Magazine", "Dallas Voyage Magazine"]
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await loadSiteContent()
+  return buildPublicPageMetadata({
+    title: "About",
+    description: readSiteText(
+      content,
+      "about.seo.description",
+      "Meet Dr. Deepa Pattani, Doctor of Pharmacy, functional medicine specialist, and founder of Elevate Health Solutions."
+    ),
+    path: "/about",
+  })
+}
 
 const APPROACH_PILLARS = [
   {
@@ -58,7 +55,14 @@ const APPROACH_PILLARS = [
   },
 ]
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const content = await loadSiteContent()
+  const intro = readSiteParagraphs(content, "about.intro")
+  const healer = readSiteParagraphs(content, "about.healer")
+  const credentials = readSiteLines(content, "about.credentials")
+  const press = readPressLines(content)
+  const portraitSrc = readSiteText(content, "about.portrait", BRAND_IMAGES.founderPortrait.src)
+
   return (
     <main>
       <JsonLdScript data={personJsonLd()} />
@@ -66,7 +70,13 @@ export default function AboutPage() {
         <Container>
           <div className="grid items-center gap-12 min-[861px]:grid-cols-[1.05fr_0.95fr]">
             <BrandImage
-              image={BRAND_IMAGES.founderPortrait}
+              image={{
+                src: portraitSrc,
+                alt: readSiteAlt(content, "about.portrait") || BRAND_IMAGES.founderPortrait.alt,
+                objectPosition: portraitSrc.startsWith("/")
+                  ? BRAND_IMAGES.founderPortrait.objectPosition
+                  : undefined,
+              }}
               priority
               containerClassName="aspect-[1/1.05] min-h-[340px] w-full rounded-2xl border border-line shadow-sm"
               sizes="(max-width: 860px) 100vw, 45vw"
@@ -77,19 +87,13 @@ export default function AboutPage() {
               <h1 className="mt-2 font-display text-[clamp(1.5625rem,3.3vw,2.25rem)] font-medium tracking-tight text-ink">
                 Meet {ELEVATE_BRAND.founder}
               </h1>
-              <p className="mt-4 text-base leading-relaxed text-ink-soft">
-                {ELEVATE_BRAND.founderTitle}. Founder of {ELEVATE_BRAND.name} and
-                creator of the science + soul approach to nervous system regulation and
-                functional healing.
-              </p>
-              <p className="mt-4 text-base leading-relaxed text-ink-soft">
-                For over two decades, Dr. Pattani has helped exhausted, overwhelmed
-                professionals break free from fatigue, anxiety, and hopelessness, and
-                step into energy, control, and vibrant health through the signature
-                7-Step PATTANI Protocol.
-              </p>
+              {intro.map((paragraph) => (
+                <p key={paragraph} className="mt-4 text-base leading-relaxed text-ink-soft">
+                  {paragraph}
+                </p>
+              ))}
               <div className="mt-5 flex flex-wrap gap-2.5">
-                {CREDENTIALS.map((credential, index) => (
+                {credentials.map((credential, index) => (
                   <span
                     key={credential}
                     className={
@@ -110,18 +114,11 @@ export default function AboutPage() {
               <h2 className="font-display text-[26px] font-medium text-ink">
                 A third-generation healer
               </h2>
-              <p className="mt-3 text-[17px] leading-[1.75] text-ink-soft">
-                Healing runs in her blood. A personal transformation in Bali, where
-                traditional practices met modern medical science, confirmed what years of
-                clinical work had shown: sustainable healing requires both evidence and
-                embodiment.
-              </p>
-              <p className="mt-4 text-[17px] leading-[1.75] text-ink-soft">
-                After losing 40 pounds without pharmaceuticals using the same holistic
-                tools she now teaches, Dr. Pattani committed fully to functional medicine,
-                finding and fixing root causes rather than managing symptoms on the
-                surface.
-              </p>
+              {healer.map((paragraph) => (
+                <p key={paragraph} className="mt-3 text-[17px] leading-[1.75] text-ink-soft">
+                  {paragraph}
+                </p>
+              ))}
             </section>
 
             <section>
@@ -129,21 +126,29 @@ export default function AboutPage() {
                 Featured in
               </h2>
               <div className="mt-3 flex flex-wrap gap-3">
-                {PRESS.map((outlet) => (
-                  <span
-                    key={outlet}
-                    className="rounded-[30px] border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink"
-                  >
-                    {outlet}
-                  </span>
-                ))}
+                {press.map((outlet) =>
+                  outlet.url ? (
+                    <a
+                      key={outlet.name}
+                      href={outlet.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-[30px] border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink"
+                    >
+                      {outlet.name}
+                    </a>
+                  ) : (
+                    <span
+                      key={outlet.name}
+                      className="rounded-[30px] border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink"
+                    >
+                      {outlet.name}
+                    </span>
+                  )
+                )}
               </div>
               <p className="mt-4 text-[17px] leading-[1.75] text-ink-soft">
-                Best-selling author of <em>Unleashing the Storrie Within</em> and
-                contributing author to the Amazon bestseller{" "}
-                <em>Creating a Functional Medicine Revolution</em>. She is currently
-                writing <em>The Earth is My Body</em>, the first in a series on human
-                healing and the natural world.
+                {readSiteText(content, "about.books")}
               </p>
             </section>
 
@@ -176,8 +181,7 @@ export default function AboutPage() {
 
             <section className="rounded-2xl border border-line bg-cream2/60 p-8 text-center">
               <p className="font-display text-xl font-medium text-ink">
-                &ldquo;Healing is not something we force. It is something we allow when
-                we return to ourselves.&rdquo;
+                &ldquo;{readSiteText(content, "about.quote")}&rdquo;
               </p>
               <p className="mt-3 text-sm text-ink-soft">{ELEVATE_BRAND.founder}</p>
             </section>
@@ -197,7 +201,15 @@ export default function AboutPage() {
                 {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => (
                   <a
                     key={link.network}
-                    href={link.href}
+                    href={readSiteText(
+                      content,
+                      link.network === "instagram"
+                        ? "global.social.instagram"
+                        : link.network === "facebook"
+                          ? "global.social.facebook"
+                          : "global.social.linkedin",
+                      link.href
+                    )}
                     target={link.target}
                     rel={link.rel}
                     aria-label={link.ariaLabel}
@@ -207,7 +219,7 @@ export default function AboutPage() {
                   </a>
                 ))}
                 <a
-                  href={PUBLIC_FACEBOOK_GROUP_LINK.href}
+                  href={readSiteText(content, "global.social.facebook_group", PUBLIC_FACEBOOK_GROUP_LINK.href)}
                   target={PUBLIC_FACEBOOK_GROUP_LINK.target}
                   rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
                   aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}

@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      media_assets: {
+        Row: {
+          alt_text: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mime_type: string
+          public_url: string
+          size_bytes: number
+          storage_bucket: string
+          storage_path: string
+        }
+        Insert: {
+          alt_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime_type: string
+          public_url: string
+          size_bytes: number
+          storage_bucket?: string
+          storage_path: string
+        }
+        Update: {
+          alt_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime_type?: string
+          public_url?: string
+          size_bytes?: number
+          storage_bucket?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          alt_text: string
+          field_type: string
+          group_key: string
+          help_text: string | null
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          alt_text?: string
+          field_type: string
+          group_key: string
+          help_text?: string | null
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Update: {
+          alt_text?: string
+          field_type?: string
+          group_key?: string
+          help_text?: string | null
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           certificate_number: string
@@ -351,6 +426,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          bot_flagged_at: string | null
+          bot_flagged_by: string | null
+          bot_reason: string | null
           created_at: string
           email: string
           estimated_participants: string | null
@@ -368,10 +446,14 @@ export type Database = {
           phone: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          suspected_bot: boolean
           updated_at: string
           visitor_ack_status: Database["public"]["Enums"]["lead_notification_status"]
         }
         Insert: {
+          bot_flagged_at?: string | null
+          bot_flagged_by?: string | null
+          bot_reason?: string | null
           created_at?: string
           email: string
           estimated_participants?: string | null
@@ -389,10 +471,14 @@ export type Database = {
           phone?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          suspected_bot?: boolean
           updated_at?: string
           visitor_ack_status?: Database["public"]["Enums"]["lead_notification_status"]
         }
         Update: {
+          bot_flagged_at?: string | null
+          bot_flagged_by?: string | null
+          bot_reason?: string | null
           created_at?: string
           email?: string
           estimated_participants?: string | null
@@ -410,6 +496,7 @@ export type Database = {
           phone?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          suspected_bot?: boolean
           updated_at?: string
           visitor_ack_status?: Database["public"]["Enums"]["lead_notification_status"]
         }
@@ -1171,10 +1258,37 @@ export type Database = {
           },
         ]
       }
+      public_form_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_type: "email" | "ip"
+          scope: "lead" | "signup" | "auth_email"
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_type: "email" | "ip"
+          scope: "lead" | "signup" | "auth_email"
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_type?: "email" | "ip"
+          scope?: "lead" | "signup" | "auth_email"
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auth_user_id: string
           avatar_url: string | null
+          bot_flagged_at: string | null
+          bot_flagged_by: string | null
+          bot_reason: string | null
           certificate_name: string | null
           certificate_name_corrected_at: string | null
           certificate_name_corrected_by: string | null
@@ -1187,11 +1301,15 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           stripe_customer_id: string | null
+          suspected_bot: boolean
           updated_at: string
         }
         Insert: {
           auth_user_id: string
           avatar_url?: string | null
+          bot_flagged_at?: string | null
+          bot_flagged_by?: string | null
+          bot_reason?: string | null
           certificate_name?: string | null
           certificate_name_corrected_at?: string | null
           certificate_name_corrected_by?: string | null
@@ -1204,11 +1322,15 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           stripe_customer_id?: string | null
+          suspected_bot?: boolean
           updated_at?: string
         }
         Update: {
           auth_user_id?: string
           avatar_url?: string | null
+          bot_flagged_at?: string | null
+          bot_flagged_by?: string | null
+          bot_reason?: string | null
           certificate_name?: string | null
           certificate_name_corrected_at?: string | null
           certificate_name_corrected_by?: string | null
@@ -1221,6 +1343,7 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           stripe_customer_id?: string | null
+          suspected_bot?: boolean
           updated_at?: string
         }
         Relationships: [

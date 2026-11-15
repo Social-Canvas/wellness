@@ -17,6 +17,7 @@ import {
   type BillingUrlValue,
 } from "@/features/checkout/utils/membership-billing"
 import { BRAND_IMAGES, type BrandImageAsset } from "@/lib/brand/images"
+import type { MembershipMarketingCopy } from "@/features/site-content/resolve"
 import { ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
 import { getMembershipPriceQuote } from "@/lib/constants/membership-pricing"
 import { cn } from "@/lib/utils"
@@ -29,6 +30,7 @@ const MEMBERSHIP_IMAGES: BrandImageAsset[] = [
 
 type HomepageMembershipOffersProps = {
   initialBilling: BillingUrlValue
+  marketingCopy?: MembershipMarketingCopy
   footerCta?: { label: string; href: string }
 }
 
@@ -38,6 +40,7 @@ type HomepageMembershipOffersProps = {
  */
 export function HomepageMembershipOffers({
   initialBilling,
+  marketingCopy,
   footerCta,
 }: HomepageMembershipOffersProps) {
   return (
@@ -57,6 +60,8 @@ export function HomepageMembershipOffers({
 
             <div className="mt-10 grid grid-cols-1 gap-5 min-[861px]:grid-cols-3">
               {ELEVATE_MEMBERSHIPS.map((tier, index) => {
+                const copy = marketingCopy?.[tier.slug]
+                const whoItIsFor = copy?.whoItIsFor || tier.whoItIsFor
                 const quote = getMembershipPriceQuote(
                   tier.slug,
                   billingUrlToInterval(billing)
@@ -99,7 +104,7 @@ export function HomepageMembershipOffers({
                         {tier.name}
                       </h3>
                       <p className="mt-1.5 mb-3.5 text-sm text-ink-soft">
-                        {tier.whoItIsFor}
+                        {whoItIsFor}
                       </p>
 
                       {quote.accessiblePriceSummary ? (

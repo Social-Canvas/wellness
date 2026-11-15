@@ -52,7 +52,6 @@ export function EditLessonDialog({
     resolver: zodResolver(updateLessonSchema),
     defaultValues: {
       title: "",
-      slug: "",
       description: "",
       sortOrder: 0,
       isRequired: true,
@@ -76,7 +75,6 @@ export function EditLessonDialog({
 
     reset({
       title: lesson.title,
-      slug: lesson.slug,
       description: lesson.description ?? "",
       sortOrder: lesson.sort_order,
       isRequired: lesson.is_required,
@@ -152,15 +150,8 @@ export function EditLessonDialog({
 
             <div className="space-y-2">
               <Label htmlFor="edit-lesson-slug">Slug</Label>
-              <Input
-                id="edit-lesson-slug"
-                aria-invalid={Boolean(errors.slug)}
-                disabled={isSubmitting}
-                {...register("slug")}
-              />
-              {errors.slug ? (
-                <p className="text-sm text-destructive">{errors.slug.message}</p>
-              ) : null}
+              <Input id="edit-lesson-slug" value={lesson?.slug ?? ""} readOnly disabled />
+              <p className="text-xs text-ink-soft">Slug stays fixed after the lesson is created.</p>
             </div>
 
             <div className="space-y-2">

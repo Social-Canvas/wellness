@@ -40,6 +40,9 @@ export type CheckoutConsentContext = {
   planPriceId?: string
   productId?: string
   interval: BillingInterval
+  valueCents: number | null
+  currency: string | null
+  itemId: string
 }
 
 function failure(code: string, message: string): ActionResult<never> {
@@ -125,6 +128,9 @@ export async function resolveCheckoutConsentContext(input: {
         planSlug: plan.slug,
         planPriceId: planPrice.id,
         interval: parsedInterval.data,
+        valueCents: planPrice.amount,
+        currency: planPrice.currency,
+        itemId: plan.slug,
       },
     }
   }
@@ -168,6 +174,9 @@ export async function resolveCheckoutConsentContext(input: {
       productSlug: product.slug,
       productId: product.id,
       interval: "monthly",
+      valueCents: product.priceAmount,
+      currency: product.currency,
+      itemId: product.slug,
     },
   }
 }

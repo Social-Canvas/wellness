@@ -4,6 +4,11 @@ import {
   submitLeadSchema,
   type SubmitLeadInput,
 } from "@/features/leads/schemas/submit-lead"
+import { LEAD_RATE_LIMIT_USER_ERROR } from "@/features/bot-protection/utils/durable-rate-limit"
+import {
+  evaluateEnquirySpamFingerprint,
+  SPAM_FINGERPRINT_USER_ERROR,
+} from "@/features/bot-protection/utils/spam-fingerprint"
 import {
   isEnquiryRateLimited,
   recordEnquiryAttempt,
@@ -30,6 +35,10 @@ export type InsertedLead = {
 
 export type EnquirySubmissionDeps = {
   clientIp?: string | null
+  consumeRateLimit?: (
+    email: string,
+    ip: string
+  ) => Promise<"ok" | "limited">
   insertLead: (row: LeadInsertRow) => Promise<InsertedLead | null>
   updateNotificationStatuses: (input: {
     leadId: string
@@ -47,6 +56,10 @@ export type EnquirySubmissionDeps = {
     email: string
   }) => Promise<EnquiryEmailSendResult>
   onHoneypot?: (info: { leadType: string; source: string | null }) => void
+  onSpamFingerprint?: (info: {
+    leadType: string
+    reasons: string[]
+  }) => void
   onInsertError?: (info: { leadType: string; error?: string }) => void
   onUnexpectedError?: (info: { leadType: string; error: string }) => void
   onAdminNotifyError?: (info: { leadId: string; error: string }) => void
@@ -91,12 +104,13 @@ function metadataString(
 }
 
 /**
- * Core enquiry submission (relative imports only — unit-testable under node:test).
+ * Core enquiry submission:
+ * validate → honeypot → durable + memory rate limit → spam fingerprint → insert → notify.
  */
 export async function submitEnquiryCore(
   input: SubmitLeadInput,
   deps: EnquirySubmissionDeps
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   const parsed = submitLeadSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -108,19 +122,34 @@ export async function submitEnquiryCore(
       leadType: parsed.data.leadType,
       source: parsed.data.source ?? null,
     })
-    return success({ id: crypto.randomUUID() })
+    return success({ id: crypto.randomUUID(), analyticsEligible: false })
   }
 
   const clientIp = deps.clientIp?.trim() || "unknown"
+  if (deps.consumeRateLimit) {
+    const durable = await deps.consumeRateLimit(parsed.data.email, clientIp)
+    if (durable === "limited") {
+      return failure("rate_limited", LEAD_RATE_LIMIT_USER_ERROR)
+    }
+  }
   if (isEnquiryRateLimited(parsed.data.email, clientIp)) {
-    return failure(
-      "rate_limited",
-      "Too many enquiries were submitted recently. Please try again later."
-    )
+    return failure("rate_limited", LEAD_RATE_LIMIT_USER_ERROR)
   }
   recordEnquiryAttempt(parsed.data.email, clientIp)
 
   const metadataRecord = (parsed.data.metadata ?? {}) as Record<string, unknown>
+  const fingerprint = evaluateEnquirySpamFingerprint({
+    name: parsed.data.name,
+    message: parsed.data.message,
+    metadata: metadataRecord,
+  })
+  if (fingerprint.matched) {
+    deps.onSpamFingerprint?.({
+      leadType: parsed.data.leadType,
+      reasons: fingerprint.reasons,
+    })
+    return failure("spam_rejected", SPAM_FINGERPRINT_USER_ERROR)
+  }
   const organizationName =
     parsed.data.organizationName?.trim() ||
     metadataString(metadataRecord, "organizationName")
@@ -225,7 +254,7 @@ export async function submitEnquiryCore(
       lastNotificationError: lastError,
     })
 
-    return success({ id: data.id })
+    return success({ id: data.id, analyticsEligible: true })
   } catch (error) {
     deps.onUnexpectedError?.({
       leadType: parsed.data.leadType,

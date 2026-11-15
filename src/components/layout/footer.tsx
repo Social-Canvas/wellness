@@ -18,6 +18,8 @@ import {
   PUBLIC_SOCIAL_LINK_CLASSNAME,
   PUBLIC_SOCIAL_PROFILE_LINKS,
 } from "@/lib/constants/social-links"
+import { readSiteText } from "@/features/site-content/resolve"
+import { loadSiteContent } from "@/features/site-content/services/site-content.service"
 
 type FooterProps = {
   isAuthenticated: boolean
@@ -29,14 +31,28 @@ const PROFILE_ICONS = {
   linkedin: LinkedInIcon,
 } as const
 
-function Footer({ isAuthenticated }: FooterProps) {
+async function Footer({ isAuthenticated }: FooterProps) {
+  const content = await loadSiteContent()
+  const groupHref = readSiteText(
+    content,
+    "global.social.facebook_group",
+    PUBLIC_FACEBOOK_GROUP_LINK.href
+  )
+  const groupLabel = readSiteText(
+    content,
+    "global.social.facebook_group_label",
+    PUBLIC_FACEBOOK_GROUP_LINK.label
+  )
+
   return (
     <footer className="bg-ink px-(--spacing-wrap-x) py-[46px] pb-7 text-[#C2D2D0]">
       <Container>
         <div className="flex flex-wrap justify-between gap-6">
           <div className="min-w-0 max-w-full">
             <BrandLogo variant="horizontal" size="lg" appearance="footer" href="/" />
-            <p className="mt-2.5 max-w-[280px] text-sm">{PUBLIC_FOOTER_DESCRIPTION}</p>
+            <p className="mt-2.5 max-w-[280px] text-sm">
+              {readSiteText(content, "global.footer.description", PUBLIC_FOOTER_DESCRIPTION)}
+            </p>
 
             <div className="mt-3.5 max-w-full">
               <nav
@@ -45,10 +61,19 @@ function Footer({ isAuthenticated }: FooterProps) {
               >
                 {PUBLIC_SOCIAL_PROFILE_LINKS.map((link) => {
                   const Icon = PROFILE_ICONS[link.network]
+                  const href = readSiteText(
+                    content,
+                    link.network === "instagram"
+                      ? "global.social.instagram"
+                      : link.network === "facebook"
+                        ? "global.social.facebook"
+                        : "global.social.linkedin",
+                    link.href
+                  )
                   return (
                     <a
                       key={link.network}
-                      href={link.href}
+                      href={href}
                       target={link.target}
                       rel={link.rel}
                       aria-label={link.ariaLabel}
@@ -62,14 +87,14 @@ function Footer({ isAuthenticated }: FooterProps) {
 
               <div className="mt-4 max-w-[280px]">
                 <a
-                  href={PUBLIC_FACEBOOK_GROUP_LINK.href}
+                  href={groupHref}
                   target={PUBLIC_FACEBOOK_GROUP_LINK.target}
                   rel={PUBLIC_FACEBOOK_GROUP_LINK.rel}
                   aria-label={PUBLIC_FACEBOOK_GROUP_LINK.ariaLabel}
                   className={PUBLIC_FACEBOOK_GROUP_LINK_CLASSNAME}
                 >
                   <FacebookIcon className="size-3.5 shrink-0 opacity-90" />
-                  <span>{PUBLIC_FACEBOOK_GROUP_LINK.label}</span>
+                  <span>{groupLabel}</span>
                   <span aria-hidden="true" className="font-normal">
                     →
                   </span>

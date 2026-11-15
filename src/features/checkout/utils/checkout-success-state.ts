@@ -2,6 +2,14 @@ import type { PostPurchaseDestination } from "../constants/destinations"
 
 export type CheckoutFulfillmentState = "fulfilled" | "processing" | "invalid"
 
+export type CheckoutPurchaseAnalytics = {
+  transactionId: string
+  itemId: string | null
+  itemName: string | null
+  value: number | null
+  currency: string | null
+}
+
 export type CheckoutSuccessView = {
   state: CheckoutFulfillmentState
   title: string
@@ -10,6 +18,7 @@ export type CheckoutSuccessView = {
   purchaseType: "membership" | "product" | "unknown"
   destination: PostPurchaseDestination | null
   accessReady: boolean
+  purchaseAnalytics: CheckoutPurchaseAnalytics | null
 }
 
 export function genericInvalidCheckoutView(): CheckoutSuccessView {
@@ -22,6 +31,7 @@ export function genericInvalidCheckoutView(): CheckoutSuccessView {
     purchaseType: "unknown",
     destination: null,
     accessReady: false,
+    purchaseAnalytics: null,
   }
 }
 
@@ -54,6 +64,7 @@ export function buildSuccessViewFromLocalState(input: {
   purchaseType: "membership" | "product"
   productName: string
   destination: PostPurchaseDestination
+  purchaseAnalytics?: CheckoutPurchaseAnalytics | null
 }): CheckoutSuccessView {
   if (!input.ownershipOk) {
     return genericInvalidCheckoutView()
@@ -68,6 +79,7 @@ export function buildSuccessViewFromLocalState(input: {
       purchaseType: input.purchaseType,
       destination: input.destination,
       accessReady: true,
+      purchaseAnalytics: input.purchaseAnalytics ?? null,
     }
   }
 
@@ -79,6 +91,7 @@ export function buildSuccessViewFromLocalState(input: {
     purchaseType: input.purchaseType,
     destination: input.destination,
     accessReady: false,
+    purchaseAnalytics: null,
   }
 }
 

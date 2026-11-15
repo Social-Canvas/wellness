@@ -13,9 +13,19 @@ import { cn } from "@/lib/utils"
 type PublicMobileNavProps = {
   links: readonly NavbarLinkItem[]
   isAuthenticated: boolean
+  primaryCta?: { label: string; href: string }
 }
 
-function PublicMobileNav({ links, isAuthenticated }: PublicMobileNavProps) {
+const DEFAULT_PUBLIC_CTA = {
+  label: "Start Reset Plan",
+  href: "/programs#reset-plan",
+} as const
+
+function PublicMobileNav({
+  links,
+  isAuthenticated,
+  primaryCta = DEFAULT_PUBLIC_CTA,
+}: PublicMobileNavProps) {
   const pathname = usePathname()
   const panelId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
@@ -178,14 +188,14 @@ function PublicMobileNav({ links, isAuthenticated }: PublicMobileNavProps) {
                     Log in
                   </Link>
                   <Link
-                    href="/programs#reset-plan"
+                    href={primaryCta.href}
                     onClick={close}
                     className={cn(
                       buttonVariants({ variant: "default", size: "sm" }),
                       "justify-center"
                     )}
                   >
-                    Start Reset Plan
+                    {primaryCta.label || "Start Reset Plan"}
                   </Link>
                 </>
               )}

@@ -5,6 +5,7 @@ import { AdminNavItem } from "./AdminNavItem"
 
 const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
+  { label: "Content", href: "/admin/content" },
   { label: "Plans", href: "/admin/plans" },
   { label: "Courses", href: "/admin/courses" },
   { label: "Videos", href: "/admin/videos" },
@@ -12,9 +13,8 @@ const ADMIN_NAV_ITEMS = [
   { label: "Recorded Sessions", href: "/admin/recorded-sessions" },
   { label: "Products", href: "/admin/products" },
   { label: "Members", href: "/admin/members" },
+  { label: "Bot review", href: "/admin/bots" },
   { label: "Nonprofits", href: "/dashboard/nonprofit" },
-  { label: "Certificates", href: "/admin/certificates" },
-  { label: "Bookings", href: "/admin/bookings" },
   { label: "Leads", href: "/admin/leads" },
   { label: "Settings", href: "/admin/settings" },
 ] as const

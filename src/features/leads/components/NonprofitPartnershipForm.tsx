@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState, useTransition } from "react"
+import { useCallback, useId, useState, useTransition } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,6 +12,8 @@ import {
   EnquiryFormCard,
   EnquirySuccessPanel,
 } from "@/features/leads/components/enquiry"
+import { HoneypotField } from "@/features/bot-protection/components/honeypot-field"
+import { TurnstileField } from "@/features/bot-protection/components/turnstile-field"
 import { submitNonprofitPartnershipAction } from "@/features/leads/actions/leads.actions"
 import {
   submitNonprofitPartnershipSchema,
@@ -27,7 +29,10 @@ import {
   NONPROFIT_ENQUIRY_SUCCESS_BODY,
   NONPROFIT_ENQUIRY_SUCCESS_HEADING,
   NONPROFIT_PARTICIPANT_RANGE_OPTIONS,
+  nonprofitEnquirySource,
 } from "@/features/leads/utils/nonprofit-enquiry"
+import { trackLead } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 import { EDUCATIONAL_DISCLAIMER } from "@/features/checkout/constants/disclaimer"
 
 type NonprofitPartnershipFormProps = {
@@ -66,6 +71,7 @@ function NonprofitPartnershipForm({
     register,
     handleSubmit,
     setFocus,
+    setValue,
     formState: { errors },
   } = useForm<SubmitNonprofitPartnershipInput>({
     resolver: zodResolver(submitNonprofitPartnershipSchema),
@@ -81,8 +87,16 @@ function NonprofitPartnershipForm({
       partnershipNotes: "",
       message: "",
       [ENQUIRY_HONEYPOT_FIELD]: "",
+      turnstileToken: "",
     },
   })
+
+  const handleTurnstileToken = useCallback(
+    (token: string) => {
+      setValue("turnstileToken", token, { shouldValidate: false })
+    },
+    [setValue]
+  )
 
   function onInvalid() {
     const order: (keyof SubmitNonprofitPartnershipInput)[] = [
@@ -121,6 +135,9 @@ function NonprofitPartnershipForm({
           return
         }
 
+        if (isAnalyticsEligible(result)) {
+          trackLead({ leadType: "nonprofit", source: nonprofitEnquirySource() })
+        }
         setSubmitted(true)
       } catch {
         setSubmitLocked(false)
@@ -163,18 +180,13 @@ function NonprofitPartnershipForm({
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit, onInvalid)}
-        className="mt-6 space-y-4"
+        className="relative mt-6 space-y-4"
         aria-describedby={serverError ? serverErrorId : undefined}
       >
-        <div className="sr-only" aria-hidden="true">
-          <Label htmlFor={`${formId}-company-url`}>Company website</Label>
-          <Input
-            id={`${formId}-company-url`}
-            tabIndex={-1}
-            autoComplete="off"
-            {...register(ENQUIRY_HONEYPOT_FIELD)}
-          />
-        </div>
+        <HoneypotField
+          id={`${formId}-company-url`}
+          inputProps={register(ENQUIRY_HONEYPOT_FIELD)}
+        />
 
         <div className="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
           <div className="space-y-1.5">
@@ -393,6 +405,8 @@ function NonprofitPartnershipForm({
             {serverError}
           </p>
         ) : null}
+
+        <TurnstileField onTokenChange={handleTurnstileToken} />
 
         <Button
           type="submit"

@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+const SIGNUP_HONEYPOT_FIELD = "companyUrl" as const
+
 import {
   certificateNameConfirmField,
   certificateNameField,
@@ -13,6 +15,8 @@ export const signupSchema = z
     confirmPassword: z.string().min(1, "Confirm your password"),
     certificateName: certificateNameField,
     confirmCertificateName: certificateNameConfirmField,
+    [SIGNUP_HONEYPOT_FIELD]: z.string().max(200).optional().nullable(),
+    turnstileToken: z.string().max(4000).optional().nullable(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

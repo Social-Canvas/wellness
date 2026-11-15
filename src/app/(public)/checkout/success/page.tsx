@@ -47,6 +47,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         purchaseType: "unknown" as const,
         destination: null,
         accessReady: false,
+        purchaseAnalytics: null,
       }
 
   return (
@@ -61,6 +62,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             destinationHref={view.destination?.href ?? null}
             destinationLabel={view.destination?.label ?? null}
             autoRedirect={view.destination?.autoRedirect ?? false}
+            purchaseAnalytics={view.purchaseAnalytics}
           />
 
           <p className="mt-6 text-center text-sm text-ink-soft">

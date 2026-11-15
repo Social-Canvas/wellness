@@ -22,6 +22,8 @@ import {
   isLiveMembershipAccess,
   membershipPlanCtaFactsFromEffective,
 } from "@/features/checkout/utils/membership-plan-cta-state"
+import { readMembershipCopy } from "@/features/site-content/resolve"
+import { loadSiteContent } from "@/features/site-content/services/site-content.service"
 import { listPlans } from "@/features/plans/services/plans.service"
 import { isConfiguredStripePriceId } from "@/server/integrations/stripe/mode"
 import { buildLiveBreathworkOfferView } from "@/features/checkout/utils/live-breathwork-offer-state"
@@ -187,10 +189,12 @@ export default async function ProgramsPage({ searchParams }: ProgramsPageProps) 
     ])
   )
 
+  const siteContent = await loadSiteContent()
   const individualsPanel = (
     <MembershipPricingCards
       facts={membershipFacts}
       initialBilling={initialBilling}
+      marketingCopy={readMembershipCopy(siteContent)}
     />
   )
 

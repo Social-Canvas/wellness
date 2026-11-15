@@ -53,7 +53,7 @@ test("honeypot detection skips persistence path in core", () => {
   assert.match(core, /ENQUIRY_HONEYPOT_FIELD/)
   assert.match(
     core,
-    /return success\(\{\s*id:\s*crypto\.randomUUID\(\)\s*\}\)/
+    /return success\(\{\s*id:\s*crypto\.randomUUID\(\),\s*analyticsEligible:\s*false\s*\}\)/
   )
   assert.doesNotMatch(
     core.slice(
@@ -74,7 +74,13 @@ test("rate limit blocks further attempts in the window", () => {
 
   const core = readSrc("features/leads/services/enquiry-submission.core.ts")
   assert.match(core, /isEnquiryRateLimited/)
+  assert.match(core, /consumeRateLimit/)
   assert.match(core, /rate_limited/)
+  const rateIdx = core.indexOf("if (isEnquiryRateLimited")
+  const fingerprintIdx = core.indexOf("evaluateEnquirySpamFingerprint({")
+  const insertIdx = core.indexOf("await deps.insertLead")
+  assert.ok(fingerprintIdx > rateIdx)
+  assert.ok(insertIdx > fingerprintIdx)
 })
 
 test("notification failure does not fail submission after insert", () => {
@@ -82,7 +88,7 @@ test("notification failure does not fail submission after insert", () => {
   // Insert happens before notify; success returns even when notify fails.
   const insertIdx = core.indexOf("await deps.insertLead")
   const adminIdx = core.indexOf("deps.sendAdminNotification")
-  const successIdx = core.lastIndexOf("return success({ id: data.id })")
+  const successIdx = core.lastIndexOf("return success({ id: data.id, analyticsEligible: true })")
   assert.ok(insertIdx > 0)
   assert.ok(adminIdx > insertIdx)
   assert.ok(successIdx > adminIdx)
@@ -121,6 +127,8 @@ test("insert failure returns provider_error without success", () => {
 test("service uses admin client and nonprofit canonical type", () => {
   const service = readSrc("features/leads/services/leads.service.ts")
   assert.match(service, /createAdminClient/)
+  assert.match(service, /consumePublicFormRateLimit/)
+  assert.match(service, /LEAD_RATE_LIMIT_POLICY/)
   assert.match(service, /leadType: "nonprofit"/)
   assert.match(service, /insertLeadWithSchemaFallback/)
   assert.match(service, /providerErrorFields/)
@@ -133,8 +141,11 @@ test("service uses admin client and nonprofit canonical type", () => {
   ]
   for (const form of forms) {
     assert.match(form, /ENQUIRY_HONEYPOT_FIELD/)
-    assert.match(form, /sr-only/)
+    assert.match(form, /HoneypotField/)
   }
+  const honeypot = readSrc("features/bot-protection/components/honeypot-field.tsx")
+  assert.match(honeypot, /sr-only/)
+  assert.match(honeypot, /aria-hidden="true"/)
 
   assert.equal(ENQUIRY_HONEYPOT_FIELD, "companyUrl")
 })

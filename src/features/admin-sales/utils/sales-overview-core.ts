@@ -544,24 +544,24 @@ export function buildSalesOverviewSnapshot(
     },
     {
       id: "successful_payments",
-      label: "Successful payments",
+      label: "Successful one-time payments",
       value: ordersInRange.length,
       displayValue: formatInteger(ordersInRange.length),
       tooltip:
         "Successful monetary one-time checkout payments synced from Stripe. Membership renewals are not stored as local payment rows, so recurring charges are not included here.",
       reliability: "partial",
-      note: "One-time checkouts only — renewals not in local DB",
+      note: "Membership renewal revenue is available in Stripe.",
       dateFilterApplies: true,
     },
     {
       id: "revenue_collected",
-      label: "Revenue collected",
+      label: "One-time revenue collected",
       value: revenueCents,
       displayValue: formatCents(revenueCents, primaryCurrency),
       tooltip:
         "Sum of amount_paid on Stripe-synced paid one-time orders (actual captured checkout totals). Not plan price × count. Membership subscription/renewal revenue is not persisted locally.",
       reliability: "partial",
-      note: "Product checkouts only — membership renewals available in Stripe",
+      note: "Membership renewal revenue is available in Stripe.",
       dateFilterApplies: true,
     },
   ]
@@ -701,7 +701,7 @@ export function buildSalesOverviewSnapshot(
 
   const limitations = [
     "Membership renewal / invoice payment amounts are not stored locally. Stripe remains the source of truth for recurring revenue.",
-    "Successful payments and revenue collected cover Stripe-synced paid one-time product checkouts only.",
+    "Successful one-time payments and one-time revenue collected cover Stripe-synced paid product checkouts only. Membership renewal revenue is available in Stripe.",
     "Active memberships reflect current subscription and sponsored seat state and are not historically reconstructed for date ranges.",
     "Free claims create product_entitlements rows only and never appear as paid purchases.",
   ]

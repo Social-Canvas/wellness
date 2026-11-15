@@ -17,6 +17,10 @@ import {
   type SignupInput,
   type UpdateProfileInput,
 } from "@/features/auth/schemas"
+import {
+  HONEYPOT_FIELD,
+  isHoneypotTriggered,
+} from "@/features/bot-protection/utils/honeypot"
 import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
 import { buildAuthCallbackUrl } from "@/lib/config/app-url"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -54,6 +58,7 @@ export interface SignUpResult {
   requiresEmailConfirmation: boolean
   email: string
   profile?: ProfileView
+  analyticsEligible: boolean
 }
 
 type ServerSupabaseClient = SupabaseClient<Database>
@@ -369,6 +374,15 @@ export async function signUp(
     return validationFailure(firstValidationMessage(parsed.error))
   }
 
+  if (isHoneypotTriggered(parsed.data[HONEYPOT_FIELD])) {
+    logger.info("[auth] Signup honeypot triggered; skipping account creation.")
+    return success({
+      requiresEmailConfirmation: true,
+      email: parsed.data.email,
+      analyticsEligible: false,
+    })
+  }
+
   try {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.signUp({
@@ -397,6 +411,7 @@ export async function signUp(
       return success({
         requiresEmailConfirmation: true,
         email: parsed.data.email,
+        analyticsEligible: true,
       })
     }
 
@@ -443,6 +458,7 @@ export async function signUp(
       requiresEmailConfirmation: false,
       email: parsed.data.email,
       profile: mapProfile(profile),
+      analyticsEligible: true,
     })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")

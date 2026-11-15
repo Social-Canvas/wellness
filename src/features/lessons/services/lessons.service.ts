@@ -56,10 +56,6 @@ function mapUpdateLessonInput(
     updates.title = input.title
   }
 
-  if (input.slug !== undefined) {
-    updates.slug = input.slug
-  }
-
   if (input.description !== undefined) {
     updates.description = input.description
   }

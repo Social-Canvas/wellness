@@ -10,6 +10,7 @@ import {
   issueTrialJoinUrlAction,
 } from "@/features/live-sessions/actions/live-sessions.actions"
 import type { LiveSessionPublic } from "@/features/live-sessions/types"
+import { redirectToCheckout } from "@/lib/analytics/client"
 import {
   LIVE_BREATHWORK_INCLUDED_LABEL,
   LIVE_BREATHWORK_INCLUDED_NOTE,
@@ -182,6 +183,13 @@ export function TrialLiveSessionCard({
               })
               if (!result.success) {
                 setMessage(result.error.message)
+                return
+              }
+              if (result.data.sessionId && result.data.url.startsWith("http")) {
+                redirectToCheckout(result.data.url, {
+                  itemId: "live-breathwork-trial",
+                  itemName: session.title,
+                })
                 return
               }
               window.location.assign(result.data.url)

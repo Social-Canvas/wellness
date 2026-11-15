@@ -184,6 +184,15 @@ export async function resolveCheckoutSuccessView(
       accessReady = await hasActiveSubscriptionForUser(parsedUserId.data)
     }
 
+    const amountTotal =
+      typeof session.amount_total === "number" ? session.amount_total / 100 : null
+    const itemId =
+      session.metadata?.product_id ??
+      session.metadata?.plan_id ??
+      productMeta.slug ??
+      session.metadata?.plan_price_id ??
+      null
+
     return success(
       buildSuccessViewFromLocalState({
         ownershipOk: true,
@@ -197,6 +206,15 @@ export async function resolveCheckoutSuccessView(
           productType: productMeta.productType,
           grantedCourseId: productMeta.grantedCourseId,
         }),
+        purchaseAnalytics: accessReady
+          ? {
+              transactionId: session.id,
+              itemId,
+              itemName: productName,
+              value: amountTotal,
+              currency: session.currency ?? null,
+            }
+          : null,
       })
     )
   } catch {
@@ -213,6 +231,7 @@ export async function getCheckoutFulfillmentStatus(
     state: CheckoutFulfillmentState
     accessReady: boolean
     destinationHref: string | null
+    purchaseAnalytics: CheckoutSuccessView["purchaseAnalytics"]
   }>
 > {
   const viewResult = await resolveCheckoutSuccessView(userId, sessionId)
@@ -225,5 +244,6 @@ export async function getCheckoutFulfillmentStatus(
     state: viewResult.data.state,
     accessReady: viewResult.data.accessReady,
     destinationHref: viewResult.data.destination?.href ?? null,
+    purchaseAnalytics: viewResult.data.purchaseAnalytics,
   })
 }

@@ -52,6 +52,45 @@ function BrandImage({
   height,
 }: BrandImageProps) {
   const [failed, setFailed] = useState(false)
+  const remote = image.src.startsWith("https://") || image.src.startsWith("http://")
+
+  if (remote) {
+    if (failed) {
+      return (
+        <div className={cn(fill ? "relative overflow-hidden" : "relative aspect-[3/2] w-full overflow-hidden", containerClassName, className)}>
+          <BrandImageFallback alt={image.alt} />
+        </div>
+      )
+    }
+
+    if (fill) {
+      return (
+        <div className={cn("relative overflow-hidden", containerClassName)}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- storage URLs are not remotePatterns */}
+          <img
+            src={image.src}
+            alt={image.alt}
+            className={cn("absolute inset-0 h-full w-full object-cover", className)}
+            style={image.objectPosition ? { objectPosition: image.objectPosition } : undefined}
+            onError={() => setFailed(true)}
+          />
+        </div>
+      )
+    }
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- storage URLs are not remotePatterns
+      <img
+        src={image.src}
+        alt={image.alt}
+        width={width}
+        height={height}
+        className={cn("h-auto w-full object-cover", className)}
+        style={image.objectPosition ? { objectPosition: image.objectPosition } : undefined}
+        onError={() => setFailed(true)}
+      />
+    )
+  }
 
   if (fill) {
     return (

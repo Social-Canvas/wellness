@@ -3,6 +3,7 @@ import { z } from "zod"
 import { createLessonSchema } from "./create-lesson"
 
 export const updateLessonSchema = createLessonSchema
+  .omit({ slug: true })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field is required.",

@@ -90,6 +90,7 @@ export const submitNonprofitPartnershipSchema = z.object({
     .or(z.literal("")),
   /** Anti-spam honeypot — must be empty for real humans. */
   [ENQUIRY_HONEYPOT_FIELD]: z.string().max(200).optional().nullable(),
+  turnstileToken: z.string().max(4000).optional().nullable(),
 })
 
 export type SubmitNonprofitPartnershipInput = z.infer<

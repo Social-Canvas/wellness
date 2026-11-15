@@ -10,6 +10,12 @@ import { cn } from "@/lib/utils"
 
 type RetreatsLandingPageProps = {
   isAuthenticated: boolean
+  hero?: {
+    heading?: string
+    body?: string
+    primaryLabel?: string
+    secondaryLabel?: string
+  }
 }
 
 function PastRetreatCard({
@@ -45,8 +51,22 @@ function PastRetreatCard({
   )
 }
 
-function RetreatsLandingPage({ isAuthenticated }: RetreatsLandingPageProps) {
-  const { hero, past, expect, upcoming, enquiry } = RETREATS_PAGE
+function RetreatsLandingPage({ isAuthenticated, hero: heroCopy }: RetreatsLandingPageProps) {
+  const page = RETREATS_PAGE
+  const hero = {
+    ...page.hero,
+    heading: heroCopy?.heading || page.hero.heading,
+    body: heroCopy?.body || page.hero.body,
+    primaryCta: {
+      ...page.hero.primaryCta,
+      label: heroCopy?.primaryLabel || page.hero.primaryCta.label,
+    },
+    secondaryCta: {
+      ...page.hero.secondaryCta,
+      label: heroCopy?.secondaryLabel || page.hero.secondaryCta.label,
+    },
+  }
+  const { past, expect, upcoming, enquiry } = page
 
   return (
     <main>

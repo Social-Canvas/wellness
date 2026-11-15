@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import { requireStaffActor } from "@/server/auth/require-staff"
 import type { CreateVideoInput, UpdateVideoInput } from "@/features/videos/schemas"
 import {
   archiveVideo,
@@ -18,6 +19,8 @@ function revalidateVideosPath() {
 export async function createVideoAction(
   input: CreateVideoInput
 ): Promise<ActionResult<Video>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await createVideo(input)
 
   if (!result.success) {
@@ -32,6 +35,8 @@ export async function updateVideoAction(
   id: string,
   input: UpdateVideoInput
 ): Promise<ActionResult<Video>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await updateVideo(id, input)
 
   if (!result.success) {
@@ -45,6 +50,8 @@ export async function updateVideoAction(
 export async function archiveVideoAction(
   id: string
 ): Promise<ActionResult<Video>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await archiveVideo(id)
 
   if (!result.success) {

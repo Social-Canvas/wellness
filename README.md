@@ -39,7 +39,6 @@ Copy `.env.example` to `.env.local` and fill in values. Access validated env via
 | `MUX_SIGNING_KEY_ID` | Mux signed playback key ID |
 | `MUX_SIGNING_PRIVATE_KEY` | Mux signed playback private key |
 | `RESEND_API_KEY` | Resend email API key |
-| `GHL_API_KEY` | GoHighLevel API key |
 | `CRON_SECRET` | Secret for Vercel Cron job authentication |
 
 ### Optional
@@ -47,6 +46,10 @@ Copy `.env.example` to `.env.local` and fill in values. Access validated env via
 | Variable | Description |
 |----------|-------------|
 | `SKIP_ENV_VALIDATION` | Set to `true` to bypass validation (local dev only) |
+| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public forms skip the widget when unset |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret. Server skip-when-unset with the site key |
+| `ENQUIRY_NOTIFICATION_TO` | Admin inbox for new enquiries |
+| `TRANSACTIONAL_EMAIL_FROM` | Verified Resend From. Do not change production until DNS/mailbox checks in `docs/HANDOFF.md` |
 
 ## Project Structure
 
@@ -67,13 +70,18 @@ docs/            # PRD, TDD, reference HTML
 - [TASKS.md](./TASKS.md) — sprint checklist
 - [docs/PRD.md](./docs/PRD.md) — product requirements
 - [docs/TDD.md](./docs/TDD.md) — technical design
+- [docs/HANDOFF.md](./docs/HANDOFF.md) — operations, services, env names, email/DNS, bot review
 - [docs/reference/Sample_Platform_Demo.html](./docs/reference/Sample_Platform_Demo.html) — UI reference
 
 ## Scripts
 
 ```bash
 npm run dev      # Start dev server
+npm test         # Unit tests (node --test)
+npx tsc --noEmit # Typecheck
+npm run lint     # ESLint
 npm run build    # Production build
 npm run start    # Start production server
-npm run lint     # ESLint
 ```
+
+Operations, env **names**, Stripe webhooks, email/DNS, and bot review: [docs/HANDOFF.md](./docs/HANDOFF.md).

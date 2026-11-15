@@ -16,6 +16,7 @@ import {
   Input,
   Label,
 } from "@/components/ui"
+import { MediaUploader } from "@/features/media/components/media-uploader"
 import { updateCourseAction } from "@/features/courses/actions/courses.actions"
 import { updateCourseSchema, type UpdateCourseInput } from "@/features/courses/schemas"
 import type { CourseWithPlanAccess } from "@/features/courses/types"
@@ -44,7 +45,6 @@ export function EditCourseDialog({
     resolver: zodResolver(updateCourseSchema),
     defaultValues: {
       title: "",
-      slug: "",
       description: "",
       thumbnailUrl: "",
       certificateEnabled: false,
@@ -59,8 +59,19 @@ export function EditCourseDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = form
+  const courseId = course?.id ?? ""
+  const storedThumbnail = course?.thumbnail_url ?? ""
+  const [thumbnailPreview, setThumbnailPreview] = useState({
+    courseId,
+    url: storedThumbnail,
+  })
+  if (thumbnailPreview.courseId !== courseId) {
+    setThumbnailPreview({ courseId, url: storedThumbnail })
+  }
+  const thumbnailUrl = thumbnailPreview.url
 
   useEffect(() => {
     if (!course) {
@@ -69,7 +80,6 @@ export function EditCourseDialog({
 
     reset({
       title: course.title,
-      slug: course.slug,
       description: course.description ?? "",
       thumbnailUrl: course.thumbnail_url ?? "",
       certificateEnabled: course.certificate_enabled,
@@ -148,15 +158,10 @@ export function EditCourseDialog({
 
             <div className="space-y-2">
               <Label htmlFor="edit-course-slug">Slug</Label>
-              <Input
-                id="edit-course-slug"
-                aria-invalid={Boolean(errors.slug)}
-                disabled={isSubmitting}
-                {...register("slug")}
-              />
-              {errors.slug ? (
-                <p className="text-sm text-destructive">{errors.slug.message}</p>
-              ) : null}
+              <Input id="edit-course-slug" value={course.slug} readOnly disabled />
+              <p className="text-xs text-ink-soft">
+                The slug stays fixed so lesson links and progress keep working.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -173,19 +178,18 @@ export function EditCourseDialog({
               ) : null}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-course-thumbnail">Thumbnail URL</Label>
-              <Input
-                id="edit-course-thumbnail"
-                type="url"
-                aria-invalid={Boolean(errors.thumbnailUrl)}
-                disabled={isSubmitting}
-                {...register("thumbnailUrl")}
-              />
-              {errors.thumbnailUrl ? (
-                <p className="text-sm text-destructive">{errors.thumbnailUrl.message}</p>
-              ) : null}
-            </div>
+            <MediaUploader
+              label="Thumbnail"
+              value={thumbnailUrl ?? ""}
+              alt={course.title}
+              showAlt={false}
+              folder="courses"
+              disabled={isSubmitting}
+              onChange={({ url }) => {
+                setThumbnailPreview({ courseId, url })
+                setValue("thumbnailUrl", url, { shouldDirty: true })
+              }}
+            />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

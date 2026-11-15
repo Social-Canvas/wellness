@@ -17,42 +17,25 @@ import {
   Input,
   Label,
 } from "@/components/ui"
+import { MediaUploader } from "@/features/media/components/media-uploader"
 import {
   deleteProductFileAction,
   listProductFilesAction,
   updateProductAction,
-  upsertProductFileAction,
+  uploadProductFileAction,
 } from "@/features/shop/actions/products.actions"
 import { updateProductSchema } from "@/features/shop/schemas"
 import {
   PRODUCT_STATUS_OPTIONS,
-  PRODUCT_TYPE_OPTIONS,
   productSelectClassName,
   productTextareaClassName,
 } from "@/features/shop/components/product-form-styles"
 import type { Product, ProductFile } from "@/features/shop/types"
 import { formatProductPrice } from "@/features/shop/utils/format-product"
 
-const editProductFormSchema = updateProductSchema.extend({
-  priceDollars: z
-    .string()
-    .trim()
-    .min(1, "Price is required")
-    .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, {
-      message: "Enter a valid price",
-    }),
-})
-
-const productFileFormSchema = z.object({
-  fileName: z.string().trim().min(1, "File name is required"),
-  storageBucket: z.string().trim().min(1, "Storage bucket is required"),
-  storagePath: z.string().trim().min(1, "Storage path is required"),
-  mimeType: z.string().trim().optional(),
-  sizeBytes: z.string().trim().optional(),
-})
+const editProductFormSchema = updateProductSchema
 
 type EditProductFormValues = z.infer<typeof editProductFormSchema>
-type ProductFileFormValues = z.infer<typeof productFileFormSchema>
 
 interface EditProductDialogProps {
   product: Product | null
@@ -74,25 +57,9 @@ export function EditProductDialog({
     resolver: zodResolver(editProductFormSchema),
     defaultValues: {
       title: "",
-      slug: "",
       description: "",
-      productType: "digital_download",
-      priceDollars: "",
-      currency: "usd",
-      stripePriceId: "",
       coverImageUrl: "",
       status: "draft",
-    },
-  })
-
-  const fileForm = useForm<ProductFileFormValues>({
-    resolver: zodResolver(productFileFormSchema),
-    defaultValues: {
-      fileName: "",
-      storageBucket: "product-files",
-      storagePath: "",
-      mimeType: "",
-      sizeBytes: "",
     },
   })
 
@@ -100,15 +67,20 @@ export function EditProductDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = form
-
-  const {
-    register: registerFile,
-    handleSubmit: handleFileSubmit,
-    reset: resetFileForm,
-    formState: { errors: fileErrors, isSubmitting: isFileSubmitting },
-  } = fileForm
+  const productId = product?.id ?? ""
+  const storedCover = product?.cover_image_url ?? ""
+  const [coverPreview, setCoverPreview] = useState({
+    productId,
+    open,
+    url: storedCover,
+  })
+  if (coverPreview.productId !== productId || coverPreview.open !== open) {
+    setCoverPreview({ productId, open, url: storedCover })
+  }
+  const coverImageUrl = coverPreview.url
 
   useEffect(() => {
     if (!product || !open) {
@@ -117,12 +89,7 @@ export function EditProductDialog({
 
     reset({
       title: product.title,
-      slug: product.slug,
       description: product.description ?? "",
-      productType: product.product_type,
-      priceDollars: (product.price_amount / 100).toFixed(2),
-      currency: product.currency,
-      stripePriceId: product.stripe_price_id ?? "",
       coverImageUrl: product.cover_image_url ?? "",
       status: product.status,
     })
@@ -143,12 +110,7 @@ export function EditProductDialog({
 
     const result = await updateProductAction(product.id, {
       title: values.title,
-      slug: values.slug,
       description: values.description || null,
-      productType: values.productType,
-      priceAmount: Math.round(Number(values.priceDollars) * 100),
-      currency: values.currency,
-      stripePriceId: values.stripePriceId || null,
       coverImageUrl: values.coverImageUrl || null,
       status: values.status,
     })
@@ -162,21 +124,16 @@ export function EditProductDialog({
     router.refresh()
   }
 
-  async function onAddFile(values: ProductFileFormValues) {
-    if (!product) {
+  async function onAddFile(file: File | undefined) {
+    if (!product || !file) {
       return
     }
 
     setFileError(null)
-
-    const result = await upsertProductFileAction({
-      productId: product.id,
-      fileName: values.fileName,
-      storageBucket: values.storageBucket,
-      storagePath: values.storagePath,
-      mimeType: values.mimeType || null,
-      sizeBytes: values.sizeBytes ? Number(values.sizeBytes) : null,
-    })
+    const data = new FormData()
+    data.set("productId", product.id)
+    data.set("file", file)
+    const result = await uploadProductFileAction(data)
 
     if (!result.success) {
       setFileError(result.error.message)
@@ -184,13 +141,6 @@ export function EditProductDialog({
     }
 
     setFiles((current) => [...current, result.data])
-    resetFileForm({
-      fileName: "",
-      storageBucket: values.storageBucket,
-      storagePath: "",
-      mimeType: "",
-      sizeBytes: "",
-    })
     router.refresh()
   }
 
@@ -213,7 +163,7 @@ export function EditProductDialog({
         <DialogPopup className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogTitle>Edit product</DialogTitle>
           <DialogDescription>
-            Update product details and attach download file metadata manually.
+            Update public product copy and files. Slug, price, and Stripe stay locked.
           </DialogDescription>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -225,10 +175,16 @@ export function EditProductDialog({
               ) : null}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-product-slug">Slug</Label>
-              <Input id="edit-product-slug" {...register("slug")} />
-            </div>
+            {product ? (
+              <div className="rounded-xl border border-line bg-cream2/40 px-4 py-3 text-sm text-ink-soft">
+                <p>Slug: {product.slug}</p>
+                <p>Price: {formatProductPrice(product.price_amount, product.currency)}</p>
+                <p>Stripe price: {product.stripe_price_id ?? "Not set"}</p>
+                <p className="mt-1 text-xs">
+                  These identifiers stay fixed so existing purchases and links keep working.
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label htmlFor="edit-product-description">Description</Label>
@@ -240,21 +196,6 @@ export function EditProductDialog({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="edit-product-type">Type</Label>
-                <select
-                  id="edit-product-type"
-                  className={productSelectClassName}
-                  {...register("productType")}
-                >
-                  {PRODUCT_TYPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="edit-product-status">Status</Label>
                 <select
@@ -271,33 +212,18 @@ export function EditProductDialog({
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="edit-product-price">Price (USD)</Label>
-                <Input
-                  id="edit-product-price"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  {...register("priceDollars")}
-                />
-                {product ? (
-                  <p className="text-xs text-ink-soft">
-                    Current: {formatProductPrice(product.price_amount, product.currency)}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-product-stripe-price">Stripe price ID</Label>
-                <Input id="edit-product-stripe-price" {...register("stripePriceId")} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-product-cover">Cover image URL</Label>
-              <Input id="edit-product-cover" {...register("coverImageUrl")} />
-            </div>
+            <MediaUploader
+              label="Cover image"
+              value={coverImageUrl}
+              alt={product?.title ?? "Product image"}
+              showAlt={false}
+              folder="products"
+              disabled={isSubmitting}
+              onChange={({ url }) => {
+                setCoverPreview({ productId, open, url })
+                setValue("coverImageUrl", url, { shouldDirty: true })
+              }}
+            />
 
             {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
 
@@ -314,7 +240,7 @@ export function EditProductDialog({
           <div className="mt-8 border-t border-line pt-6">
             <h3 className="font-display text-lg font-medium text-ink">Download files</h3>
             <p className="mt-1 text-sm text-ink-soft">
-              Add Supabase storage metadata only. Upload files to the bucket separately.
+              Upload a PDF. Buyers receive a short-lived download link after purchase.
             </p>
 
             {files.length > 0 ? (
@@ -345,42 +271,21 @@ export function EditProductDialog({
               <p className="mt-4 text-sm text-ink-soft">No files configured yet.</p>
             )}
 
-            <form className="mt-4 space-y-3" onSubmit={handleFileSubmit(onAddFile)}>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="file-name">File name</Label>
-                  <Input id="file-name" {...registerFile("fileName")} />
-                  {fileErrors.fileName ? (
-                    <p className="text-sm text-destructive">{fileErrors.fileName.message}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file-bucket">Storage bucket</Label>
-                  <Input id="file-bucket" {...registerFile("storageBucket")} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="file-path">Storage path</Label>
-                <Input id="file-path" {...registerFile("storagePath")} />
-                {fileErrors.storagePath ? (
-                  <p className="text-sm text-destructive">{fileErrors.storagePath.message}</p>
-                ) : null}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="file-mime">MIME type</Label>
-                  <Input id="file-mime" {...registerFile("mimeType")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file-size">Size (bytes)</Label>
-                  <Input id="file-size" {...registerFile("sizeBytes")} />
-                </div>
-              </div>
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="product-pdf">PDF file</Label>
+              <input
+                id="product-pdf"
+                type="file"
+                accept="application/pdf"
+                className="block w-full text-sm text-ink"
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  void onAddFile(file)
+                  event.target.value = ""
+                }}
+              />
               {fileError ? <p className="text-sm text-destructive">{fileError}</p> : null}
-              <Button type="submit" variant="outline" disabled={isFileSubmitting}>
-                {isFileSubmitting ? "Adding..." : "Add file metadata"}
-              </Button>
-            </form>
+            </div>
           </div>
         </DialogPopup>
       </DialogPortal>

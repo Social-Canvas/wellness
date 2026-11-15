@@ -12,7 +12,6 @@ export const env = createEnv({
     MUX_SIGNING_PRIVATE_KEY: z.string().min(1),
     MUX_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
-    GHL_API_KEY: z.string().min(1),
     CRON_SECRET: z.string().min(1),
   },
   client: {
@@ -31,7 +30,6 @@ export const env = createEnv({
     MUX_SIGNING_PRIVATE_KEY: process.env.MUX_SIGNING_PRIVATE_KEY,
     MUX_WEBHOOK_SECRET: process.env.MUX_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
-    GHL_API_KEY: process.env.GHL_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

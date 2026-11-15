@@ -1,15 +1,19 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useCallback, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { HoneypotField } from "@/features/bot-protection/components/honeypot-field"
+import { TurnstileField } from "@/features/bot-protection/components/turnstile-field"
 import { submitLeadAction } from "@/features/leads/actions/leads.actions"
 import {
   ENQUIRY_HONEYPOT_FIELD,
   submitLeadSchema,
   type SubmitLeadInput,
 } from "@/features/leads/schemas/submit-lead"
+import { trackLead } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,6 +43,7 @@ function LeadCaptureForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SubmitLeadInput>({
     resolver: zodResolver(submitLeadSchema),
@@ -50,8 +55,16 @@ function LeadCaptureForm({
       phone: "",
       message: "",
       [ENQUIRY_HONEYPOT_FIELD]: "",
+      turnstileToken: "",
     },
   })
+
+  const handleTurnstileToken = useCallback(
+    (token: string) => {
+      setValue("turnstileToken", token, { shouldValidate: false })
+    },
+    [setValue]
+  )
 
   function onSubmit(values: SubmitLeadInput) {
     setServerError(null)
@@ -64,6 +77,9 @@ function LeadCaptureForm({
         return
       }
 
+      if (isAnalyticsEligible(result)) {
+        trackLead({ leadType, source })
+      }
       setSubmitted(true)
     })
   }
@@ -96,16 +112,8 @@ function LeadCaptureForm({
       </h1>
       <p className="mt-3 text-base text-ink-soft">{description}</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <div className="sr-only" aria-hidden="true">
-          <Label htmlFor="company-url">Company website</Label>
-          <Input
-            id="company-url"
-            tabIndex={-1}
-            autoComplete="off"
-            {...register(ENQUIRY_HONEYPOT_FIELD)}
-          />
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="relative mt-6 space-y-4">
+        <HoneypotField id="company-url" inputProps={register(ENQUIRY_HONEYPOT_FIELD)} />
 
         <div className="space-y-1.5">
           <Label htmlFor="name">Full name</Label>
@@ -150,6 +158,8 @@ function LeadCaptureForm({
         </p>
 
         {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
+
+        <TurnstileField onTokenChange={handleTurnstileToken} />
 
         <Button type="submit" disabled={isPending} className="w-full">
           {isPending ? "Submitting…" : submitLabel}

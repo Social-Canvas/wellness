@@ -43,7 +43,6 @@ export function EditPlanDialog({
     resolver: zodResolver(updatePlanSchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
       sortOrder: 0,
       isActive: true,
@@ -64,7 +63,6 @@ export function EditPlanDialog({
 
     reset({
       name: plan.name,
-      slug: plan.slug,
       description: plan.description ?? "",
       sortOrder: plan.sort_order,
       isActive: plan.is_active,
@@ -137,15 +135,8 @@ export function EditPlanDialog({
 
             <div className="space-y-2">
               <Label htmlFor="edit-plan-slug">Slug</Label>
-              <Input
-                id="edit-plan-slug"
-                aria-invalid={Boolean(errors.slug)}
-                disabled={isSubmitting}
-                {...register("slug")}
-              />
-              {errors.slug ? (
-                <p className="text-sm text-destructive">{errors.slug.message}</p>
-              ) : null}
+              <Input id="edit-plan-slug" value={plan.slug} readOnly disabled />
+              <p className="text-xs text-ink-soft">Slug stays fixed so billing and access keep working.</p>
             </div>
 
             <div className="space-y-2">

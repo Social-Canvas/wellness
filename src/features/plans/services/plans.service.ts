@@ -68,10 +68,6 @@ function mapUpdatePlanInput(
     updates.name = input.name
   }
 
-  if (input.slug !== undefined) {
-    updates.slug = input.slug
-  }
-
   if (input.description !== undefined) {
     updates.description = input.description
   }

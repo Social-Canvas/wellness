@@ -46,7 +46,6 @@ export function EditModuleDialog({
     resolver: zodResolver(updateModuleSchema),
     defaultValues: {
       title: "",
-      slug: "",
       description: "",
       sortOrder: 0,
       status: "draft",
@@ -67,7 +66,6 @@ export function EditModuleDialog({
 
     reset({
       title: module.title,
-      slug: module.slug,
       description: module.description ?? "",
       sortOrder: module.sort_order,
       status: module.status,
@@ -140,15 +138,8 @@ export function EditModuleDialog({
 
             <div className="space-y-2">
               <Label htmlFor="edit-module-slug">Slug</Label>
-              <Input
-                id="edit-module-slug"
-                aria-invalid={Boolean(errors.slug)}
-                disabled={isSubmitting}
-                {...register("slug")}
-              />
-              {errors.slug ? (
-                <p className="text-sm text-destructive">{errors.slug.message}</p>
-              ) : null}
+              <Input id="edit-module-slug" value={module?.slug ?? ""} readOnly disabled />
+              <p className="text-xs text-ink-soft">Slug stays fixed after the module is created.</p>
             </div>
 
             <div className="space-y-2">

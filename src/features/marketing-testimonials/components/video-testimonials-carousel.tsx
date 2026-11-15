@@ -63,6 +63,7 @@ import {
 type VideoTestimonialsCarouselProps = {
   testimonials: HomepageVideoTestimonial[]
   className?: string
+  section?: { eyebrow: string; title: string; subtitle: string }
 }
 
 type MuxMediaElement = HTMLElement & {
@@ -110,7 +111,13 @@ function slotOffsetClass(slot: Exclude<TestimonialCarouselSlot, "hidden">): stri
 export function VideoTestimonialsCarousel({
   testimonials,
   className,
+  section,
 }: VideoTestimonialsCarouselProps) {
+  const heading = {
+    eyebrow: section?.eyebrow || VIDEO_TESTIMONIALS_SECTION.eyebrow,
+    title: section?.title || VIDEO_TESTIMONIALS_SECTION.title,
+    subtitle: section?.subtitle || VIDEO_TESTIMONIALS_SECTION.subtitle,
+  }
   const total = testimonials.length
   const statusId = useId()
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -353,7 +360,7 @@ export function VideoTestimonialsCarousel({
       id={VIDEO_TESTIMONIALS_SECTION.id}
       variant="soft"
       className={cn("overflow-x-clip", className)}
-      aria-label={VIDEO_TESTIMONIALS_SECTION.title}
+      aria-label={heading.title}
     >
       <div
         ref={rootRef}
@@ -369,9 +376,9 @@ export function VideoTestimonialsCarousel({
         <Container className="max-w-6xl">
           <SectionHeader
             align="center"
-            eyebrow={VIDEO_TESTIMONIALS_SECTION.eyebrow}
-            title={VIDEO_TESTIMONIALS_SECTION.title}
-            subtitle={VIDEO_TESTIMONIALS_SECTION.subtitle}
+            eyebrow={heading.eyebrow}
+            title={heading.title}
+            subtitle={heading.subtitle}
           />
 
           <div className="relative mt-10">

@@ -190,7 +190,8 @@ test("successful payments count one-time checkouts only (renewals not in local D
   assert.equal(metricValue(snapshot, "revenue_collected"), 14600)
   const paymentsMetric = snapshot.metrics.find((m) => m.id === "successful_payments")
   assert.equal(paymentsMetric?.reliability, "partial")
-  assert.match(paymentsMetric?.note ?? "", /renewals/i)
+  assert.match(paymentsMetric?.note ?? "", /renewal/i)
+  assert.match(paymentsMetric?.label ?? "", /Successful one-time payments/)
 })
 
 test("test-mode checkout sessions are excluded from production metrics", () => {
