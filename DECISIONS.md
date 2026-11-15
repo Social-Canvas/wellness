@@ -355,3 +355,15 @@ Format:
 **Alternatives considered:** Always-on Turnstile; auto-flagging unconfirmed Gmail accounts; deleting suspected rows; counting `leads` rows only (misses IP, blocked attempts, and signup); treating inactivity as bot evidence; blocking every 10-letter name (too many false positives).
 
 **Status:** Accepted
+
+---
+
+## 2026-11-15 — Admin content, media uploads, and one-time retreat-spam flag
+
+**Decision:** Keep public marketing copy in code as the default and let Admin or Super Admin override it in `site_content`. Images upload to the public `site-media` bucket through a staff-only server action. Product PDFs upload to the existing private `product-files` bucket. Slugs, Stripe price IDs, product prices, and product types stay fixed after creation. After the 15 Nov 2026 read-only audit, a migration may flag the 9-13 Sep 2026 retreat leads only. It does not flag accounts and does not delete rows.
+
+**Reason:** Routine wording and images should not need a deploy. Checkout identifiers and entitlement rules should not be editable in the same forms. The retreat campaign was 44 of 44 leads and 0 of 446 accounts at high confidence.
+
+**Alternatives considered:** A hosted CMS, a page builder, bulk-flagging unconfirmed accounts, and letting admins edit Stripe price IDs.
+
+**Status:** Accepted

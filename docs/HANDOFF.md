@@ -1,7 +1,17 @@
 # Elevate Health Solutions — operations handoff
 
-Last updated: 2026-10-26  
-Branch: `feature/elevate-handoff-gtm-bot-docs` (not pushed)
+Last updated: 2026-11-15  
+Branch: `feature/elevate-handoff-gtm-bot-docs` (local only, not pushed)
+
+## Update 2026-11-15
+
+A fresh read-only audit replaced the 26 Oct account counts. See `docs/EMAIL_DELIVERABILITY.md`, `docs/CLIENT_ACTION_TRACKER.md`, and `docs/FUTURE_SCOPE.md`.
+
+- Accounts: **446**. High-confidence bot/test: **0**. Suspicious: **42**. Likely legitimate: **77**. Unknown: **327**. No per-minute signup burst. Do not treat unconfirmed accounts as bots.
+- Leads: **44**, all the September retreat spam campaign. Migration `20261115121000_flag_retreat_spam_leads.sql` flags that window when migrations are applied. It does not delete rows and does not flag accounts.
+- `ritika.bizz@gmail.com` and `elevate.ritika@gmail.com` both already exist as `super_admin`. No account was created or changed in this pass.
+- Admin → Content edits public copy and revalidates pages. Admin → Settings shows whether integration env vars are set, never their values, and only for super admins.
+- Local env From is `no-reply@elevate-healthsolutions.com`. Reply-To is `sender@elevate-healthsolutions.com`. Do not switch to `hello@` until that mailbox is confirmed.
 
 This document is the operator handoff for the Next.js membership platform at **elevate-healthsolutions.com**. It includes the Phase 0 bot assessment. It does not contain secret values.
 
@@ -19,7 +29,7 @@ Accounts are **not** a bot flood. All **44** retreat enquiries **are** external 
 
 | Metric | Count |
 |---|---|
-| Total profiles | 250 |
+| Total profiles | 446 (15 Nov 2026 read-only audit; 250 was the 26 Oct count) |
 | Auth users fetched | 250 |
 | Class A high-confidence bot/test | 0 (0%) |
 | Class B suspicious | 30 (12%) |
@@ -79,8 +89,8 @@ Internal test data was separated from external spam. Production currently has **
 
 ### Operators
 
-- `ritika.bizz@gmail.com` **exists**, role **`user`** (not Super Admin).
-- `elevate.ritika@gmail.com` **does not exist**.
+- `ritika.bizz@gmail.com` **exists**, role **`super_admin`** (15 Nov 2026).
+- `elevate.ritika@gmail.com` **exists**, role **`super_admin`** (15 Nov 2026).
 - One unrelated `super_admin` and three `admin` accounts already exist (emails omitted here).
 
 ### What is safe to auto-flag vs manual review
@@ -318,9 +328,10 @@ No signing secrets are stored in git.
 | Nav item | Route | Status |
 |---|---|---|
 | Bookings | `/admin/bookings` | **Unused placeholder.** Calendly/Zoom are operational elsewhere. No bookings CRUD. |
-| Settings | `/admin/settings` | **Unused placeholder.** No secrets UI. Roles: Admin → Members. Env: Vercel. |
+| Settings | `/admin/settings` | **Operational for super admins.** Shows whether env vars are set. Never shows values. Admins do not edit secrets here. |
 | Certificates | `/admin/certificates` | **Partially implemented elsewhere.** Member list `/dashboard/certificates`; public verify `/certificate/verify/[token]`; admin name correction on **Members**. Dedicated admin certificate list is not built. |
-| Bot review | `/admin/bots` | **New.** Dry-run + single-record flag. Does not bulk-write. |
+| Content | `/admin/content` | **Operational.** Structured public copy, images, FAQs, social links, and SEO text. Does not change prices or access. |
+| Bot review | `/admin/bots` | **Operational.** Single-record review. The Sep 2026 retreat leads can be flagged by migration. Accounts are not bulk-flagged. |
 
 ---
 
@@ -366,45 +377,20 @@ Live lookup for `elevate-healthsolutions.com` on 2026-10-25:
 
 Do **not** change production sender in this branch.
 
-Expected (illustrative, not applied):
-
-```
-v=spf1 include:secureserver.net include:spf.protection.outlook.com include:amazonses.com -all
-```
-
-Confirm the Resend include in their dashboard before editing DNS. Blindly merging SPF can break mail.
+Do not put Resend's SPF on the domain root. Resend expects the return-path on `send` (MX plus TXT, or the CNAMEs shown in the Resend Records tab). Copy those records exactly. Edit the existing root SPF only to add Microsoft if mailbox sending should pass SPF. Details: `docs/EMAIL_DELIVERABILITY.md`.
 
 ---
 
-## 9. Super Admin onboarding (no production writes in this task)
+## 9. Super Admin onboarding
 
-App-side: `profiles.role` enum includes `super_admin`. Admin layout and mutations already check it. `ritika.bizz@gmail.com` and `elevate.ritika@gmail.com` **can** be Super Admins; the app does not fabricate accounts.
+App-side: `profiles.role` includes `super_admin`. Admin layout allows `admin` and `super_admin`. Role changes stay super-admin only.
 
-Constants: `src/lib/constants/super-admin-emails.ts`.
+As of 15 Nov 2026 both requested accounts already exist and are already `super_admin`:
 
-### If the person already has a login (`ritika.bizz@gmail.com` does)
+- `ritika.bizz@gmail.com`
+- `elevate.ritika@gmail.com`
 
-After a current Super Admin is signed in: **Admin → Members → set role Super admin**.
-
-Or SQL in Supabase (production SQL editor), after confirming the email:
-
-```sql
-update public.profiles
-set role = 'super_admin'
-where lower(email) in (
-  'ritika.bizz@gmail.com',
-  'elevate.ritika@gmail.com'
-);
-```
-
-Do not run this as part of this code change.
-
-### If the person has no account (`elevate.ritika@gmail.com`)
-
-1. They sign up at `/signup` and confirm email.
-2. Then grant `super_admin` via SQL or Members (once a Super Admin exists).
-
-This migration also blocks authenticated users from self-updating `role` or bot-flag columns (service_role / admin client only).
+Do not create them again and do not run a promotion update. New staff still sign up first, then a super admin sets the role at Admin → Members. Authenticated users cannot change their own role or bot-review flags.
 
 ---
 
@@ -415,7 +401,7 @@ This migration also blocks authenticated users from self-updating `role` or bot-
 - **Email SPF/DKIM mismatch** (above). High impact on Auth confirmation and Outlook.
 - **`GHL_API_KEY` required to boot production** but there is **no GHL client**. Keep a dummy-or-real value so `env.ts` does not fail; GHL sync is not live.
 - **No `middleware.ts`.** Session refresh relies on server `getUser()` in layouts. Watch for stale cookies.
-- **Admin Bookings/Settings 404s are now placeholders**; Certificates admin list is still not a real queue.
+- **Admin Bookings is still a placeholder.** Certificates do not have a separate admin queue. Settings shows configuration status only.
 - **In-memory rate limits** still exist as a same-instance burst fallback. Durable hashed email+IP counts in `public_form_rate_limits` are the cross-instance control (15-minute burst + 24 h email cap / 1 h IP cap for leads). If that table is missing, the limiter fails open and logs a warning. Fingerprint rejection does not skip the limiter.
 - `docs/production-readiness-audit.md` is **stale** in places (it predates Resend, cron, `emailRedirectTo`). Prefer this HANDOFF.
 
@@ -423,7 +409,7 @@ This migration also blocks authenticated users from self-updating `role` or bot-
 
 - Dedicated admin certificates list.
 - Internal bookings calendar (out of MVP; Calendly remains source of truth).
-- Settings UI for integrations.
+- Settings does not edit secrets. Change those in Vercel.
 - Kit sync still off by default.
 - Advanced analytics UI (GTM/GA4 is the launch path).
 - MFA for admins (post-MVP).
