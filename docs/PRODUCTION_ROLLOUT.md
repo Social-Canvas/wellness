@@ -107,6 +107,8 @@ where suspected_bot = true
 
 The 15 Nov 2026 audit found 44 matching leads. Re-count before treating 44 as required if new leads arrived.
 
+`20261115121000_flag_retreat_spam_leads.sql` is recorded on production, but its update did not persist. `leads_protect_bot_columns` restores bot columns unless `auth.role()` is `service_role`, and the migration runner does not set that role. `20261116010000_fix_retreat_spam_lead_flags.sql` repeats the same predicate inside one transaction that disables only that trigger, then enables it again. It does not change the permanent trigger and does not flag profiles.
+
 ## Phase 2 — External configuration
 
 ### Required before deployment

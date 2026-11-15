@@ -146,6 +146,33 @@ test("Turnstile skips when keys are unset so local tests do not require secrets"
   }
 })
 
+test("corrective retreat spam migration keeps the lead trigger and the reviewed predicate", () => {
+  const migration = readSrc("supabase/migrations/20261116010000_fix_retreat_spam_lead_flags.sql")
+  const protection = readSrc("supabase/migrations/20261025180000_bot_review_flags.sql")
+  const lowered = migration.toLowerCase()
+
+  assert.match(lowered, /begin;/)
+  assert.match(lowered, /commit;/)
+  assert.match(lowered, /lock table public\.leads in share row exclusive mode;/)
+  assert.match(lowered, /disable trigger leads_protect_bot_columns;/)
+  assert.match(lowered, /enable trigger leads_protect_bot_columns;/)
+  assert.match(migration, /lead_type = 'retreat'/)
+  assert.match(migration, /source = 'retreats_page'/)
+  assert.match(migration, /timestamptz '2026-09-09 00:00:00\+00'/)
+  assert.match(migration, /timestamptz '2026-09-14 00:00:00\+00'/)
+  assert.match(migration, /suspected_bot = false/)
+  assert.match(migration, /bot_reason = 'retreat_spam_fingerprint'/)
+  assert.doesNotMatch(lowered, /delete from/)
+  assert.doesNotMatch(lowered, /update public\.profiles/)
+  assert.doesNotMatch(lowered, /bot_flagged_by/)
+  assert.doesNotMatch(lowered, /drop trigger/)
+  assert.doesNotMatch(lowered, /create or replace function public\.protect_lead_bot_columns/)
+  assert.ok(lowered.indexOf("disable trigger") < lowered.indexOf("update public.leads"))
+  assert.ok(lowered.indexOf("update public.leads") < lowered.indexOf("enable trigger"))
+  assert.match(protection, /create trigger leads_protect_bot_columns/)
+  assert.match(protection, /auth\.role\(\) is distinct from 'service_role'/)
+})
+
 test("flag schema updates review fields only and never includes delete", () => {
   const parsed = flagBotRecordSchema.safeParse({
     targetType: "profile",
