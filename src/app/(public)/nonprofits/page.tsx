@@ -18,6 +18,8 @@ import {
   NONPROFIT_SUPPORTING_NOTE,
   buildNonprofitMembershipBenefits,
 } from "@/features/checkout/utils/membership-audience"
+import { readSiteText } from "@/features/site-content/resolve"
+import { loadSiteContent } from "@/features/site-content/services/site-content.service"
 import { ELEVATE_MEMBERSHIPS } from "@/lib/constants/elevate-brand"
 import { buildPublicPageMetadata } from "@/lib/seo/site-seo"
 import { cn } from "@/lib/utils"
@@ -34,7 +36,8 @@ export const metadata: Metadata = buildPublicPageMetadata({
   path: "/nonprofits",
 })
 
-export default function NonprofitsLandingPage() {
+export default async function NonprofitsLandingPage() {
+  const content = await loadSiteContent()
   const benefits =
     partnershipBenefits.length > 0
       ? partnershipBenefits
@@ -47,8 +50,8 @@ export default function NonprofitsLandingPage() {
           <SectionHeader
             align="center"
             eyebrow={NONPROFIT_LANDING_EYEBROW}
-            title={NONPROFIT_MISSION_HEADING}
-            subtitle={NONPROFIT_MISSION_BODY}
+            title={readSiteText(content, "nonprofit.mission.heading", NONPROFIT_MISSION_HEADING)}
+            subtitle={readSiteText(content, "nonprofit.mission.body", NONPROFIT_MISSION_BODY)}
           />
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -58,7 +61,7 @@ export default function NonprofitsLandingPage() {
                 "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               )}
             >
-              {NONPROFIT_INQUIRY_CTA}
+              {readSiteText(content, "nonprofit.inquiry_cta", NONPROFIT_INQUIRY_CTA)}
             </Link>
             <Link
               href="#nonprofit-benefits"
@@ -67,7 +70,7 @@ export default function NonprofitsLandingPage() {
                 "min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               )}
             >
-              {NONPROFIT_SEE_WHATS_INCLUDED_CTA}
+              {readSiteText(content, "nonprofit.included_cta", NONPROFIT_SEE_WHATS_INCLUDED_CTA)}
             </Link>
           </div>
         </Container>

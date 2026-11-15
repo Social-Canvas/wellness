@@ -6,7 +6,7 @@ import { Section } from "@/components/layout/section"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { TrustBar } from "@/components/marketing/trust-bar"
-import { BRAND_IMAGES } from "@/lib/brand/images"
+import { BRAND_IMAGES, type BrandImageAsset } from "@/lib/brand/images"
 import { cn } from "@/lib/utils"
 
 type HeroAction = {
@@ -23,7 +23,7 @@ type HeroSectionProps = React.ComponentProps<"section"> & {
   actions: HeroAction[]
   trustItems?: string[]
   media?: React.ReactNode
-  image?: (typeof BRAND_IMAGES)[keyof typeof BRAND_IMAGES]
+  image?: BrandImageAsset
 }
 
 function HeroSection({

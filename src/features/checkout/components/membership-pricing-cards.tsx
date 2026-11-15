@@ -19,6 +19,7 @@ import {
   type MembershipPlanSlug,
 } from "@/features/checkout/utils/membership-plan-cta-state"
 import { getMembershipPriceQuote } from "@/lib/constants/membership-pricing"
+import type { MembershipMarketingCopy } from "@/features/site-content/resolve"
 import {
   ELEVATE_MEMBERSHIPS,
   type MembershipTierContent,
@@ -34,11 +35,13 @@ function membershipAnchorId(slug: MembershipPlanSlug): string {
 type MembershipPricingCardsProps = {
   facts: MembershipPlanCtaFacts
   initialBilling: BillingUrlValue
+  marketingCopy?: MembershipMarketingCopy
 }
 
 export function MembershipPricingCards({
   facts,
   initialBilling,
+  marketingCopy,
 }: MembershipPricingCardsProps) {
   return (
     <MembershipBillingSync initialBilling={initialBilling}>
@@ -52,6 +55,12 @@ export function MembershipPricingCards({
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {ELEVATE_MEMBERSHIPS.map((tier) => {
+                const copy = marketingCopy?.[tier.slug]
+                const displayTier = {
+                  ...tier,
+                  whoItIsFor: copy?.whoItIsFor || tier.whoItIsFor,
+                  features: copy?.features.length ? copy.features : tier.features,
+                }
                 const view = cardViews.find((entry) => entry.planSlug === tier.slug) ?? {
                   planSlug: tier.slug,
                   kind: "join" as const,
@@ -69,7 +78,7 @@ export function MembershipPricingCards({
                 return (
                   <MembershipPricingCard
                     key={tier.slug}
-                    tier={tier}
+                    tier={displayTier}
                     view={view}
                     billing={billing}
                   />

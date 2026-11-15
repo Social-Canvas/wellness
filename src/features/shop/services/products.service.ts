@@ -81,28 +81,8 @@ function mapUpdateProductInput(
     updates.title = input.title
   }
 
-  if (input.slug !== undefined) {
-    updates.slug = input.slug
-  }
-
   if (input.description !== undefined) {
     updates.description = emptyToNull(input.description)
-  }
-
-  if (input.productType !== undefined) {
-    updates.product_type = input.productType
-  }
-
-  if (input.priceAmount !== undefined) {
-    updates.price_amount = input.priceAmount
-  }
-
-  if (input.currency !== undefined) {
-    updates.currency = input.currency
-  }
-
-  if (input.stripePriceId !== undefined) {
-    updates.stripe_price_id = emptyToNull(input.stripePriceId)
   }
 
   if (input.coverImageUrl !== undefined) {

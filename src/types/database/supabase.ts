@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      media_assets: {
+        Row: {
+          alt_text: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mime_type: string
+          public_url: string
+          size_bytes: number
+          storage_bucket: string
+          storage_path: string
+        }
+        Insert: {
+          alt_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime_type: string
+          public_url: string
+          size_bytes: number
+          storage_bucket?: string
+          storage_path: string
+        }
+        Update: {
+          alt_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime_type?: string
+          public_url?: string
+          size_bytes?: number
+          storage_bucket?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          alt_text: string
+          field_type: string
+          group_key: string
+          help_text: string | null
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          alt_text?: string
+          field_type: string
+          group_key: string
+          help_text?: string | null
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Update: {
+          alt_text?: string
+          field_type?: string
+          group_key?: string
+          help_text?: string | null
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           certificate_number: string

@@ -5,6 +5,7 @@ import { AdminNavItem } from "./AdminNavItem"
 
 const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
+  { label: "Content", href: "/admin/content" },
   { label: "Plans", href: "/admin/plans" },
   { label: "Courses", href: "/admin/courses" },
   { label: "Videos", href: "/admin/videos" },

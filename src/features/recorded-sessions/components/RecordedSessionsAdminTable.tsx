@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui"
+import { MediaUploader } from "@/features/media/components/media-uploader"
 import {
   archiveRecordedSessionAction,
   createRecordedSessionAction,
@@ -331,11 +332,13 @@ export function RecordedSessionsAdminTable({
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="rs-thumb">Thumbnail URL</Label>
-              <Input
-                id="rs-thumb"
+              <MediaUploader
+                label="Thumbnail"
                 value={form.thumbnailUrl}
-                onChange={(e) => updateField("thumbnailUrl", e.target.value)}
+                alt={form.title || "Recorded session"}
+                showAlt={false}
+                folder="recorded-sessions"
+                onChange={({ url }) => updateField("thumbnailUrl", url)}
               />
             </div>
             <div className="flex gap-2 sm:col-span-2">

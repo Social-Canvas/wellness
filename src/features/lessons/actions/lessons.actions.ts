@@ -10,6 +10,7 @@ import {
 } from "@/features/lessons/services/lessons.service"
 import type { Lesson } from "@/features/lessons/types"
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import { requireStaffActor } from "@/server/auth/require-staff"
 
 function revalidateLessonsPath(courseId: string, moduleId: string) {
   revalidatePath(`/admin/courses/${courseId}/modules/${moduleId}/lessons`)
@@ -20,6 +21,8 @@ export async function createLessonAction(
   moduleId: string,
   input: CreateLessonInput
 ): Promise<ActionResult<Lesson>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await createLesson(moduleId, input)
 
   if (!result.success) {
@@ -36,6 +39,8 @@ export async function updateLessonAction(
   id: string,
   input: UpdateLessonInput
 ): Promise<ActionResult<Lesson>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await updateLesson(id, input)
 
   if (!result.success) {
@@ -51,6 +56,8 @@ export async function archiveLessonAction(
   moduleId: string,
   id: string
 ): Promise<ActionResult<Lesson>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await archiveLesson(id)
 
   if (!result.success) {

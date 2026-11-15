@@ -10,6 +10,7 @@ import {
 } from "@/features/modules/services/modules.service"
 import type { Module } from "@/features/modules/types"
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import { requireStaffActor } from "@/server/auth/require-staff"
 
 function revalidateModulesPath(courseId: string) {
   revalidatePath(`/admin/courses/${courseId}/modules`)
@@ -19,6 +20,8 @@ export async function createModuleAction(
   courseId: string,
   input: CreateModuleInput
 ): Promise<ActionResult<Module>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await createModule(courseId, input)
 
   if (!result.success) {
@@ -34,6 +37,8 @@ export async function updateModuleAction(
   id: string,
   input: UpdateModuleInput
 ): Promise<ActionResult<Module>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await updateModule(id, input)
 
   if (!result.success) {
@@ -48,6 +53,8 @@ export async function archiveModuleAction(
   courseId: string,
   id: string
 ): Promise<ActionResult<Module>> {
+  const actor = await requireStaffActor()
+  if (!actor.success) return actor
   const result = await archiveModule(id)
 
   if (!result.success) {
