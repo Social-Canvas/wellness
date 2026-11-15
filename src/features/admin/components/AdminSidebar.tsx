@@ -15,8 +15,6 @@ const ADMIN_NAV_ITEMS = [
   { label: "Members", href: "/admin/members" },
   { label: "Bot review", href: "/admin/bots" },
   { label: "Nonprofits", href: "/dashboard/nonprofit" },
-  { label: "Certificates", href: "/admin/certificates" },
-  { label: "Bookings", href: "/admin/bookings" },
   { label: "Leads", href: "/admin/leads" },
   { label: "Settings", href: "/admin/settings" },
 ] as const

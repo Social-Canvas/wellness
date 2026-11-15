@@ -65,8 +65,10 @@ test("begin_checkout fires after session creation and purchase requires fulfille
   assert.doesNotMatch(actions, /redirect\(/)
   assert.match(consent, /redirectToCheckout/)
   assert.match(success, /trackPurchaseOnce/)
+  assert.match(success, /transactionId: analytics.transactionId/)
   assert.match(success, /state !== "fulfilled"/)
   assert.match(successService, /accessReady/)
+  assert.match(successService, /transactionId: session.id/)
   assert.match(successService, /purchaseAnalytics: accessReady/)
   const successPage = readSrc("src/app/(public)/checkout/success/page.tsx")
   assert.doesNotMatch(successPage, /trackPurchase/)
@@ -115,6 +117,28 @@ test("typed analytics helpers never include email or health fields", () => {
     assert.equal("message" in clean, false)
     assert.equal("health" in clean, false)
   }
+})
+
+test("purchase transaction_id is the checkout session id and survives sanitizing", () => {
+  const event: AnalyticsEvent = {
+    event: "purchase",
+    transaction_id: "cs_live_session_1",
+    value: 47,
+    currency: "usd",
+    items: [{ item_id: "plan-core", item_name: "Elevate Core" }],
+  }
+  const clean = sanitizeAnalyticsEvent(event)
+  assert.equal(clean.event, "purchase")
+  if (clean.event !== "purchase") {
+    return
+  }
+  assert.equal(clean.transaction_id, "cs_live_session_1")
+  assert.equal(analyticsEventHasPii(clean), false)
+  const dataLayer = readSrc("src/lib/analytics/data-layer.ts")
+  const client = readSrc("src/lib/analytics/client.ts")
+  assert.match(dataLayer, /transaction_id: input.transactionId/)
+  assert.match(client, /createSessionPurchaseDedupeStore/)
+  assert.match(client, /pushPurchase\(input\)/)
 })
 
 test("purchase events dedupe by transaction id", () => {

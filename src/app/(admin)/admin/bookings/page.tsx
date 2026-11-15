@@ -9,7 +9,7 @@ export default function AdminBookingsPage() {
       <div>
         <h2 className="font-display text-[28px] font-medium text-ink">Bookings</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          This admin destination is a placeholder. Live session booking is handled
+          This page is not in the admin menu. Live session booking is handled
           with Zoom participant links after entitlement checks. Calendly remains
           an external scheduling option where configured. There is no internal
           bookings database or CRUD here.

@@ -39,7 +39,6 @@ Copy `.env.example` to `.env.local` and fill in values. Access validated env via
 | `MUX_SIGNING_KEY_ID` | Mux signed playback key ID |
 | `MUX_SIGNING_PRIVATE_KEY` | Mux signed playback private key |
 | `RESEND_API_KEY` | Resend email API key |
-| `GHL_API_KEY` | GoHighLevel API key |
 | `CRON_SECRET` | Secret for Vercel Cron job authentication |
 
 ### Optional

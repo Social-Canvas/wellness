@@ -7,7 +7,7 @@ Branch: `feature/elevate-handoff-gtm-bot-docs` (local only, not pushed)
 
 A fresh read-only audit replaced the 26 Oct account counts. See `docs/EMAIL_DELIVERABILITY.md`, `docs/CLIENT_ACTION_TRACKER.md`, and `docs/FUTURE_SCOPE.md`.
 
-- Accounts: **446**. High-confidence bot/test: **0**. Suspicious: **42**. Likely legitimate: **77**. Unknown: **327**. No per-minute signup burst. Do not treat unconfirmed accounts as bots.
+- Accounts: **446**. High-confidence bot/test: **0**. Suspicious: **42**. Likely legitimate: **77**. Unknown: **327**. No per-minute signup burst. Do not treat unconfirmed accounts as bots. `orders` is empty. The only Stripe payment webhook is a test-mode $47 checkout (`livemode: false`). The one active subscription is complimentary. Classifications were not changed.
 - Leads: **44**, all the September retreat spam campaign. Migration `20261115121000_flag_retreat_spam_leads.sql` flags that window when migrations are applied. It does not delete rows and does not flag accounts.
 - `ritika.bizz@gmail.com` and `elevate.ritika@gmail.com` both already exist as `super_admin`. No account was created or changed in this pass.
 - Admin → Content edits public copy and revalidates pages. Admin → Settings shows whether integration env vars are set, never their values, and only for super admins.
@@ -40,8 +40,26 @@ Accounts are **not** a bot flood. All **44** retreat enquiries **are** external 
 | Never confirmed | 207 |
 | Never signed in | 207 |
 | Any subsequent activity (orders, subs, progress, entitlements, certificates, live regs) | 1 |
-| Paid order users | 0 |
+| Paid order users | 0 in `orders`. See the reconciliation below. |
 | Roles | 246 user, 3 admin, 1 super_admin |
+
+### Paid activity reconciliation (15 Nov 2026, read-only)
+
+The audit matched `orders.user_id` and `subscriptions.user_id` to `profiles.id`. That join is the real foreign key. It did not use auth user ids, and it did not skip subscriptions.
+
+Current database, rechecked the same day:
+
+| Record | Count | Meaning |
+|---|---|---|
+| `orders` | 0 | No paid, pending, test, or live order rows. |
+| `subscriptions` | 1 | `active`, `access_source=complimentary`, id prefix `comp_`. Linked to one profile. This is the one account with activity. |
+| `product_entitlements` | 2 | One `complimentary`, one `free_claim`, both for that same profile. |
+| Profiles with `stripe_customer_id` | 6 | 3 super admins, 1 admin, 2 users. A customer id is not a payment. |
+| Stripe `webhook_events` | 6 | All `livemode: false`. |
+
+The only checkout event is `checkout.session.completed`, mode `payment`, `payment_status=paid`, amount 4700 USD cents, status `processed`. The matching `charge.succeeded` and `payment_intent.succeeded` rows are the same test-mode $47 charge. Those charge events are stored as processed and do not create orders. There are no live-mode webhook events and no `sub_` subscription rows.
+
+So the “0 paid accounts” figure is true for this database. The payment that exists is a Stripe **test-mode** checkout, not a live customer payment, and it has no current `orders` or paid-subscription row. Account classifications were not changed.
 
 IP and user-agent are **not stored** on profiles or leads.
 
@@ -144,7 +162,7 @@ The 15-minute window alone would **not** have stopped the 6–7 repeats from one
 | Calendly | External scheduling (no internal bookings DB) | Optional `calendly_url` on live classes | Not in repo | Invite if they own scheduling |
 | GitHub | Source | `Social-Canvas/wellness` | Not in repo | **Yes, for code access** |
 | Cloudflare Turnstile | Optional bot challenge | Env names only until keys are set | Not in repo | Create in Cloudflare, then set Vercel env |
-| GHL | Env key required for production boot; **no live GHL client** in `src/` | `ghl_sync_status` columns exist | Not in repo | Not required unless GHL is revived |
+| GHL | Not integrated. No client reads an API key. | Unused `ghl_sync_status` columns remain | Not in repo | None. Do not add a dummy key. |
 | Google Search Console | TXT `google-site-verification=…` on apex | Verification record present | Not in repo | Optional |
 
 Never invent owners. If an email is not in the repo, it is listed as unknown.
@@ -228,9 +246,7 @@ When both Turnstile keys are unset, public forms **skip** the challenge (local a
 
 ### Other
 
-| Name | Required | Where | Purpose |
-|---|---|---|---|
-| `GHL_API_KEY` | required by `env.ts` | server | Boot-time presence only; no GHL client in `src/` |
+`GHL_API_KEY` is not part of the env schema. GoHighLevel has no client in this app, so production boots without that variable. Do not add a placeholder secret.
 
 GTM container ID `GTM-54JKK6HG` is **hardcoded**. Do not add `NEXT_PUBLIC_GA_ID` or a gtag snippet.
 
@@ -332,9 +348,9 @@ No signing secrets are stored in git.
 
 | Nav item | Route | Status |
 |---|---|---|
-| Bookings | `/admin/bookings` | **Unused placeholder.** Calendly/Zoom are operational elsewhere. No bookings CRUD. |
+| Bookings | `/admin/bookings` | **Hidden from admin navigation.** The route remains as an unused placeholder. Live Sessions and Calendly are the real workflow. |
 | Settings | `/admin/settings` | **Operational for super admins.** Shows whether env vars are set. Never shows values. Admins do not edit secrets here. |
-| Certificates | `/admin/certificates` | **Partially implemented elsewhere.** Member list `/dashboard/certificates`; public verify `/certificate/verify/[token]`; admin name correction on **Members**. Dedicated admin certificate list is not built. |
+| Certificates | `/admin/certificates` | **Hidden from admin navigation.** The route remains a pointer. Members view certificates on the dashboard, public verification stays at `/certificate/verify/[token]`, and name corrections stay on **Members**. |
 | Content | `/admin/content` | **Operational.** Structured public copy, images, FAQs, social links, and SEO text. Does not change prices or access. |
 | Bot review | `/admin/bots` | **Operational.** Single-record review. The Sep 2026 retreat leads can be flagged by migration. Accounts are not bulk-flagged. |
 
@@ -404,7 +420,7 @@ Do not create them again and do not run a promotion update. New staff still sign
 ### Production risk
 
 - **Email SPF/DKIM mismatch** (above). High impact on Auth confirmation and Outlook.
-- **`GHL_API_KEY` required to boot production** but there is **no GHL client**. Keep a dummy-or-real value so `env.ts` does not fail; GHL sync is not live.
+- **`GHL_API_KEY` is no longer required.** There is still no GHL client. Old database columns may remain. Do not invent a key.
 - **No `middleware.ts`.** Session refresh relies on server `getUser()` in layouts. Watch for stale cookies.
 - **Admin Bookings is still a placeholder.** Certificates do not have a separate admin queue. Settings shows configuration status only.
 - **In-memory rate limits** still exist as a same-instance burst fallback. Durable hashed email+IP counts in `public_form_rate_limits` are the cross-instance control (15-minute burst + 24 h email cap / 1 h IP cap for leads). If that table is missing, the limiter fails open and logs a warning. Fingerprint rejection does not skip the limiter.
@@ -432,9 +448,9 @@ GTM `GTM-54JKK6HG` once in `src/app/layout.tsx`. Typed helper: `src/lib/analytic
 | `signup` | After successful `signUp` (including confirm-email-needed) | `{ event: "signup" }` |
 | `lead` | After lead row persisted | `{ event: "lead", lead_type, source? }` |
 | `begin_checkout` | After Stripe session created, **before** browser redirect | item id, optional value/currency |
-| `purchase` | Checkout success page only after local paid/active fulfillment | `transaction_id` = checkout session id; deduped in `sessionStorage` |
+| `purchase` | Checkout success page only after local paid/active fulfillment | `transaction_id` is the Stripe Checkout Session id (`session.id`) |
 
-Purchase is **not** fired from the success URL alone.
+Purchase is **not** fired from the success URL alone. `sessionStorage` only stops a second push in the same browser. GA4 and GTM dedupe on `transaction_id`. The id is not an email, user id, or payment-intent secret.
 
 ---
 
