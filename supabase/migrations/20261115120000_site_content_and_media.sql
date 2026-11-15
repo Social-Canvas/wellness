@@ -38,7 +38,9 @@ for each row execute function public.set_updated_at();
 
 alter table public.site_content enable row level security;
 
-revoke all on table public.site_content from anon, authenticated;
+-- Service role only. Upsert needs select, insert, and update. No sequence: the key is text.
+revoke all on table public.site_content from public, anon, authenticated;
+grant select, insert, update on table public.site_content to service_role;
 
 comment on table public.site_content is
   'Structured public marketing copy. Blank values fall back to code defaults. Does not grant entitlements.';
@@ -62,7 +64,10 @@ create index media_assets_created_at_idx on public.media_assets (created_at desc
 
 alter table public.media_assets enable row level security;
 
-revoke all on table public.media_assets from anon, authenticated;
+-- Service role only. Inserts return the new row, and staff delete removes a record.
+-- id uses gen_random_uuid(), so no sequence grant is required.
+revoke all on table public.media_assets from public, anon, authenticated;
+grant select, insert, delete on table public.media_assets to service_role;
 
 comment on table public.media_assets is
   'Admin-uploaded public marketing images. Paths are unique. Product downloads stay in the private product-files bucket.';

@@ -63,7 +63,11 @@ test("media uploads are staff-only and do not use a public write policy", () => 
     "utf8"
   )
   assert.match(service, /requireStaffActor/)
-  assert.match(migration, /revoke all on table public.media_assets/)
+  assert.match(migration, /revoke all on table public\.site_content from public, anon, authenticated/)
+  assert.match(migration, /grant select, insert, update on table public\.site_content to service_role/)
+  assert.match(migration, /revoke all on table public\.media_assets from public, anon, authenticated/)
+  assert.match(migration, /grant select, insert, delete on table public\.media_assets to service_role/)
   assert.match(migration, /site-media/)
+  assert.doesNotMatch(migration, /grant [\s\S]* to (anon|authenticated|public)/)
   assert.doesNotMatch(migration, /for insert[\s\S]*to anon/)
 })

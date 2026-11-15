@@ -8,7 +8,7 @@ Reviewed application commit: `5c886209d590c4c9ac14798891ae4fe0c34e553b` on `feat
 
 ## Phase 0 — Before touching production
 
-- Confirm a current Supabase backup or point-in-time recovery window exists. Do not restore over production.
+- On 15 Nov 2026 the Supabase backup list was empty and point-in-time recovery was off. Do not apply migrations until a restorable logical dump exists. This environment could not create one: `supabase db dump` requires Docker or Podman, and `pg_dump` is not installed. Do not restore over production.
 - Confirm `origin/main` is still `08690fae807a5c77510246473e184dbf19062881`. If it has moved, stop and review the new commits before merging.
 - In Vercel Production, confirm these names are set. Do not print the values. Do not add `GHL_API_KEY`.
   - `NEXT_PUBLIC_APP_URL` = `https://elevate-healthsolutions.com`
@@ -21,7 +21,7 @@ Reviewed application commit: `5c886209d590c4c9ac14798891ae4fe0c34e553b` on `feat
   - `RESEND_API_KEY`
   - `CRON_SECRET`
   - `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `MUX_SIGNING_KEY_ID`, `MUX_SIGNING_PRIVATE_KEY`, `MUX_WEBHOOK_SECRET`
-- Confirm the Stripe production webhook already targets `https://elevate-healthsolutions.com/api/stripe/webhook` and verifies `Stripe-Signature`. Do not create a second endpoint.
+- The live Stripe account has no webhook endpoint and no event destination. Create one live endpoint at `https://elevate-healthsolutions.com/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. The route checks `Stripe-Signature` with `STRIPE_WEBHOOK_SECRET`, stores `provider_event_id` for idempotency, and ignores test/live mismatches. Creating the endpoint issues a new signing secret. Put that secret in the Vercel Production `STRIPE_WEBHOOK_SECRET`. Do not print it. Do not add a second endpoint after that one exists.
 - Confirm the Supabase project is the one already serving production. Do not create a second project.
 - Confirm `ritika.bizz@gmail.com` and `elevate.ritika@gmail.com` already exist as `super_admin`. Do not create or promote them again.
 - Open the live site and confirm `/`, `/programs`, `/login`, and `/admin` behave as they do today.
@@ -65,7 +65,7 @@ Expect `public.public_form_rate_limits`.
 
 ### 3. `20261115120000_site_content_and_media.sql`
 
-Creates `site_content` and `media_assets`, recreates `public.set_updated_at()`, and creates the public `site-media` bucket (JPEG, PNG, WebP, GIF, 5 MB). No anonymous write policy. It does not change existing pages until an admin saves an override.
+Creates `site_content` and `media_assets`, recreates `public.set_updated_at()`, and creates the public `site-media` bucket (JPEG, PNG, WebP, GIF, 5 MB). RLS stays enabled. `public`, `anon`, and `authenticated` are revoked. `service_role` receives select, insert, and update on `site_content`, and select, insert, and delete on `media_assets`. No sequence grant: content keys are text and media ids use `gen_random_uuid()`. No anonymous write policy. It does not change existing pages until an admin saves an override.
 
 Rollback: do not drop the tables after content has been saved. Before any admin save, the new tables and unused bucket can be removed. Do not delete objects that public pages already reference.
 
@@ -77,7 +77,16 @@ select to_regclass('public.site_content') as site_content,
 select id, public from storage.buckets where id = 'site-media';
 ```
 
-Expect both tables and one public `site-media` bucket.
+Expect both tables, one public `site-media` bucket, and true for every privilege below.
+
+```sql
+select has_table_privilege('service_role', 'public.site_content', 'SELECT') as content_select,
+       has_table_privilege('service_role', 'public.site_content', 'INSERT') as content_insert,
+       has_table_privilege('service_role', 'public.site_content', 'UPDATE') as content_update,
+       has_table_privilege('service_role', 'public.media_assets', 'SELECT') as media_select,
+       has_table_privilege('service_role', 'public.media_assets', 'INSERT') as media_insert,
+       has_table_privilege('service_role', 'public.media_assets', 'DELETE') as media_delete;
+```
 
 ### 4. `20261115121000_flag_retreat_spam_leads.sql`
 
@@ -105,7 +114,7 @@ The 15 Nov 2026 audit found 44 matching leads. Re-count before treating 44 as re
 - Leave the Vercel Production values listed in Phase 0 in place. This release removes the `GHL_API_KEY` boot requirement. Do not add a placeholder.
 - Leave `KIT_SYNC_ENABLED` unset or `false`. Do not turn Kit sync on in the same change as the deploy.
 - Leave `TRANSACTIONAL_EMAIL_FROM` as `no-reply@elevate-healthsolutions.com` and Reply-To as `sender@elevate-healthsolutions.com` until Phase 5 says otherwise.
-- Confirm the Stripe and Mux webhooks still point at the production origin. Do not rotate secrets as part of this deploy.
+- Create the live Stripe webhook in Phase 0 before checkout fulfillment is relied on. Do not rotate the Mux webhook as part of this deploy.
 
 ### Can be completed after deployment
 
