@@ -21,6 +21,7 @@ import {
   ENQUIRY_HONEYPOT_FIELD,
 } from "@/features/leads/schemas/submit-lead"
 import { trackLead } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 import {
   RETREAT_ENQUIRY_CTA,
   RETREAT_ENQUIRY_FORM_HEADING,
@@ -230,7 +231,9 @@ function LeadEnquiryForm({
           return
         }
 
-        trackLead({ leadType: config.leadType, source: config.source })
+        if (isAnalyticsEligible(result)) {
+          trackLead({ leadType: config.leadType, source: config.source })
+        }
         setSubmitted(true)
       } catch {
         setSubmitLocked(false)

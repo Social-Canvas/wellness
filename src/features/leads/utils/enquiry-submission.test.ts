@@ -53,7 +53,7 @@ test("honeypot detection skips persistence path in core", () => {
   assert.match(core, /ENQUIRY_HONEYPOT_FIELD/)
   assert.match(
     core,
-    /return success\(\{\s*id:\s*crypto\.randomUUID\(\)\s*\}\)/
+    /return success\(\{\s*id:\s*crypto\.randomUUID\(\),\s*analyticsEligible:\s*false\s*\}\)/
   )
   assert.doesNotMatch(
     core.slice(
@@ -88,7 +88,7 @@ test("notification failure does not fail submission after insert", () => {
   // Insert happens before notify; success returns even when notify fails.
   const insertIdx = core.indexOf("await deps.insertLead")
   const adminIdx = core.indexOf("deps.sendAdminNotification")
-  const successIdx = core.lastIndexOf("return success({ id: data.id })")
+  const successIdx = core.lastIndexOf("return success({ id: data.id, analyticsEligible: true })")
   assert.ok(insertIdx > 0)
   assert.ok(adminIdx > insertIdx)
   assert.ok(successIdx > adminIdx)

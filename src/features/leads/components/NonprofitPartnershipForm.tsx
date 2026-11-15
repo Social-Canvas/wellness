@@ -32,6 +32,7 @@ import {
   nonprofitEnquirySource,
 } from "@/features/leads/utils/nonprofit-enquiry"
 import { trackLead } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 import { EDUCATIONAL_DISCLAIMER } from "@/features/checkout/constants/disclaimer"
 
 type NonprofitPartnershipFormProps = {
@@ -134,7 +135,9 @@ function NonprofitPartnershipForm({
           return
         }
 
-        trackLead({ leadType: "nonprofit", source: nonprofitEnquirySource() })
+        if (isAnalyticsEligible(result)) {
+          trackLead({ leadType: "nonprofit", source: nonprofitEnquirySource() })
+        }
         setSubmitted(true)
       } catch {
         setSubmitLocked(false)

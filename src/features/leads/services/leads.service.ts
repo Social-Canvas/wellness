@@ -61,8 +61,8 @@ function firstValidationMessage(error: { issues: { message: string }[] }): strin
   return error.issues[0]?.message ?? "Invalid input."
 }
 
-function honeypotSuccess(): ActionResult<{ id: string }> {
-  return success({ id: crypto.randomUUID() })
+function honeypotSuccess(): ActionResult<{ id: string; analyticsEligible: boolean }> {
+  return success({ id: crypto.randomUUID(), analyticsEligible: false })
 }
 
 export type SubmitLeadOptions = {
@@ -220,7 +220,7 @@ function buildDeps(options: SubmitLeadOptions): EnquirySubmissionDeps {
 export async function submitLead(
   input: SubmitLeadInput,
   options: SubmitLeadOptions = {}
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   return submitEnquiryCore(input, buildDeps(options))
 }
 
@@ -231,7 +231,7 @@ export async function submitLead(
 export async function submitNonprofitPartnership(
   input: SubmitNonprofitPartnershipInput,
   options: SubmitLeadOptions = {}
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   const parsed = submitNonprofitPartnershipSchema.safeParse(input)
 
   if (!parsed.success) {

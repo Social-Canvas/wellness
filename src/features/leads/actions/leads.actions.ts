@@ -29,7 +29,7 @@ async function guardPublicForm(
 
 export async function submitLeadAction(
   input: SubmitLeadInput
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   const guard = await guardPublicForm(input.turnstileToken)
   if (!guard.success) {
     return guard
@@ -39,7 +39,7 @@ export async function submitLeadAction(
 
 export async function submitNonprofitPartnershipAction(
   input: SubmitNonprofitPartnershipInput
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   const guard = await guardPublicForm(input.turnstileToken)
   if (!guard.success) {
     return guard

@@ -4,7 +4,6 @@ import { useState } from "react"
 
 import { Button, Input, Label } from "@/components/ui"
 import {
-  deleteSiteMediaByUrlAction,
   listSiteMediaAction,
   uploadSiteMediaAction,
 } from "@/features/media/actions/media.actions"
@@ -39,7 +38,6 @@ export function MediaUploader({
     }
     setPending(true)
     setError(null)
-    const previous = value
     const data = new FormData()
     data.set("file", file)
     data.set("altText", alt)
@@ -51,9 +49,6 @@ export function MediaUploader({
       return
     }
     onChange({ url: result.data.publicUrl, alt: result.data.altText || alt })
-    if (previous && previous !== result.data.publicUrl) {
-      await deleteSiteMediaByUrlAction(previous)
-    }
   }
 
   async function loadLibrary() {

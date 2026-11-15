@@ -1,3 +1,4 @@
+import { normalizeAnalyticsCurrency } from "./currency"
 import { sanitizeAnalyticsEvent } from "./sanitize"
 import type {
   AnalyticsEvent,
@@ -69,8 +70,9 @@ export function trackBeginCheckout(
   if (typeof input.value === "number" && Number.isFinite(input.value)) {
     event.value = input.value
   }
-  if (input.currency?.trim()) {
-    event.currency = input.currency.trim().toLowerCase()
+  const currency = normalizeAnalyticsCurrency(input.currency)
+  if (currency) {
+    event.currency = currency
   }
   pushAnalyticsEvent(
     event,
@@ -103,8 +105,9 @@ export function trackPurchase(
   if (typeof input.value === "number" && Number.isFinite(input.value)) {
     event.value = input.value
   }
-  if (input.currency?.trim()) {
-    event.currency = input.currency.trim().toLowerCase()
+  const currency = normalizeAnalyticsCurrency(input.currency)
+  if (currency) {
+    event.currency = currency
   }
   pushAnalyticsEvent(
     event,

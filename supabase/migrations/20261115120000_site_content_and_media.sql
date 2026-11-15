@@ -1,3 +1,15 @@
+-- Matches public.set_updated_at() from 20250628190000_initial_schema.sql.
+-- Recreated here so this migration still applies on a database built only from repo files.
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 -- Public marketing copy and images editable from /admin/content.
 -- Service role writes only. Public pages read through the server.
 -- Does not store secrets, prices, or Stripe identifiers.

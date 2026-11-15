@@ -58,6 +58,7 @@ export interface SignUpResult {
   requiresEmailConfirmation: boolean
   email: string
   profile?: ProfileView
+  analyticsEligible: boolean
 }
 
 type ServerSupabaseClient = SupabaseClient<Database>
@@ -378,6 +379,7 @@ export async function signUp(
     return success({
       requiresEmailConfirmation: true,
       email: parsed.data.email,
+      analyticsEligible: false,
     })
   }
 
@@ -409,6 +411,7 @@ export async function signUp(
       return success({
         requiresEmailConfirmation: true,
         email: parsed.data.email,
+        analyticsEligible: true,
       })
     }
 
@@ -455,6 +458,7 @@ export async function signUp(
       requiresEmailConfirmation: false,
       email: parsed.data.email,
       profile: mapProfile(profile),
+      analyticsEligible: true,
     })
   } catch {
     return failure("unknown_error", "Something went wrong. Please try again.")

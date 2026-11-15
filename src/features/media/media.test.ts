@@ -41,6 +41,21 @@ test("stored image paths are unique and only site-media URLs can be deleted", ()
   assert.equal(safePdfFileName("My Journal!.pdf"), "My-Journal.pdf")
 })
 
+test("replacing or clearing an image does not delete the stored asset", () => {
+  const uploader = readFileSync(
+    join(root, "src/features/media/components/media-uploader.tsx"),
+    "utf8"
+  )
+  assert.doesNotMatch(uploader, /deleteSiteMedia/)
+  assert.match(uploader, /Remove image/)
+  assert.match(uploader, /onChange\(\{ url: ""/)
+  const migration = readFileSync(
+    join(root, "supabase/migrations/20261115120000_site_content_and_media.sql"),
+    "utf8"
+  )
+  assert.match(migration, /create or replace function public\.set_updated_at/)
+})
+
 test("media uploads are staff-only and do not use a public write policy", () => {
   const service = readFileSync(join(root, "src/features/media/services/media.service.ts"), "utf8")
   const migration = readFileSync(

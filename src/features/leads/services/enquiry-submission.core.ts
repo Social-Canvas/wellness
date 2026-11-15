@@ -110,7 +110,7 @@ function metadataString(
 export async function submitEnquiryCore(
   input: SubmitLeadInput,
   deps: EnquirySubmissionDeps
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; analyticsEligible: boolean }>> {
   const parsed = submitLeadSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -122,7 +122,7 @@ export async function submitEnquiryCore(
       leadType: parsed.data.leadType,
       source: parsed.data.source ?? null,
     })
-    return success({ id: crypto.randomUUID() })
+    return success({ id: crypto.randomUUID(), analyticsEligible: false })
   }
 
   const clientIp = deps.clientIp?.trim() || "unknown"
@@ -254,7 +254,7 @@ export async function submitEnquiryCore(
       lastNotificationError: lastError,
     })
 
-    return success({ id: data.id })
+    return success({ id: data.id, analyticsEligible: true })
   } catch (error) {
     deps.onUnexpectedError?.({
       leadType: parsed.data.leadType,

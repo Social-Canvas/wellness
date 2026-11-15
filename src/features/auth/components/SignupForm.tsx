@@ -14,6 +14,7 @@ import { HoneypotField } from "@/features/bot-protection/components/honeypot-fie
 import { TurnstileField } from "@/features/bot-protection/components/turnstile-field"
 import { HONEYPOT_FIELD } from "@/features/bot-protection/utils/honeypot"
 import { trackSignup } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 
 interface SignupFormProps {
   redirectTo?: string
@@ -89,7 +90,9 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
       return
     }
 
-    trackSignup()
+    if (isAnalyticsEligible(result)) {
+      trackSignup()
+    }
 
     if (result.data.requiresEmailConfirmation) {
       setPendingVerificationEmail(result.data.email)

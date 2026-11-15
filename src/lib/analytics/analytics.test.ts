@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url"
 import { test } from "node:test"
 
 import { GTM_CONTAINER_ID } from "./constants.ts"
+import { normalizeAnalyticsCurrency } from "./currency.ts"
+import { isAnalyticsEligible } from "./eligibility.ts"
 import {
   createMemoryPurchaseDedupeStore,
   shouldFirePurchaseEvent,
@@ -42,18 +44,51 @@ test("signup and lead events fire only from success paths", () => {
     readSrc("src/features/leads/components/LeadCaptureForm.tsx"),
     readSrc("src/features/leads/components/NonprofitPartnershipForm.tsx"),
   ]
+  assert.match(signup, /isAnalyticsEligible\(result\)/)
   assert.match(signup, /trackSignup\(\)/)
   const signupCall = signup.indexOf("trackSignup()")
+  const signupEligible = signup.indexOf("isAnalyticsEligible(result)")
   const signupFail = signup.indexOf("if (!result.success)")
-  assert.ok(signupFail >= 0 && signupCall > signupFail)
+  assert.ok(signupFail >= 0 && signupEligible > signupFail && signupCall > signupEligible)
   assert.match(signup.slice(signupFail, signupCall), /return/)
   for (const lead of leadForms) {
+    assert.match(lead, /isAnalyticsEligible\(result\)/)
     assert.match(lead, /trackLead\(/)
     const leadCall = lead.indexOf("trackLead(")
+    const leadEligible = lead.indexOf("isAnalyticsEligible(result)")
     const leadFail = lead.indexOf("if (!result.success)")
-    assert.ok(leadFail >= 0 && leadCall > leadFail)
+    assert.ok(leadFail >= 0 && leadEligible > leadFail && leadCall > leadEligible)
     assert.match(lead.slice(leadFail, leadCall), /return/)
   }
+})
+
+test("honeypot successes stay successful without analytics eligibility", () => {
+  assert.equal(isAnalyticsEligible({ success: true, data: { analyticsEligible: false } }), false)
+  assert.equal(isAnalyticsEligible({ success: true, data: { analyticsEligible: true } }), true)
+  assert.equal(isAnalyticsEligible({ success: false }), false)
+
+  const signup = readSrc("src/features/auth/services/auth.service.ts")
+  const honeypot = signup.indexOf("Signup honeypot triggered")
+  const accountCreate = signup.indexOf("supabase.auth.signUp")
+  assert.ok(honeypot > 0 && accountCreate > honeypot)
+  assert.match(signup.slice(honeypot, accountCreate), /analyticsEligible: false/)
+  assert.doesNotMatch(signup.slice(honeypot, accountCreate), /supabase\.auth\.signUp/)
+  assert.match(signup, /analyticsEligible: true/)
+
+  const core = readSrc("src/features/leads/services/enquiry-submission.core.ts")
+  const leadHoneypot = core.indexOf("isHoneypotTriggered(parsed.data")
+  const insert = core.indexOf("await deps.insertLead")
+  assert.ok(leadHoneypot > 0 && insert > leadHoneypot)
+  assert.match(core.slice(leadHoneypot, insert), /analyticsEligible: false/)
+  assert.doesNotMatch(core.slice(leadHoneypot, insert), /insertLead/)
+  assert.match(core, /id: data\.id, analyticsEligible: true/)
+
+  const nonprofit = readSrc("src/features/leads/services/leads.service.ts")
+  const nonprofitHoneypot = nonprofit.indexOf("Nonprofit enquiry honeypot triggered")
+  const nonprofitPersist = nonprofit.indexOf("return submitLead(")
+  assert.ok(nonprofitHoneypot > 0 && nonprofitPersist > nonprofitHoneypot)
+  assert.match(nonprofit.slice(nonprofitHoneypot, nonprofitPersist), /return honeypotSuccess\(\)/)
+  assert.match(nonprofit, /analyticsEligible: false/)
 })
 
 test("begin_checkout fires after session creation and purchase requires fulfilled paid state", () => {
@@ -117,6 +152,15 @@ test("typed analytics helpers never include email or health fields", () => {
     assert.equal("message" in clean, false)
     assert.equal("health" in clean, false)
   }
+})
+
+test("begin_checkout and purchase send uppercase ISO currency", () => {
+  assert.equal(normalizeAnalyticsCurrency("usd"), "USD")
+  assert.equal(normalizeAnalyticsCurrency(" gbp "), "GBP")
+  assert.equal(normalizeAnalyticsCurrency("  "), undefined)
+  const dataLayer = readSrc("src/lib/analytics/data-layer.ts")
+  assert.match(dataLayer, /normalizeAnalyticsCurrency\(input\.currency\)/)
+  assert.doesNotMatch(dataLayer, /toLowerCase\(\)/)
 })
 
 test("purchase transaction_id is the checkout session id and survives sanitizing", () => {

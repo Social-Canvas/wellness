@@ -13,6 +13,7 @@ import {
   type SubmitLeadInput,
 } from "@/features/leads/schemas/submit-lead"
 import { trackLead } from "@/lib/analytics/client"
+import { isAnalyticsEligible } from "@/lib/analytics/eligibility"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -76,8 +77,10 @@ function LeadCaptureForm({
         return
       }
 
+      if (isAnalyticsEligible(result)) {
         trackLead({ leadType, source })
-        setSubmitted(true)
+      }
+      setSubmitted(true)
     })
   }
 
