@@ -102,7 +102,6 @@ test("9. Authenticated user sees member navigation", () => {
     "My Library",
     "Membership",
     "Downloads",
-    "Certificates",
     "Account",
     "Programs",
     "Shop",
@@ -111,6 +110,7 @@ test("9. Authenticated user sees member navigation", () => {
   ]) {
     assert.ok(mobile.includes(label), `missing ${label}`)
   }
+  assert.ok(!mobile.includes("Certificates"))
   assert.match(publicMobile(), /isAuthenticated/)
   assert.match(publicMobile(), /Dashboard/)
   assert.match(publicMobile(), /\/dashboard\/account/)
@@ -174,9 +174,9 @@ test("14. Existing desktop header remains unchanged", () => {
     "/dashboard/library",
     "/dashboard/membership",
     "/dashboard/downloads",
-    "/dashboard/certificates",
     "/dashboard/account",
   ])
+  assert.ok(!essentials.includes("/dashboard/certificates"))
   assert.match(
     readSource("src/components/layout/navbar.tsx"),
     /sticky top-0 z-40 border-b border-line bg-\[rgba\(246,250,249,0\.96\)\] backdrop-blur-\[10px\]/

@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
 
 import { CertificateVerifyView } from "@/features/certificates/components"
 import { verifyCertificate } from "@/features/certificates/services/certificates.service"
@@ -15,7 +14,7 @@ export async function generateMetadata({
   const result = await verifyCertificate({ token })
 
   if (!result.success) {
-    return { title: "Certificate not found" }
+    return { title: "Certificates are not currently offered" }
   }
 
   return {
@@ -31,7 +30,16 @@ export default async function VerifyCertificatePage({
   const result = await verifyCertificate({ token })
 
   if (!result.success) {
-    notFound()
+    return (
+      <main className="mx-auto max-w-lg px-6 py-16 text-center">
+        <h1 className="font-display text-2xl font-medium text-ink">
+          Certificates are not currently offered
+        </h1>
+        <p className="mt-3 text-sm text-ink-soft">
+          This link does not open a certificate.
+        </p>
+      </main>
+    )
   }
 
   return <CertificateVerifyView certificate={result.data} />

@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 import type {
   ForgotPasswordInput,
@@ -96,7 +95,7 @@ export async function signUpAction(
 export async function signInAction(
   input: LoginInput,
   redirectTo?: string
-): Promise<ActionResult<SignInResult>> {
+): Promise<ActionResult<SignInResult & { redirectTo: string }>> {
   const result = await signIn(input)
 
   if (!result.success) {
@@ -105,9 +104,13 @@ export async function signInAction(
 
   revalidatePath("/", "layout")
 
-  const safeRedirect = resolveSafeAuthReturnPath(redirectTo)
-
-  redirect(safeRedirect)
+  return {
+    success: true,
+    data: {
+      ...result.data,
+      redirectTo: resolveSafeAuthReturnPath(redirectTo),
+    },
+  }
 }
 
 export async function signOutAction(): Promise<ActionResult<null>> {
@@ -118,7 +121,7 @@ export async function signOutAction(): Promise<ActionResult<null>> {
   }
 
   revalidatePath("/", "layout")
-  redirect("/login")
+  return result
 }
 
 export async function forgotPasswordAction(

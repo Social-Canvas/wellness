@@ -2,8 +2,6 @@ import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
-import { CourseCertificateCard } from "@/features/certificates/components"
-import { issueCertificate } from "@/features/certificates/services/certificates.service"
 import {
   CourseResourcesSection,
   LibraryModuleList,
@@ -100,24 +98,6 @@ export default async function CourseLibraryPage({
     courseId: course.id,
   })
 
-  let certificate = null
-
-  // Certificates are never issued as a side effect of previewing draft content.
-  if (
-    !isPreview &&
-    course.certificateEnabled &&
-    progressResult.success &&
-    progressResult.data.completedAt
-  ) {
-    const certificateResult = await issueCertificate(profileResult.data.id, {
-      courseId: course.id,
-    })
-
-    if (certificateResult.success) {
-      certificate = certificateResult.data
-    }
-  }
-
   const resourcesResult = !isPreview
     ? await listCourseResourcesForMember(profileResult.data.id, course.id)
     : null
@@ -150,8 +130,6 @@ export default async function CourseLibraryPage({
           comingSoonCount={comingSoonCount}
         />
       ) : null}
-
-      {certificate ? <CourseCertificateCard certificate={certificate} /> : null}
 
       <LibraryModuleList
         courseId={course.id}

@@ -13,9 +13,8 @@ export default function AdminCertificatesPage() {
           Certificates
         </h2>
         <p className="mt-1 text-sm text-ink-soft">
-          This page is not in the admin menu. Member certificates are issued from course completion. Members view them
-          at Dashboard → Certificates. Public verification is at
-          /certificate/verify/[token]. Admin certificate-name corrections live on
+          This page is not in the admin menu. Certificates are hidden from member
+          navigation. Historical records stay in the database. Admin certificate-name corrections live on
           Admin → Members.
         </p>
       </div>

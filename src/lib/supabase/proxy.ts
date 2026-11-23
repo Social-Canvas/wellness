@@ -14,6 +14,12 @@ function isProtectedPath(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
+  const pendingCookies: {
+    name: string
+    value: string
+    options?: Parameters<NextResponse["cookies"]["set"]>[2]
+  }[] = []
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: (() => {
@@ -33,6 +39,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
+          pendingCookies.splice(0, pendingCookies.length, ...cookiesToSet)
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
           })
@@ -64,8 +71,8 @@ export async function updateSession(request: NextRequest) {
     url.searchParams.set("next", request.nextUrl.pathname)
     const redirectResponse = NextResponse.redirect(url)
 
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value)
+    pendingCookies.forEach(({ name, value, options }) => {
+      redirectResponse.cookies.set(name, value, options)
     })
 
     return redirectResponse

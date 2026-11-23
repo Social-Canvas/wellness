@@ -36,7 +36,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     if (!result.success) {
       setFormError(result.error.message)
+      return
     }
+
+    window.location.assign(result.data.redirectTo)
   }
 
   return (

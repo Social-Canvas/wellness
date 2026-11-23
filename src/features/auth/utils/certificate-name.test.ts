@@ -166,13 +166,13 @@ test("13. User cannot set another user’s name", () => {
   assert.doesNotMatch(service, /p_user_id|targetUserId|anotherUser/)
 })
 
-// 14. Locked name appears read-only on Account.
-test("14. Locked name appears read-only on Account", () => {
+// 14. Account no longer presents certificates. The locked name stays in data.
+test("14. Account hides certificate copy and keeps the name read-only", () => {
   const account = read("src/app/(dashboard)/dashboard/account/page.tsx")
-  assert.match(account, /Certificate name/)
-  assert.match(account, /profile\.certificateName/)
+  assert.doesNotMatch(account, /Certificate name/)
+  assert.doesNotMatch(account, /profile\.certificateName/)
   assert.doesNotMatch(account, /register\("certificateName"\)/)
-  assert.match(account, /Contact\s+support if a correction is required/)
+  assert.match(account, /profile\.fullName/)
 })
 
 // 15. Certificate issuance uses the locked name.

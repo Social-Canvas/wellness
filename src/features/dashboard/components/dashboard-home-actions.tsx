@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Award, BookOpen, CreditCard, Download, ShoppingBag, Sparkles } from "lucide-react"
+import { BookOpen, CreditCard, Download, ShoppingBag, Sparkles } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
@@ -40,13 +40,6 @@ const DASHBOARD_ACTIONS = [
     href: "/dashboard/account",
     label: "Account settings",
     icon: CreditCard,
-  },
-  {
-    title: "View Certificates",
-    description: "See certificates you have earned from completed courses.",
-    href: "/dashboard/certificates",
-    label: "My certificates",
-    icon: Award,
   },
 ] as const
 

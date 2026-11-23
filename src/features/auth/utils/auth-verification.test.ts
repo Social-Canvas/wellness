@@ -46,6 +46,15 @@ test("onboarding vs dashboard destinations stay relative-safe", () => {
     "/certificate-name?next=%2Fdashboard"
   )
   assert.equal(resolveSafeAuthReturnPath("/dashboard/library"), "/dashboard/library")
+  assert.equal(resolveSafeAuthReturnPath("/admin"), "/admin")
+  assert.equal(
+    resolveSafeAuthReturnPath("/admin/live-sessions"),
+    "/admin/live-sessions"
+  )
+  assert.equal(
+    resolveSafeAuthReturnPath("/dashboard/recorded-sessions"),
+    "/dashboard/recorded-sessions"
+  )
 })
 
 test("friendly auth errors never include raw tokens", () => {

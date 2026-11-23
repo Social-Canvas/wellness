@@ -36,7 +36,10 @@ export default async function DashboardLayout({
       (!profileResult.success &&
         profileResult.error.code === "authentication_required")
     ) {
-      redirect("/login")
+      const headerList = await headers()
+      const pathname = headerList.get("x-pathname") ?? "/dashboard"
+      const nextPath = pathname.startsWith("/dashboard") ? pathname : "/dashboard"
+      redirect(`/login?next=${encodeURIComponent(nextPath)}`)
     }
 
     const message = !userResult.success
