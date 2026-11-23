@@ -34,7 +34,10 @@ export default async function AdminLayout({
       (!profileResult.success &&
         profileResult.error.code === "authentication_required")
     ) {
-      redirect("/login")
+      const headerList = await headers()
+      const pathname = headerList.get("x-pathname") ?? "/admin"
+      const nextPath = pathname.startsWith("/admin") ? pathname : "/admin"
+      redirect(`/login?next=${encodeURIComponent(nextPath)}`)
     }
 
     const message = !userResult.success

@@ -125,14 +125,10 @@ export default async function DashboardAccountPage({
         <CardContent className="space-y-4 text-sm text-ink-soft">
           <div>
             <p>
-              <span className="font-semibold text-ink">Certificate name</span>
+              <span className="font-semibold text-ink">Name</span>
             </p>
             <p className="mt-1 text-base font-medium text-ink">
-              {profile.certificateName ?? "Not confirmed"}
-            </p>
-            <p className="mt-1 text-xs">
-              This name is locked because it is used on your certificates. Contact
-              support if a correction is required.
+              {profile.fullName ?? "Not set"}
             </p>
           </div>
           <p>

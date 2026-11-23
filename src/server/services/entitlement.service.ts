@@ -11,6 +11,7 @@ import {
   evaluatePreviewEligibility,
   isActiveSubscription,
 } from "@/server/services/preview-eligibility"
+import { profileHasSuperAdminDemoAccess } from "@/server/services/super-admin-access.server"
 import type { Database } from "@/types/database/supabase"
 
 type ContentType = Database["public"]["Enums"]["content_type"]
@@ -414,6 +415,10 @@ export const canAccessCourse = cache(
       return validationFailure(firstValidationMessage(parsedCourseId.error))
     }
 
+    if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+      return success(true)
+    }
+
     const subscriptionAccessResult = await hasSubscriptionContentAccess(
       parsedUserId.data,
       [{ contentType: "course", contentId: parsedCourseId.data }]
@@ -442,6 +447,10 @@ export const canAccessLesson = cache(
 
     if (!parsedLessonId.success) {
       return validationFailure(firstValidationMessage(parsedLessonId.error))
+    }
+
+    if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+      return success(true)
     }
 
     const chainResult = await getLessonContentChain(parsedLessonId.data)
@@ -486,6 +495,10 @@ export async function canAccessVideo(
 
   if (!parsedVideoId.success) {
     return validationFailure(firstValidationMessage(parsedVideoId.error))
+  }
+
+  if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+    return success(true)
   }
 
   const directAccessResult = await hasSubscriptionContentAccess(parsedUserId.data, [
@@ -540,6 +553,10 @@ export async function canDownloadProduct(
     return validationFailure(firstValidationMessage(parsedProductId.error))
   }
 
+  if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+    return success(true)
+  }
+
   return hasPurchasedProduct(parsedUserId.data, parsedProductId.data)
 }
 
@@ -555,6 +572,10 @@ export const canAccessRecordedSessions = cache(
 
     if (!parsedUserId.success) {
       return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+      return success(true)
     }
 
     const { userHasCapability } = await import(
@@ -578,6 +599,10 @@ export const canAccessLiveOnlineSessions = cache(
 
     if (!parsedUserId.success) {
       return validationFailure(firstValidationMessage(parsedUserId.error))
+    }
+
+    if (await profileHasSuperAdminDemoAccess(parsedUserId.data)) {
+      return success(true)
     }
 
     const { userHasCapability } = await import(

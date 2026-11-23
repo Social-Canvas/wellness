@@ -10,7 +10,10 @@ export function SignOutButton() {
 
   function handleSignOut() {
     startTransition(async () => {
-      await signOutAction()
+      const result = await signOutAction()
+      if (result.success) {
+        window.location.assign("/login")
+      }
     })
   }
 

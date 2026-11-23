@@ -73,7 +73,10 @@ export function DashboardUserMenu({
   function handleSignOut() {
     setOpen(false)
     startTransition(async () => {
-      await signOutAction()
+      const result = await signOutAction()
+      if (result.success) {
+        window.location.assign("/login")
+      }
     })
   }
 

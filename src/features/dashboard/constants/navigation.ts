@@ -21,7 +21,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { label: "My Library", href: "/dashboard/library", group: "essential" },
   { label: "Membership", href: "/dashboard/membership", group: "essential" },
   { label: "Downloads", href: "/dashboard/downloads", group: "essential" },
-  { label: "Certificates", href: "/dashboard/certificates", group: "essential" },
   { label: "Account", href: "/dashboard/account", group: "essential" },
   { label: "Programs", href: "/programs", group: "secondary" },
   { label: "For Nonprofits", href: "/nonprofits", group: "secondary" },

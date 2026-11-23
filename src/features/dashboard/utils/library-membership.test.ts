@@ -457,7 +457,6 @@ test("Nav essentials include Membership and exclude Live/Recorded top-level", ()
     "My Library",
     "Membership",
     "Downloads",
-    "Certificates",
     "Account",
   ])
   assert.deepEqual(getWideNavItems(false), [])

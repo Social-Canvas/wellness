@@ -6,6 +6,7 @@ import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { profileHasSuperAdminDemoAccess } from "@/server/services/super-admin-access.server"
 import {
   COMP_PREVIEW_MARKER_PREFIX,
   isActiveSubscription,
@@ -500,6 +501,10 @@ export async function userHasCapability(
   userId: string,
   capability: MembershipCapability
 ): Promise<ActionResult<boolean>> {
+  if (await profileHasSuperAdminDemoAccess(userId)) {
+    return success(true)
+  }
+
   const membership = await getEffectiveMembership(userId)
   if (!membership.success) {
     return membership as ActionFailure

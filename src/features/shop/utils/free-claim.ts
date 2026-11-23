@@ -107,10 +107,15 @@ export function resolveSafeAuthReturnPath(
   }
 
   const pathOnly = nextRaw.split("?")[0] ?? nextRaw
-  const allowed = (SAFE_AUTH_RETURN_PATHS as readonly string[]).some(
-    (allowedPath) =>
-      pathOnly === allowedPath || pathOnly.startsWith(`${allowedPath}/`)
-  )
+  const allowed =
+    pathOnly === "/admin" ||
+    pathOnly.startsWith("/admin/") ||
+    pathOnly === "/dashboard" ||
+    pathOnly.startsWith("/dashboard/") ||
+    (SAFE_AUTH_RETURN_PATHS as readonly string[]).some(
+      (allowedPath) =>
+        pathOnly === allowedPath || pathOnly.startsWith(`${allowedPath}/`)
+    )
 
   return allowed ? nextRaw : fallback
 }

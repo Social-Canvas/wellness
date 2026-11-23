@@ -110,9 +110,9 @@ test("essential dashboard links remain accessible", () => {
     "/dashboard/library",
     "/dashboard/membership",
     "/dashboard/downloads",
-    "/dashboard/certificates",
     "/dashboard/account",
   ])
+  assert.ok(!essentials.includes("/dashboard/certificates"))
 })
 
 test("Programs and Shop remain accessible", () => {
@@ -158,7 +158,6 @@ test("mobile menu contains all destinations", () => {
     "Shop",
     "Blog",
     "About",
-    "Certificates",
     "Account",
     "Admin",
   ]) {
