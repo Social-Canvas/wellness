@@ -4,6 +4,7 @@ import type Stripe from "stripe"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import { profileHasSuperAdminDemoAccess } from "@/server/services/super-admin-access.server"
 import {
   buildCheckoutCancelUrl,
   buildCheckoutSuccessUrl,
@@ -360,12 +361,33 @@ export async function listPurchasedDownloads(
       }
     }
 
-    const productIds = [
+    const superAdminDemo = await profileHasSuperAdminDemoAccess(
+      parsedUserId.data
+    )
+    let productIds = [
       ...new Set([
         ...(entitlements ?? []).map((row) => row.product_id),
         ...orderProductIds.keys(),
       ]),
     ]
+
+    if (superAdminDemo) {
+      const { data: publishedProducts, error: publishedError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("status", "published")
+
+      if (publishedError) {
+        return mapDatabaseError(publishedError)
+      }
+
+      productIds = [
+        ...new Set([
+          ...productIds,
+          ...(publishedProducts ?? []).map((product) => product.id),
+        ]),
+      ]
+    }
 
     if (productIds.length === 0) {
       return success([])
@@ -448,6 +470,13 @@ export async function listPurchasedDownloads(
       } else if (paidAt) {
         source = "purchase"
         acquiredAt = paidAt
+      } else if (
+        superAdminDemo &&
+        product.status === "published" &&
+        (filesByProductId.get(product.id)?.length ?? 0) > 0
+      ) {
+        source = "included"
+        acquiredAt = null
       } else {
         continue
       }

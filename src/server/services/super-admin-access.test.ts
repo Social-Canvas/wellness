@@ -67,6 +67,20 @@ test("entitlement and membership entry points consult super admin access", () =>
 
   assert.match(entitlement, /profileHasSuperAdminDemoAccess/)
   assert.match(membership, /profileHasSuperAdminDemoAccess/)
+  const downloads = readFileSync(
+    new URL("../../features/shop/services/shop.service.ts", import.meta.url),
+    "utf8"
+  )
+  const membershipPage = readFileSync(
+    new URL(
+      "../../app/(dashboard)/dashboard/membership/page.tsx",
+      import.meta.url
+    ),
+    "utf8"
+  )
+  assert.match(downloads, /profileHasSuperAdminDemoAccess/)
+  assert.match(membershipPage, /grantsSuperAdminDemoAccess/)
+  assert.match(membershipPage, /Super admin demo/)
   assert.doesNotMatch(entitlement, /elevate\.ritika@gmail\.com|ritika\.bizz@gmail\.com/)
   assert.doesNotMatch(membership, /elevate\.ritika@gmail\.com|ritika\.bizz@gmail\.com/)
 })

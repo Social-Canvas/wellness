@@ -13,7 +13,12 @@ import { listUpcomingLiveSessionsForMembers } from "@/features/live-sessions/ser
 import { listPublishedRecordedSessionsForMember } from "@/features/recorded-sessions/services/recorded-sessions.service"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getEffectiveMembership } from "@/server/services/membership.service"
+import { MEMBERSHIP_CAPABILITIES } from "@/server/services/membership-capabilities"
+import {
+  getEffectiveMembership,
+  type EffectiveMembership,
+} from "@/server/services/membership.service"
+import { grantsSuperAdminDemoAccess } from "@/server/services/super-admin-access"
 
 export const metadata: Metadata = {
   title: "Membership",
@@ -38,7 +43,10 @@ export default async function MembershipPage() {
     )
   }
 
-  const membership = membershipResult.data
+  const membership = withSuperAdminDemoMembership(
+    membershipResult.data,
+    profileResult.data.role
+  )
   if (
     membership.source === "none" ||
     membership.status === "none" ||
@@ -112,4 +120,29 @@ export default async function MembershipPage() {
       reservation={reservation}
     />
   )
+}
+
+function withSuperAdminDemoMembership(
+  membership: EffectiveMembership,
+  role: string
+): EffectiveMembership {
+  if (!grantsSuperAdminDemoAccess(role) || membership.effectivePlanId) {
+    return membership
+  }
+
+  return {
+    ...membership,
+    effectiveTierSlug: "super-admin-demo",
+    effectivePlanId: "super-admin-demo",
+    effectivePlanName: "Super admin demo",
+    source: "complimentary",
+    status: "active",
+    capabilities: [...MEMBERSHIP_CAPABILITIES],
+    hasCourseLibrary: true,
+    canAttendInPerson: true,
+    hasPersonalBilling: false,
+    isSponsored: false,
+    upgradePlanSlugs: [],
+    downgradePlanSlugs: [],
+  }
 }
