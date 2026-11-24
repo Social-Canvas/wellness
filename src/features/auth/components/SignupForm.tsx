@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
@@ -10,7 +10,6 @@ import { signUpAction } from "@/features/auth/actions/auth.actions"
 import { GoogleAuthButton } from "@/features/auth/components/GoogleAuthButton"
 import { ResendVerificationForm } from "@/features/auth/components/ResendVerificationForm"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
-import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
 import { HoneypotField } from "@/features/bot-protection/components/honeypot-field"
 import { TurnstileField } from "@/features/bot-protection/components/turnstile-field"
 import { HONEYPOT_FIELD } from "@/features/bot-protection/utils/honeypot"
@@ -23,8 +22,6 @@ interface SignupFormProps {
 
 export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
   const router = useRouter()
-  const helpId = useId()
-  const confirmHelpId = useId()
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<
@@ -34,11 +31,9 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      fullName: "",
       email: "",
       password: "",
-      confirmPassword: "",
-      certificateName: "",
-      confirmCertificateName: undefined as unknown as true,
       [HONEYPOT_FIELD]: "",
       turnstileToken: "",
     },
@@ -60,25 +55,14 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
   )
 
   useEffect(() => {
-    if (errors.certificateName) {
-      setFocus("certificateName")
-    } else if (errors.confirmCertificateName) {
-      setFocus("confirmCertificateName")
+    if (errors.fullName) {
+      setFocus("fullName")
     } else if (errors.email) {
       setFocus("email")
     } else if (errors.password) {
       setFocus("password")
-    } else if (errors.confirmPassword) {
-      setFocus("confirmPassword")
     }
-  }, [
-    errors.certificateName,
-    errors.confirmCertificateName,
-    errors.email,
-    errors.password,
-    errors.confirmPassword,
-    setFocus,
-  ])
+  }, [errors.fullName, errors.email, errors.password, setFocus])
 
   async function onSubmit(values: SignupInput) {
     setFormError(null)
@@ -100,7 +84,6 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
       setFormSuccess(
         `Check your email to confirm your account at ${result.data.email}.`
       )
-      // Preserve certificate name values after recoverable confirmation-needed state.
       return
     }
 
@@ -156,47 +139,18 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="signup-certificate-name">
-              {CERTIFICATE_NAME_COPY.signupLabel}
-            </Label>
+            <Label htmlFor="signup-full-name">Name</Label>
             <Input
-              id="signup-certificate-name"
+              id="signup-full-name"
               type="text"
               autoComplete="name"
-              aria-invalid={Boolean(errors.certificateName)}
-              aria-describedby={helpId}
+              aria-invalid={Boolean(errors.fullName)}
               disabled={isSubmitting}
-              {...register("certificateName")}
+              {...register("fullName")}
             />
-            <p id={helpId} className="text-sm text-ink-soft">
-              {CERTIFICATE_NAME_COPY.signupHelp}
-            </p>
-            {errors.certificateName ? (
+            {errors.fullName ? (
               <p role="alert" className="text-sm text-destructive">
-                {errors.certificateName.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="signup-confirm-certificate-name"
-              className="flex items-start gap-3 text-sm text-ink"
-            >
-              <input
-                id="signup-confirm-certificate-name"
-                type="checkbox"
-                className="mt-1 size-4 shrink-0 accent-[var(--color-blue)]"
-                aria-invalid={Boolean(errors.confirmCertificateName)}
-                aria-describedby={confirmHelpId}
-                disabled={isSubmitting}
-                {...register("confirmCertificateName")}
-              />
-              <span id={confirmHelpId}>{CERTIFICATE_NAME_COPY.signupConfirm}</span>
-            </label>
-            {errors.confirmCertificateName ? (
-              <p role="alert" className="text-sm text-destructive">
-                {errors.confirmCertificateName.message}
+                {errors.fullName.message}
               </p>
             ) : null}
           </div>
@@ -231,23 +185,6 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
             {errors.password ? (
               <p role="alert" className="text-sm text-destructive">
                 {errors.password.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="signup-confirm-password">Confirm password</Label>
-            <Input
-              id="signup-confirm-password"
-              type="password"
-              autoComplete="new-password"
-              aria-invalid={Boolean(errors.confirmPassword)}
-              disabled={isSubmitting}
-              {...register("confirmPassword")}
-            />
-            {errors.confirmPassword ? (
-              <p role="alert" className="text-sm text-destructive">
-                {errors.confirmPassword.message}
               </p>
             ) : null}
           </div>

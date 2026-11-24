@@ -154,6 +154,25 @@ test("typed analytics helpers never include email or health fields", () => {
   }
 })
 
+test("reset landing page pushes a PII-free view_item event for the reset product", () => {
+  const page = readSrc("src/app/(public)/reset/page.tsx")
+  const tracker = readSrc("src/components/analytics/view-item-tracker.tsx")
+  const dataLayer = readSrc("src/lib/analytics/data-layer.ts")
+  assert.match(page, /<ViewItemTracker itemId=\{RESET_PLAN\.slug\}/)
+  assert.match(tracker, /trackViewItem\(/)
+  assert.match(dataLayer, /event: "view_item"/)
+
+  const clean = sanitizeAnalyticsEvent({
+    event: "view_item",
+    items: [{ item_id: "7-day-reset", item_name: "Reset Plan" }],
+  })
+  assert.equal(analyticsEventHasPii(clean), false)
+  assert.deepEqual(clean, {
+    event: "view_item",
+    items: [{ item_id: "7-day-reset", item_name: "Reset Plan" }],
+  })
+})
+
 test("begin_checkout and purchase send uppercase ISO currency", () => {
   assert.equal(normalizeAnalyticsCurrency("usd"), "USD")
   assert.equal(normalizeAnalyticsCurrency(" gbp "), "GBP")

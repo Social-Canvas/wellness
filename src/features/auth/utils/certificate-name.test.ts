@@ -5,6 +5,7 @@ import { test } from "node:test"
 
 import {
   CERTIFICATE_NAME_COPY,
+  CERTIFICATES_OFFERED,
   isCertificateNameLocked,
   normalizeCertificateName,
   resolveCertificateNameNextPath,
@@ -18,21 +19,25 @@ function read(relativePath: string): string {
   return readFileSync(join(ROOT, relativePath), "utf8")
 }
 
-// 1. Signup requires a certificate name.
-test("1. Signup requires a certificate name", () => {
+// 1. Signup asks for name, email, and password only while certificates are hidden.
+test("1. Signup collects a plain name instead of a certificate name", () => {
+  assert.equal(CERTIFICATES_OFFERED, false)
   assert.equal(validateCertificateName("").ok, false)
   const schema = read("src/features/auth/schemas/signup.ts")
-  assert.match(schema, /certificateName:\s*certificateNameField/)
-  assert.doesNotMatch(schema, /fullName:\s*fullNameField/)
+  assert.match(schema, /fullName:\s*fullNameField/)
+  assert.doesNotMatch(schema, /certificateName/)
+  assert.doesNotMatch(schema, /confirmPassword/)
+  const service = read("src/features/auth/services/auth.service.ts")
+  assert.doesNotMatch(service, /certificate_name: parsed\.data/)
 })
 
-// 2. Signup requires permanence confirmation.
-test("2. Signup requires permanence confirmation", () => {
-  const schema = read("src/features/auth/schemas/signup.ts")
-  assert.match(schema, /confirmCertificateName:\s*certificateNameConfirmField/)
+// 2. Signup form has no certificate or confirm-password fields.
+test("2. Signup form drops certificate confirmation and confirm password", () => {
   const form = read("src/features/auth/components/SignupForm.tsx")
-  assert.match(form, /confirmCertificateName/)
-  assert.match(form, /CERTIFICATE_NAME_COPY\.signupConfirm/)
+  assert.match(form, /register\("fullName"\)/)
+  assert.doesNotMatch(form, /confirmCertificateName/)
+  assert.doesNotMatch(form, /CERTIFICATE_NAME_COPY/)
+  assert.doesNotMatch(form, /confirmPassword/)
 })
 
 // 3. Name is normalized server-side.
@@ -68,12 +73,17 @@ test("5. Control characters and markup-like input are rejected", () => {
   }
 })
 
-// 6. Existing user without a name is redirected to onboarding.
-test("6. Existing user without a name is redirected to onboarding", () => {
+// 6. The onboarding redirect only runs while certificates are offered.
+test("6. Certificate-name onboarding gate is off while certificates are hidden", () => {
   const layout = read("src/app/(dashboard)/dashboard/layout.tsx")
   const gate = read("src/features/auth/utils/require-locked-certificate-name.ts")
+  const login = read("src/app/(auth)/login/page.tsx")
+  const confirm = read("src/app/auth/confirm/route.ts")
   assert.match(layout, /requireLockedCertificateName/)
   assert.match(gate, /\/certificate-name\?next=/)
+  assert.match(gate, /!CERTIFICATES_OFFERED \|\| isCertificateNameLocked/)
+  assert.match(login, /CERTIFICATES_OFFERED && !isCertificateNameLocked/)
+  assert.match(confirm, /CERTIFICATES_OFFERED &&/)
   assert.equal(
     isCertificateNameLocked({ certificateName: null, certificateNameLockedAt: null }),
     false

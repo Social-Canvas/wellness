@@ -11,6 +11,7 @@ import {
   SALES_EXPORT_FORBIDDEN_SUBSTRINGS,
   TEST_DATA_EXCLUSION_SUMMARY,
   COMP_PREVIEW_MARKER_PREFIX,
+  toMonthlyPriceCents,
   type OverviewOrderInput,
   type OverviewProfileInput,
   type OverviewSponsoredMemberInput,
@@ -279,6 +280,42 @@ test("date filtering applies to purchases and customers but not active membershi
   assert.equal(metricValue(snapshot, "active_memberships"), 1)
   const active = snapshot.metrics.find((m) => m.id === "active_memberships")
   assert.equal(active?.dateFilterApplies, false)
+})
+
+test("monthly recurring revenue uses active paid subscription prices only", () => {
+  const snapshot = buildSalesOverviewSnapshot({
+    now: NOW,
+    dateRange: resolveSalesDateRange({ preset: "all", now: NOW }),
+    profiles: [profile({ id: "p1", email: "real@customer.com" })],
+    orders: [],
+    subscriptions: [
+      subscription({ id: "s-monthly", customerEmail: "a@customer.com", monthlyPriceCents: 9900 }),
+      subscription({
+        id: "s-yearly",
+        customerEmail: "b@customer.com",
+        monthlyPriceCents: toMonthlyPriceCents(118800, "yearly"),
+      }),
+      subscription({
+        id: "s-comp",
+        customerEmail: "c@customer.com",
+        stripeSubscriptionId: `${COMP_PREVIEW_MARKER_PREFIX}x`,
+        monthlyPriceCents: 14900,
+      }),
+      subscription({
+        id: "s-cancelled",
+        customerEmail: "d@customer.com",
+        status: "canceled",
+        currentPeriodEnd: "2026-09-01T00:00:00.000Z",
+        monthlyPriceCents: 4700,
+      }),
+    ],
+    sponsoredMembers: [],
+    marketingConsents: [],
+  })
+
+  assert.equal(metricValue(snapshot, "monthly_recurring_revenue"), 9900 + 9900)
+  const card = snapshot.metrics.find((m) => m.id === "monthly_recurring_revenue")
+  assert.equal(card?.dateFilterApplies, false)
 })
 
 test("product and tier breakdowns aggregate correctly including sponsored seats", () => {
