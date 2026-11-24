@@ -19,7 +19,7 @@ async function PublicNavbar() {
   const isAuthenticated = profileResult.success
   const primaryCta = {
     label: readSiteText(content, "global.nav.cta_label", "Start Reset Plan"),
-    href: readSiteText(content, "global.nav.cta_href", "/programs#reset-plan"),
+    href: readSiteText(content, "global.nav.cta_href", "/reset"),
   }
 
   return (

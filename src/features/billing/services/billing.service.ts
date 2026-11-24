@@ -15,6 +15,7 @@ import {
   buildCheckoutCancelUrl,
   buildCheckoutSuccessUrl,
 } from "@/features/checkout/utils/stripe-return-urls"
+import { readAttributionMetadata } from "@/lib/attribution/cookie"
 import { env } from "@/lib/config"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { recordMembershipLifecycleEvent } from "@/server/services/membership.service"
@@ -291,6 +292,7 @@ export async function createCheckoutSession(
         purchase_type: "membership",
         plan_id: planPriceResult.data.plan_id,
         billing_interval: planPriceResult.data.billing_interval,
+        ...(await readAttributionMetadata()),
       },
       subscription_data: {
         metadata: {

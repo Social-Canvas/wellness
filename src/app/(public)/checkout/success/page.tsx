@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
 import { Container, Section } from "@/components/layout"
 import { CheckoutSuccessStatus } from "@/features/checkout/components/checkout-success-status"
@@ -22,12 +21,31 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const profileResult = await getCurrentProfile()
 
   if (!profileResult.success) {
-    const params = await searchParams
-    const sessionId = params.session_id ?? ""
-    const returnTo = sessionId
-      ? `/checkout/success?session_id=${encodeURIComponent(sessionId)}`
-      : "/checkout/success"
-    redirect(`/login?redirectTo=${encodeURIComponent(returnTo)}`)
+    return (
+      <main>
+        <Section padding="default">
+          <Container className="max-w-2xl space-y-4">
+            <h1 className="font-display text-3xl font-medium text-ink">
+              Payment received
+            </h1>
+            <p className="text-sm text-ink-soft">
+              If you already have an account, sign in with the email you used at
+              checkout. If this is your first purchase, use Forgot password with
+              that same email to set a password and open your course. No temporary
+              password is created.
+            </p>
+            <div className="flex flex-wrap gap-4 text-sm font-semibold">
+              <Link href="/login?next=%2Fdashboard%2Flibrary" className="text-blue">
+                Sign in
+              </Link>
+              <Link href="/forgot-password" className="text-blue">
+                Forgot password
+              </Link>
+            </div>
+          </Container>
+        </Section>
+      </main>
+    )
   }
 
   const params = await searchParams

@@ -1,6 +1,6 @@
 # Email deliverability
 
-Checked 15 Nov 2026. No DNS records were changed. No sender address was changed.
+Checked 15 Nov 2026. Re-checked public DNS on 24 Nov 2026. No DNS records were changed. No sender address was changed. The public records below are unchanged.
 
 The local production-backed environment sends transactional mail as:
 

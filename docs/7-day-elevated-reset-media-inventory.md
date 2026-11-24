@@ -1,3 +1,5 @@
+Launch note from 15 Nov 2026 is stale. Production on 24 Nov 2026 has this course published with 22 published lessons (Welcome plus Day 1–7 morning, afternoon, and evening). Each lesson has a published video. The Welcome video is not the stand-in playback ID named in the table below. There are no course resource files, and the Reset product has no PDF. A Reset journal, grocery list, and quiz are not in the repository or the database. The separate free Integration Journal is a different product.
+
 # 7-Day Elevated Reset - Media Migration Inventory
 
 Course slug: `7-day-reset-meditation-series`

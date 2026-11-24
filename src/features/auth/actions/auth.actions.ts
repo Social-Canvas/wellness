@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
 
 import type {
   ForgotPasswordInput,
@@ -38,7 +39,9 @@ import {
   TURNSTILE_USER_ERROR,
   verifyTurnstileToken,
 } from "@/features/bot-protection/utils/turnstile"
+import { env } from "@/lib/config"
 import { resolveClientIp } from "@/lib/http/client-ip"
+import { createClient } from "@/lib/supabase/server"
 import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 
 function rateLimitedResult(): ActionResult<never> {
@@ -168,4 +171,29 @@ export async function updateProfileAction(
 
   revalidatePath("/dashboard", "layout")
   return result
+}
+
+export async function signInWithGoogleAction(): Promise<ActionResult<{ url: string }>> {
+  const headerList = await headers()
+  const origin = headerList.get("origin") ?? env.NEXT_PUBLIC_APP_URL
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+      queryParams: { prompt: "select_account" },
+    },
+  })
+
+  if (error || !data.url) {
+    return {
+      success: false,
+      error: {
+        code: "provider_error",
+        message: "Google sign-in is not available yet.",
+      },
+    }
+  }
+
+  return { success: true, data: { url: data.url } }
 }

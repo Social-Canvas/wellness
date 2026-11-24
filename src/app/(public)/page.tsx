@@ -64,7 +64,7 @@ const HERO_DESCRIPTION =
   "Elevate Health Solutions blends functional medicine, breathwork, and evidence-informed healing to help high-performing professionals move beyond burnout, anxiety, and depletion into clarity, resilience, and vibrant health."
 
 const HERO_ACTIONS: HeroAction[] = [
-  { label: "Start Reset Plan", href: "/programs#reset-plan", variant: "primary" },
+  { label: "Start Reset Plan", href: "/reset", variant: "primary" },
   { label: "Explore memberships", href: "#memberships", variant: "ghost" },
 ]
 

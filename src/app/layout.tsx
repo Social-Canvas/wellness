@@ -4,6 +4,8 @@ import {
   GoogleTagManagerNoscript,
   GoogleTagManagerScript,
 } from "@/components/analytics/google-tag-manager";
+import { AttributionCapture } from "@/components/analytics/attribution-capture";
+import { CookieConsent } from "@/components/legal/cookie-consent";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { TurnstileConfigProvider } from "@/features/bot-protection/components/turnstile-config";
 import { getTurnstileConfig } from "@/features/bot-protection/utils/turnstile";
@@ -82,6 +84,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-body">
         <GoogleTagManagerNoscript />
         <GoogleTagManagerScript />
+        <AttributionCapture />
+        <CookieConsent />
         <JsonLdScript data={organizationJsonLd()} />
         <JsonLdScript data={websiteJsonLd()} />
         <TurnstileConfigProvider siteKey={turnstileSiteKey}>

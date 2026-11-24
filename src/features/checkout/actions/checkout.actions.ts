@@ -3,7 +3,10 @@
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import { createCheckoutSession } from "@/features/billing/services/billing.service"
-import { createProductCheckoutSession } from "@/features/shop/services/shop.service"
+import {
+  createGuestProductCheckoutSession,
+  createProductCheckoutSession,
+} from "@/features/shop/services/shop.service"
 
 import { recordCheckoutMarketingConsent } from "@/server/services/marketing-consent.service"
 
@@ -38,7 +41,47 @@ export async function proceedToCheckoutAction(
   const profileResult = await getCurrentProfile()
 
   if (!profileResult.success) {
-    return profileResult
+    if (parsed.data.type !== "product" || !parsed.data.productSlug) {
+      return profileResult
+    }
+
+    const guestContext = await resolveCheckoutConsentContext({
+      type: "product",
+      productSlug: parsed.data.productSlug,
+      userId: null,
+    })
+
+    if (!guestContext.success || !guestContext.data.productId) {
+      return guestContext.success
+        ? {
+            success: false,
+            error: { code: "not_found", message: "Product not found." },
+          }
+        : guestContext
+    }
+
+    const guestCheckout = await createGuestProductCheckoutSession({
+      email: parsed.data.email,
+      productId: guestContext.data.productId,
+    })
+
+    if (!guestCheckout.success) return guestCheckout
+
+    return {
+      success: true,
+      data: {
+        url: guestCheckout.data.url,
+        analytics: {
+          itemId: guestContext.data.itemId,
+          itemName: guestContext.data.itemName,
+          value:
+            guestContext.data.valueCents === null
+              ? null
+              : guestContext.data.valueCents / 100,
+          currency: guestContext.data.currency,
+        },
+      },
+    }
   }
 
   const contextResult = await resolveCheckoutConsentContext({

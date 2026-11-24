@@ -23,6 +23,7 @@ import {
 } from "@/features/bot-protection/utils/honeypot"
 import type { AuthSessionUser, Profile, UserRole } from "@/features/auth/types"
 import { buildAuthCallbackUrl } from "@/lib/config/app-url"
+import { readAttributionMetadata } from "@/lib/attribution/cookie"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { logger, safeErrorMessage } from "@/server/utils/logger"
@@ -395,6 +396,7 @@ export async function signUp(
           // Never read as the live certificate source after profile lock.
           full_name: parsed.data.certificateName,
           certificate_name: parsed.data.certificateName,
+          ...(await readAttributionMetadata()),
         },
       },
     })

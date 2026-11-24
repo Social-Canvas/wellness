@@ -18,7 +18,7 @@ type PublicMobileNavProps = {
 
 const DEFAULT_PUBLIC_CTA = {
   label: "Start Reset Plan",
-  href: "/programs#reset-plan",
+  href: "/reset",
 } as const
 
 function PublicMobileNav({

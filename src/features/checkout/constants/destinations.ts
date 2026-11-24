@@ -52,6 +52,15 @@ export function isResetPurchase(input: {
   return false
 }
 
+export function resolveGrantedCourseId(input: {
+  productSlug: string
+  grantedCourseId: string | null
+}): string | null {
+  if (input.grantedCourseId) return input.grantedCourseId
+  if (input.productSlug === RESET_PRODUCT_SLUG) return RESET_COURSE_ID
+  return null
+}
+
 export function isAutoimmunePurchase(input: {
   productSlug?: string | null
   grantedCourseId?: string | null
