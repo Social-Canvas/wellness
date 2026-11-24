@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { type EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 
+import { CERTIFICATES_OFFERED } from "@/features/auth/utils/certificate-name"
 import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 import {
   getCanonicalAppUrl,
@@ -148,6 +149,7 @@ export async function GET(request: NextRequest) {
 
     let destination = next
     if (
+      CERTIFICATES_OFFERED &&
       user?.id &&
       next !== "/reset-password" &&
       !next.startsWith("/reset-password?")

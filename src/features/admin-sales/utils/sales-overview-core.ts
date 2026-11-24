@@ -358,6 +358,16 @@ export type OverviewSubscriptionInput = {
   customerEmail: string
   customerName: string | null
   customerRole: string
+  /** Current Stripe price normalized to one month; yearly prices are divided by 12. */
+  monthlyPriceCents?: number | null
+  priceCurrency?: string | null
+}
+
+export function toMonthlyPriceCents(
+  amountCents: number,
+  billingInterval: "monthly" | "yearly"
+): number {
+  return billingInterval === "yearly" ? Math.round(amountCents / 12) : amountCents
 }
 
 export type OverviewSponsoredMemberInput = {
@@ -506,6 +516,18 @@ export function buildSalesOverviewSnapshot(
   const primaryCurrency =
     ordersInRange.find((order) => order.currency)?.currency ?? "usd"
 
+  const pricedMemberships = activeMemberships.filter(
+    (subscription) => typeof subscription.monthlyPriceCents === "number"
+  )
+  const monthlyRecurringCents = pricedMemberships.reduce(
+    (sum, subscription) => sum + (subscription.monthlyPriceCents ?? 0),
+    0
+  )
+  const membershipCurrency =
+    pricedMemberships.find((subscription) => subscription.priceCurrency)?.priceCurrency ??
+    "usd"
+  const unpricedMembershipCount = activeMemberships.length - pricedMemberships.length
+
   const metrics: SalesMetricCard[] = [
     {
       id: "total_customers",
@@ -563,6 +585,20 @@ export function buildSalesOverviewSnapshot(
       reliability: "partial",
       note: "Membership renewal revenue is available in Stripe.",
       dateFilterApplies: true,
+    },
+    {
+      id: "monthly_recurring_revenue",
+      label: "Monthly recurring revenue",
+      value: monthlyRecurringCents,
+      displayValue: formatCents(monthlyRecurringCents, membershipCurrency),
+      tooltip:
+        "Current Stripe price of each active paid personal subscription, with yearly prices divided by 12. Excludes complimentary grants and sponsored seats. Does not subtract discounts, taxes, or failed renewals. Collected renewal revenue stays in Stripe.",
+      reliability: "partial",
+      note:
+        unpricedMembershipCount > 0
+          ? `Current state. ${unpricedMembershipCount} active membership(s) had no matching price and are not included.`
+          : "Current state (not filtered by date range)",
+      dateFilterApplies: false,
     },
   ]
 
@@ -703,6 +739,7 @@ export function buildSalesOverviewSnapshot(
     "Membership renewal / invoice payment amounts are not stored locally. Stripe remains the source of truth for recurring revenue.",
     "Successful one-time payments and one-time revenue collected cover Stripe-synced paid product checkouts only. Membership renewal revenue is available in Stripe.",
     "Active memberships reflect current subscription and sponsored seat state and are not historically reconstructed for date ranges.",
+    "Monthly recurring revenue is an estimate from current subscription prices. It is not collected revenue.",
     "Free claims create product_entitlements rows only and never appear as paid purchases.",
   ]
 

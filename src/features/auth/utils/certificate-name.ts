@@ -3,6 +3,9 @@
  * Kept dependency-free (no path aliases) so Node unit tests can import directly.
  */
 
+/** Certificates are hidden from members until the client launches them. */
+export const CERTIFICATES_OFFERED = false
+
 export const CERTIFICATE_NAME_MIN_LENGTH = 2
 export const CERTIFICATE_NAME_MAX_LENGTH = 100
 

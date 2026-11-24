@@ -5,6 +5,7 @@ import {
   trackLead as pushLead,
   trackPurchase as pushPurchase,
   trackSignup as pushSignup,
+  trackViewItem as pushViewItem,
 } from "./data-layer"
 import {
   createSessionPurchaseDedupeStore,
@@ -19,6 +20,18 @@ export function trackSignup(): void {
 
 export function trackLead(input: { leadType: string; source?: string | null }): void {
   pushLead(input)
+}
+
+export function trackViewItem(input: {
+  itemId: string
+  itemName?: string | null
+  value?: number | null
+  currency?: string | null
+}): void {
+  if (!input.itemId.trim()) {
+    return
+  }
+  pushViewItem(input)
 }
 
 export function trackBeginCheckout(input: {

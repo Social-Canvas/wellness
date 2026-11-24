@@ -4,7 +4,10 @@ import { redirect } from "next/navigation"
 
 import { LoginForm } from "@/features/auth/components/LoginForm"
 import { getCurrentProfile } from "@/features/auth/services/auth.service"
-import { isCertificateNameLocked } from "@/features/auth/utils/certificate-name"
+import {
+  CERTIFICATES_OFFERED,
+  isCertificateNameLocked,
+} from "@/features/auth/utils/certificate-name"
 import { resolveSafeAuthReturnPath } from "@/features/shop/utils/free-claim"
 
 export const metadata: Metadata = {
@@ -22,7 +25,7 @@ export default async function LoginPage({
   const redirectTo = resolveSafeAuthReturnPath(next)
 
   if (profileResult.success) {
-    if (!isCertificateNameLocked(profileResult.data)) {
+    if (CERTIFICATES_OFFERED && !isCertificateNameLocked(profileResult.data)) {
       redirect(
         `/certificate-name?next=${encodeURIComponent(redirectTo)}`
       )

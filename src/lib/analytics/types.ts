@@ -1,6 +1,7 @@
 export const ANALYTICS_EVENT_NAMES = [
   "signup",
   "lead",
+  "view_item",
   "begin_checkout",
   "purchase",
 ] as const
@@ -22,6 +23,13 @@ export type LeadAnalyticsEvent = {
   source?: string
 }
 
+export type ViewItemAnalyticsEvent = {
+  event: "view_item"
+  currency?: string
+  value?: number
+  items: AnalyticsItem[]
+}
+
 export type BeginCheckoutAnalyticsEvent = {
   event: "begin_checkout"
   currency?: string
@@ -40,6 +48,7 @@ export type PurchaseAnalyticsEvent = {
 export type AnalyticsEvent =
   | SignupAnalyticsEvent
   | LeadAnalyticsEvent
+  | ViewItemAnalyticsEvent
   | BeginCheckoutAnalyticsEvent
   | PurchaseAnalyticsEvent
 

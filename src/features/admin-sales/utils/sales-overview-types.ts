@@ -24,6 +24,7 @@ export type SalesMetricCard = {
     | "active_memberships"
     | "successful_payments"
     | "revenue_collected"
+    | "monthly_recurring_revenue"
   label: string
   value: number | null
   displayValue: string

@@ -14,6 +14,7 @@ import {
   buildSalesOverviewCsv,
   buildSalesOverviewSnapshot,
   resolveSalesDateRange,
+  toMonthlyPriceCents,
   type OverviewMarketingConsentInput,
   type OverviewOrderInput,
   type OverviewProfileInput,
@@ -129,6 +130,7 @@ async function loadOverviewRows(): Promise<{
     status: string
     plan_id: string
     stripe_subscription_id: string
+    stripe_price_id: string | null
     access_source?: string | null
     current_period_end: string | null
     cancel_at_period_end: boolean
@@ -153,6 +155,7 @@ async function loadOverviewRows(): Promise<{
     subscriptionsResult,
     sponsoredResult,
     marketingResult,
+    planPricesResult,
   ] = await Promise.all([
     typed.from("profiles").select("id, email, role, full_name, created_at"),
     typed
@@ -187,6 +190,7 @@ async function loadOverviewRows(): Promise<{
         status,
         plan_id,
         stripe_subscription_id,
+        stripe_price_id,
         access_source,
         current_period_end,
         cancel_at_period_end,
@@ -213,6 +217,9 @@ async function loadOverviewRows(): Promise<{
     typed
       .from("marketing_consents")
       .select("email, status, source, consented_at"),
+    typed
+      .from("plan_prices")
+      .select("stripe_price_id, amount, billing_interval, currency"),
   ])
 
   if (profilesResult.error) {
@@ -281,17 +288,34 @@ async function loadOverviewRows(): Promise<{
     }
   })
 
+  if (planPricesResult.error) {
+    logger.warn("[admin-sales] plan_prices unavailable", {
+      message: planPricesResult.error.message,
+    })
+  }
+
+  const pricesByStripeId = new Map(
+    (planPricesResult.data ?? []).map((price) => [price.stripe_price_id, price])
+  )
+
   const subscriptionRows = (subscriptionsResult.data ??
     []) as unknown as SubscriptionRow[]
   const subscriptions: OverviewSubscriptionInput[] = subscriptionRows.map(
     (row) => {
       const profile = asProfileJoin(row.profiles)
       const plan = asPlanJoin(row.plans)
+      const price = row.stripe_price_id
+        ? pricesByStripeId.get(row.stripe_price_id)
+        : undefined
       return {
         id: row.id,
         userId: row.user_id,
         status: row.status,
         planId: row.plan_id,
+        monthlyPriceCents: price
+          ? toMonthlyPriceCents(price.amount, price.billing_interval)
+          : null,
+        priceCurrency: price?.currency ?? null,
         planName: plan?.name ?? "Membership",
         planSlug: plan?.slug ?? "",
         stripeSubscriptionId: row.stripe_subscription_id,

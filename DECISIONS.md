@@ -367,3 +367,15 @@ Format:
 **Alternatives considered:** A hosted CMS, a page builder, bulk-flagging unconfirmed accounts, and letting admins edit Stripe price IDs.
 
 **Status:** Accepted
+
+---
+
+## 2026-11-24 — Signup without certificate names; promo codes on product checkout
+
+**Decision:** While `CERTIFICATES_OFFERED` is false, signup asks for name, email, and password only, and the `/certificate-name` gate is skipped in the dashboard, admin, login, and email-confirm paths. The locked-name tables, RPC, and onboarding page stay in place for when certificates launch. Product Checkout Sessions (logged-in and guest) set `allow_promotion_codes`; membership and live-trial checkout do not. A completed 100%-off session (`no_payment_required`) is a paid order with `amount_paid = 0`, grants access, and stays out of revenue. The admin dashboard shows monthly recurring revenue as the sum of current `plan_prices` for eligible active personal subscriptions, with yearly divided by 12.
+
+**Reason:** The client asked for a shorter signup and certificates are hidden, so asking for a permanent certificate name is friction with no use today. Coupons are enforced by Stripe, per the 2026-06-28 decision. MRR is labelled as a run-rate because renewal invoices are not stored locally.
+
+**Alternatives considered:** Deleting the certificate-name system; promo codes on membership checkout (would distort the run-rate); computing MRR from Stripe invoices.
+
+**Status:** Accepted

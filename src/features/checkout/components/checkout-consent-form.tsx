@@ -139,7 +139,9 @@ export function CheckoutConsentForm({
             {EDUCATIONAL_DISCLAIMER}
           </p>
 
-          <p className="text-xs text-ink-soft">{CHECKOUT_COUPON_NOTE}</p>
+          {context.type === "product" ? (
+            <p className="text-xs text-ink-soft">{CHECKOUT_COUPON_NOTE}</p>
+          ) : null}
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

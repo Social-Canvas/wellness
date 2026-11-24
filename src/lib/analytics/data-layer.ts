@@ -5,6 +5,7 @@ import type {
   BeginCheckoutAnalyticsEvent,
   LeadAnalyticsEvent,
   PurchaseAnalyticsEvent,
+  ViewItemAnalyticsEvent,
 } from "./types"
 
 export type DataLayerSink = {
@@ -45,6 +46,37 @@ export function trackLead(
     : { event: "lead", lead_type: input.leadType }
   pushAnalyticsEvent(
     payload,
+    sink ?? (typeof window === "undefined" ? { push() {} } : browserDataLayer())
+  )
+}
+
+export function trackViewItem(
+  input: {
+    itemId: string
+    itemName?: string | null
+    value?: number | null
+    currency?: string | null
+  },
+  sink?: DataLayerSink
+): void {
+  const event: ViewItemAnalyticsEvent = {
+    event: "view_item",
+    items: [
+      {
+        item_id: input.itemId,
+        ...(input.itemName?.trim() ? { item_name: input.itemName.trim() } : {}),
+      },
+    ],
+  }
+  if (typeof input.value === "number" && Number.isFinite(input.value)) {
+    event.value = input.value
+  }
+  const currency = normalizeAnalyticsCurrency(input.currency)
+  if (currency) {
+    event.currency = currency
+  }
+  pushAnalyticsEvent(
+    event,
     sink ?? (typeof window === "undefined" ? { push() {} } : browserDataLayer())
   )
 }

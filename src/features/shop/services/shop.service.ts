@@ -794,6 +794,7 @@ export async function createProductCheckoutSession(
       mode: "payment",
       customer: customerResult.data,
       client_reference_id: parsedUserId.data,
+      allow_promotion_codes: true,
       line_items: [
         {
           price: product.stripe_price_id,
@@ -920,6 +921,7 @@ export async function createGuestProductCheckoutSession(input: {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email,
+      allow_promotion_codes: true,
       line_items: [{ price: product.stripe_price_id, quantity: 1 }],
       success_url: buildCheckoutSuccessUrl(),
       cancel_url: buildCheckoutCancelUrl({ type: "product" }),
@@ -951,6 +953,10 @@ export async function createGuestProductCheckoutSession(input: {
 
 function mapOrderStatus(session: Stripe.Checkout.Session): Database["public"]["Enums"]["order_status"] {
   if (session.payment_status === "paid") {
+    return "paid"
+  }
+
+  if (session.payment_status === "no_payment_required" && session.status === "complete") {
     return "paid"
   }
 

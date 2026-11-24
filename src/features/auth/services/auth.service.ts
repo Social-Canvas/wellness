@@ -392,10 +392,7 @@ export async function signUp(
       options: {
         emailRedirectTo: buildAuthCallbackUrl("/dashboard"),
         data: {
-          // Temporary transport only — locked into profiles via set_certificate_name_once.
-          // Never read as the live certificate source after profile lock.
-          full_name: parsed.data.certificateName,
-          certificate_name: parsed.data.certificateName,
+          full_name: parsed.data.fullName,
           ...(await readAttributionMetadata()),
         },
       },
@@ -423,43 +420,17 @@ export async function signUp(
       supabase,
       data.user.id,
       parsed.data.email,
-      { fullName: parsed.data.certificateName, allowRepair: true }
+      { fullName: parsed.data.fullName, allowRepair: true }
     )
 
     if (!profileResult.success) {
       return profileResult
     }
 
-    const { setCertificateNameOnce } = await import(
-      "@/features/auth/services/certificate-name.service"
-    )
-    const lockResult = await setCertificateNameOnce({
-      certificateName: parsed.data.certificateName,
-      confirmSpelling: true,
-      source: "signup",
-    })
-
-    if (!lockResult.success && lockResult.error.code !== "already_locked") {
-      logger.error("[auth] Failed to lock certificate name at signup", {
-        code: lockResult.error.code,
-        message: lockResult.error.message,
-      })
-      return failure(
-        "provider_error",
-        "Account created, but we could not lock your certificate name. Please confirm it on your next sign-in."
-      )
-    }
-
-    const refreshedProfile = await fetchProfileByAuthUserId(supabase, data.user.id)
-    const profile =
-      refreshedProfile.status === "found"
-        ? refreshedProfile.profile
-        : profileResult.data
-
     return success({
       requiresEmailConfirmation: false,
       email: parsed.data.email,
-      profile: mapProfile(profile),
+      profile: mapProfile(profileResult.data),
       analyticsEligible: true,
     })
   } catch {

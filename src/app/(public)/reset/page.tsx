@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
+import { ViewItemTracker } from "@/components/analytics/view-item-tracker"
 import { Container, Section } from "@/components/layout"
 import { ResetPlanOfferBand } from "@/features/checkout/components/reset-plan-offer-band"
 import { RESET_PLAN, RESET_PLAN_CTA_FEATURES } from "@/lib/constants/elevate-brand"
@@ -15,6 +16,7 @@ export const metadata: Metadata = buildPublicPageMetadata({
 export default function ResetLandingPage() {
   return (
     <main>
+      <ViewItemTracker itemId={RESET_PLAN.slug} itemName={RESET_PLAN.name} />
       <Section padding="default">
         <Container className="max-w-3xl space-y-4">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue">

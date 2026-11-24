@@ -56,12 +56,16 @@ export async function resolvePurchaserProfileId(input: {
 
   const profile = await admin
     .from("profiles")
-    .select("id")
+    .select("id, full_name")
     .eq("auth_user_id", authUserId)
     .maybeSingle()
 
   if (profile.data?.id) {
-    return { profileId: profile.data.id, created: false }
+    const fullName = input.fullName?.trim()
+    if (created && fullName && !profile.data.full_name) {
+      await admin.from("profiles").update({ full_name: fullName }).eq("id", profile.data.id)
+    }
+    return { profileId: profile.data.id, created }
   }
 
   const inserted = await admin
@@ -86,7 +90,7 @@ export async function resolvePurchaserProfileId(input: {
       .eq("auth_user_id", authUserId)
       .maybeSingle()
     if (retry.data?.id) {
-      return { profileId: retry.data.id, created: false }
+      return { profileId: retry.data.id, created }
     }
   }
 

@@ -17,7 +17,11 @@ Admin → Content edits homepage and shared site text, including the announcemen
 
 ## Images and media
 
-Admin image uploads accept JPEG, PNG, WebP, or GIF up to 5 MB, with alt text. Product PDFs go in the private product file bucket, up to 50 MB. Public pages only receive a signed download link after access is confirmed.
+Admin image uploads accept JPEG, PNG, WebP, or GIF up to 5 MB, with alt text. Product PDFs go in the private product file bucket, up to 50 MB. Public pages only receive a signed download link after access is confirmed. Crop shapes and video settings are in `docs/MEDIA_SPECS.md`. A screenshot walkthrough is in `docs/operator-guide/README.md`.
+
+## Promo codes
+
+Product checkout, including the Reset, accepts Stripe promotion codes. Create the coupon and promotion code in Stripe, with a redemption limit or expiry if needed. A 100%-off code grants access as a $0 order and is not counted as revenue. Membership checkout does not accept codes.
 
 ## Products
 
