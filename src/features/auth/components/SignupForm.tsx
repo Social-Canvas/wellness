@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
 import { signUpAction } from "@/features/auth/actions/auth.actions"
+import { GoogleAuthButton } from "@/features/auth/components/GoogleAuthButton"
 import { ResendVerificationForm } from "@/features/auth/components/ResendVerificationForm"
 import { signupSchema, type SignupInput } from "@/features/auth/schemas"
 import { CERTIFICATE_NAME_COPY } from "@/features/auth/utils/certificate-name"
@@ -142,6 +143,7 @@ export function SignupForm({ redirectTo = "/dashboard" }: SignupFormProps) {
         <CardDescription>Start your membership journey today.</CardDescription>
       </CardHeader>
       <CardContent>
+        <GoogleAuthButton />
         <form className="relative space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
           <HoneypotField id="signup-company-url" inputProps={register(HONEYPOT_FIELD)} />
           {formError ? (

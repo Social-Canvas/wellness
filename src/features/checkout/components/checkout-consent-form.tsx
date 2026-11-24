@@ -41,7 +41,7 @@ export function CheckoutConsentForm({
     event.preventDefault()
     setError(null)
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated && context.type !== "product") {
       window.location.href = `/login?next=${encodeURIComponent(loginNext)}`
       return
     }
@@ -146,7 +146,7 @@ export function CheckoutConsentForm({
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting
               ? "Redirecting to checkout..."
-              : isAuthenticated
+              : isAuthenticated || context.type === "product"
                 ? "Continue to checkout"
                 : "Sign in to continue"}
           </Button>

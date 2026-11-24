@@ -11,6 +11,10 @@ import {
 } from "@/features/leads/services/leads.service"
 import type { SubmitLeadInput } from "@/features/leads/schemas/submit-lead"
 import type { SubmitNonprofitPartnershipInput } from "@/features/leads/schemas/submit-nonprofit-partnership"
+import {
+  mergeAttributionMetadata,
+  readAttributionFromCookies,
+} from "@/lib/attribution/cookie"
 import { resolveClientIp } from "@/lib/http/client-ip"
 
 async function guardPublicForm(
@@ -34,7 +38,14 @@ export async function submitLeadAction(
   if (!guard.success) {
     return guard
   }
-  return submitLead(input, { clientIp: guard.data })
+  const attribution = await readAttributionFromCookies()
+  return submitLead(
+    {
+      ...input,
+      metadata: mergeAttributionMetadata(input.metadata, attribution),
+    },
+    { clientIp: guard.data }
+  )
 }
 
 export async function submitNonprofitPartnershipAction(

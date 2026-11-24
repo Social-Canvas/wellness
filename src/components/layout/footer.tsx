@@ -137,6 +137,18 @@ async function Footer({ isAuthenticated }: FooterProps) {
             >
               Privacy Policy
             </Link>
+            <Link
+              href="/terms"
+              className="font-semibold text-[#C2D2D0] transition-colors hover:text-white"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/refund"
+              className="font-semibold text-[#C2D2D0] transition-colors hover:text-white"
+            >
+              Refunds
+            </Link>
           </nav>
         </div>
       </Container>

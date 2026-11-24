@@ -3,6 +3,7 @@ import "server-only"
 import { cache } from "react"
 import { z } from "zod"
 
+import { RESET_COURSE_ID, RESET_PRODUCT_SLUG } from "@/features/checkout/constants/destinations"
 import type { ActionResult } from "@/features/auth/services/auth.service"
 import type { UserRole } from "@/features/auth/types"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -291,12 +292,30 @@ async function hasProductGrantedCourseAccess(
       return mapDatabaseError(error)
     }
 
-    if (!products?.length) {
+    const productIds = new Set((products ?? []).map((product) => product.id))
+
+    if (courseId === RESET_COURSE_ID) {
+      const { data: resetProduct, error: resetError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("slug", RESET_PRODUCT_SLUG)
+        .maybeSingle()
+
+      if (resetError) {
+        return mapDatabaseError(resetError)
+      }
+
+      if (resetProduct?.id) {
+        productIds.add(resetProduct.id)
+      }
+    }
+
+    if (productIds.size === 0) {
       return success(false)
     }
 
-    for (const product of products) {
-      const purchasedResult = await hasPurchasedProduct(userId, product.id)
+    for (const productId of productIds) {
+      const purchasedResult = await hasPurchasedProduct(userId, productId)
 
       if (!purchasedResult.success) {
         return purchasedResult

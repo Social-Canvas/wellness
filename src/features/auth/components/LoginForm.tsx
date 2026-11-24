@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui"
 import { signInAction } from "@/features/auth/actions/auth.actions"
+import { GoogleAuthButton } from "@/features/auth/components/GoogleAuthButton"
 import { loginSchema, type LoginInput } from "@/features/auth/schemas"
 
 type LoginFormProps = {
@@ -51,6 +52,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <CardDescription>Sign in to your member account.</CardDescription>
       </CardHeader>
       <CardContent>
+        <GoogleAuthButton />
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
           {formError ? (
             <p

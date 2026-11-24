@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         destination: "/dashboard/library/:path*",
         permanent: false,
       },
+      {
+        source: "/reset-",
+        destination: "/reset",
+        permanent: false,
+      },
+      {
+        source: "/reset-plan",
+        destination: "/reset",
+        permanent: false,
+      },
     ]
   },
   images: {

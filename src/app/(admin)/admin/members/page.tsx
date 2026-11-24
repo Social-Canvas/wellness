@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/features/auth/services/auth.service"
 import { MembersTable } from "@/features/members/components"
+import { ComplimentaryResetForm } from "@/features/members/components/complimentary-reset-form"
 import { listMembers } from "@/features/members/services/members.service"
 
 export default async function AdminMembersPage() {
@@ -39,6 +40,8 @@ export default async function AdminMembersPage() {
               : "View member accounts. Only super admins can change roles."}
         </p>
       </div>
+
+      {canCorrectCertificateNames ? <ComplimentaryResetForm /> : null}
 
       <MembersTable
         members={membersResult.data}

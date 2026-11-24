@@ -18,6 +18,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/private-events",
     "/live-breathwork",
     "/privacy",
+    "/terms",
+    "/refund",
+    "/reset",
   ] as const
 
   const staticEntries = paths.map((path) => ({

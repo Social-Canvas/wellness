@@ -4,7 +4,9 @@ import type Stripe from "stripe"
 import { z } from "zod"
 
 import type { ActionResult } from "@/features/auth/services/auth.service"
+import { readAttributionMetadata } from "@/lib/attribution/cookie"
 import { profileHasSuperAdminDemoAccess } from "@/server/services/super-admin-access.server"
+import { resolvePurchaserProfileId, sendGuestPasswordSetup } from "@/server/services/guest-purchaser"
 import {
   buildCheckoutCancelUrl,
   buildCheckoutSuccessUrl,
@@ -13,6 +15,7 @@ import {
   RESET_COURSE_ID,
   RESET_LIBRARY_PATH,
   EBOOK_LIBRARY_PATH,
+  resolveGrantedCourseId,
 } from "@/features/checkout/constants/destinations"
 import { shouldRefuseCheckoutForExistingResetAccess } from "@/features/checkout/utils/reset-plan-offer-state"
 import {
@@ -644,11 +647,16 @@ export async function createProductCheckoutSession(
       return failure("not_found", "Product not found.")
     }
 
+    const grantedCourseId = resolveGrantedCourseId({
+      productSlug: product.slug,
+      grantedCourseId: product.granted_course_id,
+    })
+
     // Defense in depth: never send entitled Reset/course users to Stripe.
-    if (product.granted_course_id) {
+    if (grantedCourseId) {
       const courseAccessResult = await canAccessCourse(
         parsedUserId.data,
-        product.granted_course_id
+        grantedCourseId
       )
 
       if (!courseAccessResult.success) {
@@ -658,14 +666,14 @@ export async function createProductCheckoutSession(
       if (
         shouldRefuseCheckoutForExistingResetAccess({
           productSlug: product.slug,
-          grantedCourseId: product.granted_course_id,
+          grantedCourseId,
           hasCourseAccess: courseAccessResult.data,
         })
       ) {
         const destination =
-          product.granted_course_id === RESET_COURSE_ID
+          grantedCourseId === RESET_COURSE_ID
             ? RESET_LIBRARY_PATH
-            : `/dashboard/library/${product.granted_course_id}`
+            : `/dashboard/library/${grantedCourseId}`
 
         return success({
           sessionId: null,
@@ -799,9 +807,8 @@ export async function createProductCheckoutSession(
         product_id: product.id,
         product_slug: product.slug,
         purchase_type: "product",
-        ...(product.granted_course_id
-          ? { granted_course_id: product.granted_course_id }
-          : {}),
+        ...(grantedCourseId ? { granted_course_id: grantedCourseId } : {}),
+        ...(await readAttributionMetadata()),
       },
     })
 
@@ -817,6 +824,123 @@ export async function createProductCheckoutSession(
   } catch (caught) {
     const stripeError = summarizeStripeProviderError(caught)
     logger.error("Unable to create product checkout session.", {
+      stripeType: stripeError.stripeType,
+      stripeCode: stripeError.stripeCode,
+      error: stripeError.message,
+    })
+    return failure("provider_error", "Unable to create checkout session. Please try again.")
+  }
+}
+
+export async function createGuestProductCheckoutSession(input: {
+  email: string
+  productId: string
+}): Promise<ActionResult<ProductCheckoutResult>> {
+  const parsedProductId = z.uuid().safeParse(input.productId)
+  const email = input.email.trim().toLowerCase()
+
+  if (!parsedProductId.success || !email.includes("@")) {
+    return failure("validation_error", "Enter a valid email to continue.")
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const { data: product, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", parsedProductId.data)
+      .eq("status", "published")
+      .maybeSingle()
+
+    if (error) return mapDatabaseError(error)
+    if (!product || !isPublicCatalogProduct({ slug: product.slug, status: product.status })) {
+      return failure("not_found", "Product not found.")
+    }
+    if (!isPurchasableCatalogProductType(product.product_type)) {
+      return failure("not_found", "Product not found.")
+    }
+
+    const grantedCourseId = resolveGrantedCourseId({
+      productSlug: product.slug,
+      grantedCourseId: product.granted_course_id,
+    })
+
+    const existingProfile = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("email", email.replace(/[%_\\]/g, (character) => `\\${character}`))
+      .maybeSingle()
+
+    if (existingProfile.data?.id && grantedCourseId) {
+      const courseAccess = await canAccessCourse(
+        existingProfile.data.id,
+        grantedCourseId
+      )
+      if (courseAccess.success && courseAccess.data) {
+        return success({
+          sessionId: null,
+          url: `/login?next=${encodeURIComponent(
+            grantedCourseId === RESET_COURSE_ID
+              ? RESET_LIBRARY_PATH
+              : `/dashboard/library/${grantedCourseId}`
+          )}`,
+          alreadyEntitled: true,
+        })
+      }
+    }
+
+    const purchaseMode = resolveCanonicalPurchaseMode({
+      serverPurchaseMode: product.purchase_mode as ProductPurchaseMode,
+    })
+    if (!mayCreateStripeCheckoutForProduct({ purchaseMode })) {
+      return failure("validation_error", "This product is not available for checkout.")
+    }
+    if (!product.stripe_price_id || !isConfiguredStripePriceId(product.stripe_price_id)) {
+      return failure("provider_error", "This product is not configured for checkout yet.")
+    }
+
+    const modeCheck = assertCheckoutUsesMatchedModeKeys({
+      secretKey: env.STRIPE_SECRET_KEY,
+      publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    })
+    if (!modeCheck.ok) return failure("provider_error", modeCheck.message)
+
+    const stripe = getStripeClient()
+    const stripePrice = await stripe.prices.retrieve(product.stripe_price_id)
+    if (
+      !stripePrice.active ||
+      stripePrice.type !== "one_time" ||
+      stripePrice.currency !== "usd" ||
+      stripePrice.unit_amount !== product.price_amount ||
+      Boolean(stripePrice.livemode) !== isStripeLiveSecretKey(env.STRIPE_SECRET_KEY)
+    ) {
+      return failure("provider_error", "This product is not available for checkout right now.")
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: email,
+      line_items: [{ price: product.stripe_price_id, quantity: 1 }],
+      success_url: buildCheckoutSuccessUrl(),
+      cancel_url: buildCheckoutCancelUrl({ type: "product" }),
+      metadata: {
+        guest_checkout: "true",
+        product_id: product.id,
+        product_slug: product.slug,
+        purchase_type: "product",
+        ...(grantedCourseId ? { granted_course_id: grantedCourseId } : {}),
+        ...(await readAttributionMetadata()),
+      },
+    })
+
+    if (!session.url) {
+      return failure("provider_error", "Unable to create checkout session.")
+    }
+
+    return success({ sessionId: session.id, url: session.url, alreadyEntitled: false })
+  } catch (caught) {
+    const stripeError = summarizeStripeProviderError(caught)
+    logger.error("Unable to create guest product checkout session.", {
       stripeType: stripeError.stripeType,
       stripeCode: stripeError.stripeCode,
       error: stripeError.message,
@@ -901,8 +1025,27 @@ export async function syncOrderFromStripeCheckoutSession(
       (session.client_reference_id ? session.client_reference_id : null)
 
     const parsedUserId = userIdSchema.safeParse(userId)
+    let profileId = parsedUserId.success ? parsedUserId.data : null
+    let createdGuestAccount = false
 
-    if (!parsedUserId.success) {
+    if (!profileId && session.metadata?.guest_checkout === "true") {
+      const purchaserEmail =
+        session.customer_details?.email ?? session.customer_email ?? null
+      if (!purchaserEmail) {
+        return failure("not_found", "Checkout session is missing a purchaser email.")
+      }
+      const purchaser = await resolvePurchaserProfileId({
+        email: purchaserEmail,
+        fullName: session.customer_details?.name,
+      })
+      if (!purchaser) {
+        return failure("provider_error", "Unable to open access for this purchase.")
+      }
+      profileId = purchaser.profileId
+      createdGuestAccount = purchaser.created
+    }
+
+    if (!profileId) {
       return failure("not_found", "Checkout session is missing a profile reference.")
     }
 
@@ -959,7 +1102,7 @@ export async function syncOrderFromStripeCheckoutSession(
     const shouldSendPurchaseEmails = status === "paid"
 
     const orderPayload = {
-      user_id: parsedUserId.data,
+      user_id: profileId,
       stripe_checkout_session_id: session.id,
       stripe_payment_intent_id: paymentIntentId,
       status,
@@ -1042,7 +1185,7 @@ export async function syncOrderFromStripeCheckoutSession(
             "@/features/live-sessions/services/live-trial-checkout.service"
           )
           const trialResult = await fulfillLiveTrialFromPaidOrder({
-            userId: parsedUserId.data,
+            userId: profileId,
             productId: product.id,
             liveClassId,
             orderId,
@@ -1066,12 +1209,12 @@ export async function syncOrderFromStripeCheckoutSession(
     }
 
     if (shouldSendPurchaseEmails) {
-      const profileResult = await getProfileByUserId(parsedUserId.data)
+      const profileResult = await getProfileByUserId(profileId)
 
       if (!profileResult.success) {
         logger.warn("Unable to load profile for purchase emails.", {
           orderId,
-          userId: parsedUserId.data,
+          userId: profileId,
           checkoutSessionId: session.id,
         })
       } else {
@@ -1097,6 +1240,17 @@ export async function syncOrderFromStripeCheckoutSession(
             error: safeErrorMessage(error),
           })
         }
+      }
+    }
+
+    if (createdGuestAccount && shouldSendPurchaseEmails) {
+      const purchaserEmail =
+        session.customer_details?.email ?? session.customer_email ?? null
+      if (purchaserEmail) {
+        await sendGuestPasswordSetup(
+          purchaserEmail,
+          `${env.NEXT_PUBLIC_APP_URL}/reset-password`
+        )
       }
     }
 
